@@ -1,0 +1,38 @@
+query Books($search: String, $limit: Int, $offset: Int) {
+  books(search: $search, limit: $limit, offset: $offset) {
+    total
+    items {
+      id
+      title
+      author
+      genre
+      description
+      priceCents
+      stock
+    }
+  }
+}
+
+query Book($id: ID!) {
+  book(id: $id) {
+    id
+    title
+    author
+    genre
+    description
+    priceCents
+    stock
+  }
+}
+
+mutation PlaceOrder($input: PlaceOrderInput!) {
+  placeOrder(input: $input) {
+    id
+    totalCents
+    items {
+      title
+      quantity
+      unitPriceCents
+    }
+  }
+}
