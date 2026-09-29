@@ -1,10 +1,10 @@
 import { useQuery } from '@apollo/client/react'
 import { ArrowLeft, ArrowRight, Check, ShoppingBag } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
-import { BookCover } from '../BookCover'
-import { useCart } from '../cart-context'
-import { BOOK_QUERY } from '../graphql'
-import { money } from '../format'
+import { BookCover } from '../components/BookCover'
+import { useCart } from '../../cart/cart-context'
+import { BOOK_QUERY } from '../../../lib/graphql'
+import { money } from '../../../lib/format'
 
 export function BookPage() {
   const { id = '' } = useParams()

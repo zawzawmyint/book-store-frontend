@@ -3,10 +3,10 @@ import type { FormEvent } from 'react'
 import { useApolloClient, useMutation } from '@apollo/client/react'
 import { ArrowLeft, ArrowRight, CheckCircle2, LockKeyhole } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useCart } from '../cart-context'
-import { money } from '../format'
-import { PLACE_ORDER } from '../graphql'
-import type { OrderReceipt } from '../graphql'
+import { useCart } from '../../cart/cart-context'
+import { money } from '../../../lib/format'
+import { PLACE_ORDER } from '../../../lib/graphql'
+import type { OrderReceipt } from '../../../lib/graphql'
 
 export function CheckoutPage() {
   const { items, total, clear } = useCart()
@@ -44,13 +44,13 @@ export function CheckoutPage() {
       <div className="mx-auto max-w-[720px] px-5 py-24 text-center sm:px-10">
         <CheckCircle2 size={54} strokeWidth={1.3} className="mx-auto text-[#2d7651]" />
         <p className="mt-8 text-[11px] font-bold uppercase tracking-[.2em] text-[#a67d58]">
-          Order placed
+          Order request received
         </p>
         <h1 className="mt-3 font-serif text-5xl tracking-[-.05em]">
           Thank you, {name.trim().split(' ')[0]}.
         </h1>
         <p className="mt-5 text-sm leading-6 text-[#6f796d]">
-          Your demo order is saved. No payment was collected.
+          Your order request is saved. No payment was collected.
         </p>
         <div className="mx-auto mt-9 max-w-md bg-[#eceae2] p-7 text-left">
           <div className="flex justify-between border-b border-[#d8d5ca] pb-4 text-sm">
@@ -104,7 +104,7 @@ export function CheckoutPage() {
           </p>
           <h1 className="font-serif text-5xl tracking-[-.05em]">Checkout</h1>
           <p className="mt-5 max-w-lg text-sm leading-6 text-[#778073]">
-            Add your details to save this demo order. There is no payment or delivery step.
+            Add your details to submit an order request. Payment and delivery are not available.
           </p>
           <form onSubmit={submit} className="mt-10 space-y-6">
             <div>
@@ -157,7 +157,7 @@ export function CheckoutPage() {
               disabled={loading}
               className="inline-flex w-full items-center justify-center gap-3 bg-[#2b5843] px-6 py-4 text-xs font-bold uppercase tracking-[.17em] text-white hover:bg-[#1e4331] disabled:opacity-60"
             >
-              {loading ? 'Saving your order…' : 'Place demo order'} <ArrowRight size={17} />
+              {loading ? 'Saving your request…' : 'Submit order request'} <ArrowRight size={17} />
             </button>
             <p className="flex items-center gap-2 text-xs text-[#8a8d83]">
               <LockKeyhole size={15} /> No payment information is requested or stored.

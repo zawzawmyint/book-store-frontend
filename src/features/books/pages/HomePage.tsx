@@ -3,9 +3,9 @@ import type { FormEvent } from 'react'
 import { useQuery } from '@apollo/client/react'
 import { ArrowRight, Search, Sparkles } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { BookCard } from '../BookCard'
-import { BookCover } from '../BookCover'
-import { BOOKS_QUERY } from '../graphql'
+import { BookCard } from '../components/BookCard'
+import { BookCover } from '../components/BookCover'
+import { BOOKS_QUERY } from '../../../lib/graphql'
 
 const categories = [
   'All books',
@@ -204,8 +204,8 @@ export function HomePage() {
             </p>
             <h2 className="font-serif text-3xl sm:text-4xl">Good books. Clear ideas.</h2>
             <p className="mt-3 max-w-xl text-sm leading-6 text-[#d3ded1]">
-              This demo uses GraphQL to request the books you see, while the server reads from
-              SQLite. Add a book to your bag to see a mutation at checkout.
+              Find your next read among our selected titles, from familiar classics to unexpected
+              favorites.
             </p>
           </div>
           <Link

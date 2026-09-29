@@ -1,9 +1,9 @@
 import { ArrowUpRight, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import type { Book } from './graphql'
-import { useCart } from './cart-context'
+import type { Book } from '../../../lib/graphql'
+import { useCart } from '../../cart/cart-context'
 import { BookCover } from './BookCover'
-import { money } from './format'
+import { money } from '../../../lib/format'
 
 export function BookCard({ book }: { book: Book }) {
   const { add } = useCart()

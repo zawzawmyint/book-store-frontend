@@ -1,6 +1,6 @@
 import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client'
-import { BookDocument, BooksDocument, PlaceOrderDocument } from './generated/graphql'
-import type { BookQuery, PlaceOrderMutation } from './generated/graphql'
+import { BookDocument, BooksDocument, PlaceOrderDocument } from '../generated/graphql'
+import type { BookQuery, PlaceOrderMutation } from '../generated/graphql'
 
 export type Book = NonNullable<BookQuery['book']>
 export type OrderReceipt = PlaceOrderMutation['placeOrder']

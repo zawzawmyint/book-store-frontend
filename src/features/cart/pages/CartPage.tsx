@@ -1,8 +1,8 @@
 import { ArrowLeft, ArrowRight, Minus, Plus, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { BookCover } from '../BookCover'
+import { BookCover } from '../../books/components/BookCover'
 import { useCart } from '../cart-context'
-import { money } from '../format'
+import { money } from '../../../lib/format'
 
 export function CartPage() {
   const { items, count, total, update } = useCart()
@@ -105,7 +105,7 @@ export function CartPage() {
               <span>{money(total)}</span>
             </div>
             <p className="mt-3 text-xs leading-5 text-[#8b8d82]">
-              This is a demo store. No payment or shipping details are collected.
+              Submitting an order request does not collect payment or shipping details.
             </p>
             <Link
               to="/checkout"

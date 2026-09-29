@@ -1,9 +1,9 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Layout } from './Layout'
-import { HomePage } from './pages/HomePage'
-import { BookPage } from './pages/BookPage'
-import { CartPage } from './pages/CartPage'
-import { CheckoutPage } from './pages/CheckoutPage'
+import { HomePage } from '../features/books/pages/HomePage'
+import { BookPage } from '../features/books/pages/BookPage'
+import { CartPage } from '../features/cart/pages/CartPage'
+import { CheckoutPage } from '../features/checkout/pages/CheckoutPage'
 
 export default function App() {
   return (

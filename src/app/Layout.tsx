@@ -1,6 +1,6 @@
 import { BookOpenText, ShoppingBag } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
-import { useCart } from './cart-context'
+import { useCart } from '../features/cart/cart-context'
 
 export function Layout() {
   const { count } = useCart()
@@ -53,15 +53,14 @@ export function Layout() {
               the quiet shelf<span className="text-[#a67b54]">.</span>
             </p>
             <p className="mt-3 max-w-md text-sm leading-6 text-[#6e756c]">
-              A thoughtfully made bookshop demo. Browse a good story, and see how GraphQL brings the
-              shelves to life.
+              Browse enduring books and build a collection worth keeping.
             </p>
           </div>
           <p className="font-serif text-lg italic text-[#526b57]">For the love of a good story.</p>
         </div>
         <div className="mx-auto flex max-w-[1280px] flex-wrap justify-between gap-3 border-t border-[#d9d3c7] px-5 py-5 text-xs text-[#85877e] sm:px-10">
           <span>© 2026 The Quiet Shelf</span>
-          <span>Demo checkout • No payment collected</span>
+          <span>Order requests only • No payment collected</span>
         </div>
       </footer>
     </div>
