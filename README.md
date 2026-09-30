@@ -2,6 +2,8 @@
 
 A React + TypeScript + Tailwind bookstore storefront. This folder is its own Git repository. The backend lives in the sibling `backend` repository and should be started first.
 
+See [SPEC.md](SPEC.md) for the storefront behavior and current scope.
+
 ## Start
 
 Requires Node.js 24 or later. In one terminal, start the backend; in another:
