@@ -9,6 +9,8 @@ export type BookSummary = {
 
 export type CartItem = BookSummary & { quantity: number }
 
+export const CART_STORAGE_KEY = 'book-store-cart'
+
 export function addToCart(cart: CartItem[], book: BookSummary): CartItem[] {
   if (book.stock < 1) return cart
   const existing = cart.find((item) => item.id === book.id)
@@ -36,7 +38,7 @@ export const cartTotal = (cart: CartItem[]) =>
 
 export function loadCart(): CartItem[] {
   try {
-    const saved: unknown = JSON.parse(localStorage.getItem('book-store-cart') || '[]')
+    const saved: unknown = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]')
     if (!Array.isArray(saved)) return []
     return saved.filter(
       (item): item is CartItem =>

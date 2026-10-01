@@ -11,6 +11,7 @@ query Books($search: String, $limit: Int, $offset: Int) {
       stock
     }
   }
+  genres
 }
 
 query Book($id: ID!) {
@@ -34,5 +35,109 @@ mutation PlaceOrder($input: PlaceOrderInput!) {
       quantity
       unitPriceCents
     }
+  }
+}
+
+query MyOrders($limit: Int, $offset: Int) {
+  myOrders(limit: $limit, offset: $offset) {
+    total
+    items {
+      id
+      createdAt
+      totalCents
+      items {
+        title
+        quantity
+        unitPriceCents
+      }
+    }
+  }
+}
+
+query Viewer {
+  viewer {
+    id
+    role
+  }
+}
+fragment AdminBookFields on AdminBook {
+  id
+  title
+  author
+  genre
+  description
+  priceCents
+  stock
+  archived
+}
+query AdminBooks(
+  $search: String
+  $filter: AdminBookFilter
+  $lowStockOnly: Boolean
+  $limit: Int
+  $offset: Int
+) {
+  adminBooks(
+    search: $search
+    filter: $filter
+    lowStockOnly: $lowStockOnly
+    limit: $limit
+    offset: $offset
+  ) {
+    total
+    items {
+      ...AdminBookFields
+    }
+  }
+}
+query AdminBook($id: ID!) {
+  adminBook(id: $id) {
+    ...AdminBookFields
+  }
+}
+mutation CreateBook($input: CreateBookInput!) {
+  createBook(input: $input) {
+    ...AdminBookFields
+  }
+}
+mutation UpdateBook($id: ID!, $input: AdminBookDetailsInput!) {
+  updateBook(id: $id, input: $input) {
+    ...AdminBookFields
+  }
+}
+mutation AdjustBookStock($id: ID!, $delta: Int!) {
+  adjustBookStock(id: $id, delta: $delta) {
+    ...AdminBookFields
+  }
+}
+mutation SetBookArchived($id: ID!, $archived: Boolean!) {
+  setBookArchived(id: $id, archived: $archived) {
+    ...AdminBookFields
+  }
+}
+fragment AdminOrderFields on AdminOrder {
+  id
+  userId
+  customerName
+  email
+  createdAt
+  totalCents
+  items {
+    title
+    quantity
+    unitPriceCents
+  }
+}
+query AdminOrders($limit: Int, $offset: Int) {
+  adminOrders(limit: $limit, offset: $offset) {
+    total
+    items {
+      ...AdminOrderFields
+    }
+  }
+}
+query AdminOrder($id: ID!) {
+  adminOrder(id: $id) {
+    ...AdminOrderFields
   }
 }

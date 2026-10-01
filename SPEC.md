@@ -1,27 +1,49 @@
 # The Quiet Shelf storefront specification
 
+> This document describes implemented behavior. See [the authentication feature spec](specs/authentication/SPEC.md) for the detailed account contract.
+
 ## Purpose and current scope
 
-Provide a browser storefront for finding books, maintaining a cart, and submitting a guest order request to the separate GraphQL API. The checkout does not collect payment or shipping details.
+Provide a browser storefront for finding books, maintaining a cart, and submitting an authenticated order request to the separate GraphQL API. The checkout does not collect payment or shipping details.
 
 ## Routes and behavior
 
-- `/` shows the catalog, search, genre shortcuts, and pagination. It requests 12 books per page.
+- `/` shows the catalog, search, genre shortcuts, and pagination. It requests 12 books per page. The shortcut genres come from the API.
 - Search text is submitted with the Go button, trimmed, and stored in the URL's `search` parameter. The backend searches title, author, and genre; the frontend does not filter the returned books itself.
 - Genre shortcuts set the same search parameter. They are text searches, not a separate exact-match genre filter. A new search returns to the first page.
 - `/books/:id` requests one book and shows its details, price, stock, and add-to-cart action.
-- `/cart` shows cart lines, quantity controls, removal, and a client-side estimated total. Cart contents persist in browser local storage.
-- `/checkout` collects customer name and email and sends book IDs and quantities through `placeOrder`. On success it shows the returned order ID and server-calculated total and clears the cart. On failure it keeps the cart.
+- `/cart` shows cart lines, quantity controls, removal, and a client-side estimated total. Zustand manages shared cart state and persists items in browser local storage using the existing `book-store-cart` key and raw JSON array format. Count and estimated total are derived from items. Previously saved carts remain readable, invalid entries are filtered out, and storage failures leave in-memory cart interactions usable.
+- `/sign-up` and `/sign-in` create or access a Better Auth account. Authentication is required for `/checkout` and `/account/orders`; a guarded route sends guests to sign-in with an internal return path.
+- `/checkout` displays account contact details and sends only book IDs and quantities through `placeOrder`. On success it shows the returned order ID and server-calculated total and clears the cart. On failure it keeps the cart.
+- `/account/orders` lists only the signed-in customer's order requests with pagination.
+- A session boundary unmounts routed content during session revalidation and clears Apollo data before rendering after any user ID change, including sign-out.
 - Unknown routes show a not-found page.
+
+## Admin routes
+
+- `/admin` redirects authorized administrators to `/admin/books`; guests redirect to sign-in with an internal return path, and customers see access denied. The existing Account menu exposes Admin only after server authorization.
+- Admin navigation uses a grouped left sidebar at desktop widths (1024px and above) and a collapsible Admin menu on smaller screens. The menu closes after navigation or Escape, and the active section remains highlighted on nested routes. Back to store stays in the admin header.
+- `/admin/books`, `/admin/books/new`, and `/admin/books/:id/edit` support catalog search/filter/pagination, creation, metadata editing, atomic stock adjustments, and archive/restore confirmations.
+- `/admin/orders` and `/admin/orders/:id` show all saved order requests and captured contact/price snapshots, including legacy guest records. They provide no payment, shipping, or order processing actions.
+- Admin queries use no-cache responses; session changes clear Apollo data, and detected membership revocation hides private views. Route entry and focus revalidate server access. Expired sessions refresh Better Auth state before redirecting to login.
+- Inventory mutation network failures are not automatically retried. Archived cart items fail checkout visibly while preserving the cart. See [the admin feature spec](specs/admin/SPEC.md) for all routes and acceptance criteria.
 
 ## GraphQL integration
 
-- `src/operations.graphql` defines the `Books`, `Book`, and `PlaceOrder` operations.
-- `src/generated/graphql.ts` contains generated typed documents and response/variable types; it is regenerated with `npm run codegen` when operations or the backend schema change.
-- Apollo Client sends requests to `VITE_GRAPHQL_URL` when set, otherwise `/graphql`. Vite proxies `/graphql` to the local backend during development.
+- `src/operations.graphql` defines the `Books`, `Book`, `PlaceOrder`, and `MyOrders` operations; `Books` also requests distinct genres.
+- `src/generated/graphql.ts` contains generated typed documents and response/variable types; it is regenerated with `bun run codegen` when operations or the backend schema change.
+- Apollo Client sends credentialed requests to `VITE_GRAPHQL_URL` when set, otherwise `/graphql`. Better Auth's React client uses `/api/auth`. Vite proxies both paths to `VITE_API_TARGET` (default `http://localhost:4000`) during development.
 - The backend is authoritative for stock, prices, and order totals. Locally displayed cart totals are estimates until an order request succeeds.
+
+## UI and validation
+
+- Copied shadcn/ui primitives live in `src/app/components/ui/`, with `components.json` configuring their location. Storefront and admin screens use them for actions, forms, filters, dialogs, menus, cards, tables, feedback, and loading states. Components retain storefront styling and accessible labels and focus behavior.
+- Account forms use React Hook Form and a local Zod schema through `@hookform/resolvers`. Sign-up names are trimmed to 1–120 characters; emails are normalized and limited to 254 characters.
+- Invalid account fields show associated errors and prevent submission. Server errors remain visible and the cart survives failed order requests. The backend remains authoritative for validation and stock.
+- Bun 1.3.14 manages dependencies with committed `bun.lock` and frozen installs. Node.js 24 or later runs development and build tooling.
 
 ## Acceptance checks
 
-- `npm test`, `npm run lint`, and `npm run build` pass.
+- Run `bun run test`, `bun run lint`, and `bun run build`.
+- Playwright Chromium tests cover account creation, checkout access, order history, direct API rejection for guests, and stock failures with cart retention. Run `bun run test:e2e:install` once, then `bun run test:e2e` with both repositories installed. The suite starts an in-memory API on 4100 and frontend on 4173, keeping persisted databases untouched.
 - Catalog loading, empty and error states, search, pagination, book detail, cart updates, and order-request success and failure remain usable.
