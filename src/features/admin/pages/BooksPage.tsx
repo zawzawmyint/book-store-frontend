@@ -1,4 +1,15 @@
-import { useEffect, useState } from 'react'
+import { AdminPageTable } from '../components/AdminPageTable'
+import { AdminFilterToolbar } from '../components/AdminFilterToolbar'
+import { AdminPageHeader } from '../components/AdminPageHeader'
+import { useEffect, useRef, useState } from 'react'
+import { MoreHorizontal } from 'lucide-react'
+import { BookCover } from '../../books/components/BookCover'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '../../../app/components/ui/dropdown-menu'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import {
@@ -8,16 +19,21 @@ import {
 } from '../../../generated/graphql'
 import { money } from '../../../lib/format'
 import { Button } from '../../../app/components/ui/button'
-import { Input } from '../../../app/components/ui/input'
 import { Label } from '../../../app/components/ui/label'
 import { Checkbox } from '../../../app/components/ui/checkbox'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../app/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../app/components/ui/table'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../app/components/ui/select'
+import { TableCell } from '../../../app/components/ui/table'
 import { Badge } from '../../../app/components/ui/badge'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { useAdminAccess, useAdminQueryError } from '../admin-access'
-import { readPage, refreshCatalog } from '../admin-data'
-import { AdminFeedback, AdminPagination } from '../components/AdminFeedback'
+import { ADMIN_PAGE_SIZE, readPage, refreshCatalog } from '../admin-data'
+import { AdminFeedback } from '../components/AdminFeedback'
 import { AdminDialog } from '../components/AdminDialog'
 import { StockDialog } from '../components/StockDialog'
 
@@ -36,7 +52,13 @@ export function BooksPage() {
   const client = useApolloClient()
   const { handleError } = useAdminAccess()
   const { data, loading, error, refetch } = useQuery(AdminBooksDocument, {
-    variables: { search, filter, lowStockOnly, limit: 20, offset: (page - 1) * 20 },
+    variables: {
+      search,
+      filter,
+      lowStockOnly,
+      limit: ADMIN_PAGE_SIZE,
+      offset: (page - 1) * ADMIN_PAGE_SIZE,
+    },
     fetchPolicy: 'no-cache',
   })
   useAdminQueryError(error)
@@ -44,6 +66,7 @@ export function BooksPage() {
   const [action, setAction] = useState<{
     kind: 'stock' | 'archive'
     book: AdminBookFieldsFragment
+    opener?: HTMLButtonElement | null
   }>()
   const [failure, setFailure] = useState('')
   const [notice, setNotice] = useState((location.state as { notice?: string } | null)?.notice ?? '')
@@ -57,9 +80,9 @@ export function BooksPage() {
     setParams(next)
   }
   useEffect(() => {
-    if (books && !loading && page > Math.max(1, Math.ceil(books.total / 20))) {
+    if (books && !loading && page > Math.max(1, Math.ceil(books.total / ADMIN_PAGE_SIZE))) {
       const next = new URLSearchParams(params)
-      next.set('page', String(Math.max(1, Math.ceil(books.total / 20))))
+      next.set('page', String(Math.max(1, Math.ceil(books.total / ADMIN_PAGE_SIZE))))
       setParams(next, { replace: true })
     }
   }, [books, loading, page, params, setParams])
@@ -79,38 +102,42 @@ export function BooksPage() {
   }
   return (
     <section>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="font-serif text-3xl">Manage books</h2>
-        <Button asChild><Link to="new" state={{ returnTo: `/admin/books?${params}` }}>Add book</Link></Button>
-      </div>
+      <AdminPageHeader
+        title="Manage books"
+        description="Manage your catalog, inventory, and book availability."
+        actions={
+          <Button asChild>
+            <Link to="new" state={{ returnTo: `/admin/books?${params}` }}>
+              Add book
+            </Link>
+          </Button>
+        }
+      />
       {notice && (
-        <Alert role="status" className="my-4"><AlertDescription>{notice}</AlertDescription></Alert>
+        <Alert role="status" className="my-4">
+          <AlertDescription>{notice}</AlertDescription>
+        </Alert>
       )}
-      <form
-        onSubmit={(event) => {
-          event.preventDefault()
-          const values = new FormData(event.currentTarget)
-          change({ search: String(values.get('search') ?? '').trim(), page: '' })
-        }}
-        className="my-6 flex flex-wrap items-end gap-4"
+      <AdminFilterToolbar
+        search={search}
+        onSearch={(value) => change({ search: value, page: '' })}
+        searchLabel="Search books"
+        searchPlaceholder="Title, author, or genre"
       >
-        <div className="min-w-48 flex-1 space-y-2">
-          <Label htmlFor="admin-book-search">Search books</Label>
-          <Input id="admin-book-search" key={search} name="search" defaultValue={search} maxLength={100} />
-        </div>
-        <Button type="submit">Search</Button>
-        <div className="space-y-2">
+        <div className="admin-toolbar-field">
           <Label htmlFor="admin-catalog-state">Catalog state</Label>
           <Select value={filter} onValueChange={(value) => change({ filter: value, page: '' })}>
-            <SelectTrigger id="admin-catalog-state" className="min-w-36"><SelectValue /></SelectTrigger>
-            <SelectContent>
+            <SelectTrigger id="admin-catalog-state" className="min-w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="admin-workspace">
               <SelectItem value="ACTIVE">Active</SelectItem>
               <SelectItem value="ARCHIVED">Archived</SelectItem>
               <SelectItem value="ALL">All</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center gap-2 py-3">
+        <div className="admin-toolbar-toggle">
           <Checkbox
             id="admin-low-stock"
             checked={lowStockOnly}
@@ -118,72 +145,81 @@ export function BooksPage() {
           />
           <Label htmlFor="admin-low-stock">Low stock only (5 or fewer)</Label>
         </div>
-      </form>
+      </AdminFilterToolbar>
       <AdminFeedback loading={loading} error={error} retry={refetch} />
       {!loading && !error && books && (
-        <>
-          <p className="mb-3 text-sm">{books.total} books</p>
-          {books.items.length === 0 ? (
-            <p>No matching books.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table className="min-w-[760px]">
-                <TableHeader>
-                  <TableRow>
-                    {['Book', 'Genre', 'Price', 'Stock', 'State', 'Actions'].map((heading) => (
-                      <TableHead key={heading} scope="col">
-                        {heading}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {books.items.map((book) => (
-                    <TableRow key={book.id}>
-                      <TableCell>
-                        <strong>{book.title}</strong>
-                        <p className="mt-1 text-[#6e756c]">{book.author}</p>
-                      </TableCell>
-                      <TableCell>{book.genre}</TableCell>
-                      <TableCell>{money(book.priceCents)}</TableCell>
-                      <TableCell>
-                        {book.stock}
-                        {book.stock <= 5 && <Badge variant="destructive" className="ml-2">Low stock</Badge>}
-                      </TableCell>
-                      <TableCell><Badge variant={book.archived ? 'secondary' : 'default'}>{book.archived ? 'Archived' : 'Active'}</Badge></TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          <Button asChild variant="ghost"><Link to={`${book.id}/edit`} state={{ returnTo: `/admin/books?${params}` }}>Edit</Link></Button>
-                          <Button type="button" variant="ghost"
-                            onClick={() => {
-                              setFailure('')
-                              setAction({ kind: 'stock', book })
-                            }}
-                          >
-                            Adjust stock
-                          </Button>
-                          <Button type="button" variant="ghost"
-                            onClick={() => {
-                              setFailure('')
-                              setAction({ kind: 'archive', book })
-                            }}
-                          >
-                            {book.archived ? 'Restore' : 'Archive'}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+        <AdminPageTable
+          columns={[
+            { label: 'Book' },
+            { label: 'Genre' },
+            { label: 'Price', numeric: true },
+            { label: 'Stock', numeric: true },
+            { label: 'State' },
+            { label: 'Actions' },
+          ]}
+          items={books.items}
+          rowKey={(book) => book.id}
+          label="books"
+          emptyMessage="No matching books."
+          page={page}
+          total={books.total}
+          onPageChange={(next) => change({ page: String(next) })}
+          tableClassName="min-w-[760px]"
+          renderRow={(book) => (
+            <>
+              <TableCell>
+                <div className="flex items-center gap-3">
+                  <BookCover id={book.id} title={book.title} author={book.author} compact />
+                  <div>
+                    <strong className="font-medium">{book.title}</strong>
+                    <p className="mt-1 text-slate-500">{book.author}</p>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>{book.genre}</TableCell>
+              <TableCell className="admin-numeric">{money(book.priceCents)}</TableCell>
+              <TableCell className="admin-numeric">
+                {book.stock}
+                {book.stock <= 5 && (
+                  <Badge variant="destructive" className="ml-2">
+                    Low stock
+                  </Badge>
+                )}
+              </TableCell>
+              <TableCell>
+                <Badge variant={book.archived ? 'secondary' : 'default'}>
+                  {book.archived ? 'Archived' : 'Active'}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <div className="flex justify-end gap-1">
+                  <Button asChild variant="ghost">
+                    <Link to={`${book.id}/edit`} state={{ returnTo: `/admin/books?${params}` }}>
+                      Edit
+                    </Link>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setFailure('')
+                      setAction({ kind: 'stock', book })
+                    }}
+                  >
+                    Adjust stock
+                  </Button>
+                  <BookRowMenu
+                    book={book}
+                    onArchive={(opener) => {
+                      setFailure('')
+                      setAction({ kind: 'archive', book, opener })
+                    }}
+                  />
+                </div>
+              </TableCell>
+            </>
           )}
-          <AdminPagination
-            page={page}
-            total={books.total}
-            change={(next) => change({ page: String(next) })}
-          />
-        </>
+        />
       )}
       {action?.kind === 'stock' && (
         <StockDialog
@@ -201,13 +237,18 @@ export function BooksPage() {
           title={`${action.book.archived ? 'Restore' : 'Archive'} ${action.book.title}?`}
           close={() => setAction(undefined)}
           busy={saving}
+          returnFocusTo={action.opener}
         >
           <p className="mb-4">
             {action.book.archived
               ? 'This book will appear in the store and become available for new orders.'
               : 'This book will be hidden from the store and unavailable for new orders. Earlier order requests are preserved.'}
           </p>
-          {failure && <Alert role="alert" variant="destructive"><AlertDescription>{failure}</AlertDescription></Alert>}
+          {failure && (
+            <Alert role="alert" variant="destructive">
+              <AlertDescription>{failure}</AlertDescription>
+            </Alert>
+          )}
           <Button
             disabled={saving}
             onClick={() => {
@@ -219,5 +260,49 @@ export function BooksPage() {
         </AdminDialog>
       )}
     </section>
+  )
+}
+function BookRowMenu({
+  book,
+  onArchive,
+}: {
+  book: AdminBookFieldsFragment
+  onArchive: (opener: HTMLButtonElement | null) => void
+}) {
+  const trigger = useRef<HTMLButtonElement>(null)
+  const openingDialog = useRef(false)
+  return (
+    <DropdownMenu
+      onOpenChange={(open) => {
+        if (open) openingDialog.current = false
+      }}
+    >
+      <DropdownMenuTrigger asChild>
+        <Button
+          ref={trigger}
+          variant="ghost"
+          className="h-10 w-10 p-0"
+          aria-label={`More actions for ${book.title}`}
+        >
+          <MoreHorizontal className="size-4" aria-hidden="true" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="admin-workspace"
+        onCloseAutoFocus={(event) => {
+          if (openingDialog.current) event.preventDefault()
+        }}
+      >
+        <DropdownMenuItem
+          onSelect={() => {
+            openingDialog.current = true
+            onArchive(trigger.current)
+          }}
+        >
+          {book.archived ? 'Restore' : 'Archive'}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

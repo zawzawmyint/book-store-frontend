@@ -18,14 +18,30 @@ export function BookCover({
   title,
   author,
   large = false,
+  compact = false,
 }: {
   id: string
   title: string
   author: string
   large?: boolean
+  compact?: boolean
 }) {
   const index = Math.max(0, Number(id) - 1) % covers.length
   const [background, accent] = covers[index]
+  if (compact)
+    return (
+      <div
+        data-slot="book-cover-thumbnail"
+        aria-hidden="true"
+        className="relative flex h-12 w-9 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-black/10 shadow-sm"
+        style={{ backgroundColor: background, color: accent }}
+      >
+        <span className="absolute inset-y-0 left-0 w-1 bg-black/15" />
+        <span className="border-y border-current/40 py-1 font-serif text-lg">
+          {title.charAt(0)}
+        </span>
+      </div>
+    )
   return (
     <div
       className={`book-cover relative flex aspect-[0.72] w-full flex-col overflow-hidden rounded-[3px] px-[12%] py-[12%] text-center shadow-[6px_8px_16px_rgba(43,35,28,.19)] ${large ? 'max-w-[310px]' : ''}`}

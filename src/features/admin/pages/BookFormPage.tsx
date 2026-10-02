@@ -1,3 +1,4 @@
+import { AdminPageHeader } from '../components/AdminPageHeader'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
@@ -95,10 +96,24 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
     navigate(returnTo, { state: { notice: book ? 'Book updated.' : 'Book created.' } })
   }
   return (
-    <section className="max-w-2xl">
-      <h2 className="font-serif text-3xl">{book ? 'Edit book' : 'Add book'}</h2>
-      {book?.archived && <Badge variant="secondary" className="mt-3">Archived</Badge>}
-      <form onSubmit={handleSubmit(save)} className="mt-8 space-y-5">
+    <section className="max-w-3xl">
+      <Link to={returnTo} className="admin-back-link">
+        ← Back to books
+      </Link>
+      <AdminPageHeader
+        title={book ? 'Edit book' : 'Add book'}
+        description={
+          book
+            ? 'Update book details. Use the catalog to adjust stock.'
+            : 'Add book details and set the opening inventory.'
+        }
+      />
+      {book?.archived && (
+        <Badge variant="secondary" className="mt-3">
+          Archived
+        </Badge>
+      )}
+      <form onSubmit={handleSubmit(save)} className="admin-form-panel grid gap-5 sm:grid-cols-2">
         {(['title', 'author', 'genre'] as const).map((field) => (
           <FormField
             key={field}
@@ -108,10 +123,8 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
             {...register(field)}
           />
         ))}
-        <div>
-          <Label htmlFor="description">
-            Description
-          </Label>
+        <div className="sm:col-span-2">
+          <Label htmlFor="description">Description</Label>
           <Textarea
             id="description"
             aria-invalid={!!errors.description}
@@ -142,14 +155,18 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
             {...register('initialStock')}
           />
         )}
-        {error && <Alert role="alert" variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
-        <div className="flex gap-5">
+        {error && (
+          <Alert role="alert" variant="destructive" className="sm:col-span-2">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        <div className="flex gap-3 border-t border-slate-200 pt-5 sm:col-span-2">
           <Button type="submit" disabled={creating || updating}>
             {creating || updating ? 'Saving…' : 'Save book'}
           </Button>
-          <Link to={returnTo} className="self-center underline">
-            Cancel
-          </Link>
+          <Button asChild variant="outline">
+            <Link to={returnTo}>Cancel</Link>
+          </Button>
         </div>
       </form>
     </section>
