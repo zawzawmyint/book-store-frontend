@@ -27,6 +27,12 @@ for (const email of [
   if (!email.startsWith('customer')) membership.setAdminAccess(result.user.id, true)
   if (email.startsWith('revocable')) revocableId = result.user.id
 }
+for (let index = 1; index <= 6; index++) {
+  db.prepare('INSERT INTO orders (customer_name, email, total_cents) VALUES (?, ?, 0)').run(
+    `Pagination Reader ${index}`,
+    `pagination-${index}@example.com`,
+  )
+}
 const legacyOrder = db
   .prepare(
     "INSERT INTO orders (customer_name, email, total_cents) VALUES ('Legacy Reader', 'legacy-e2e@example.com', 1234)",

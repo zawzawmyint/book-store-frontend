@@ -50,18 +50,20 @@ it('preserves unsaved input during same-account access revalidation and hides it
     handleError: () => {},
   }
   const view = () => (
-    <AccessContext.Provider value={access}>
-      <MemoryRouter initialEntries={['/admin']}>
-        <Routes>
-          <Route element={<RequireAdmin />}>
-            <Route
-              path="/admin"
-              element={<input aria-label="Draft book title" defaultValue="Draft" />}
-            />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </AccessContext.Provider>
+    <MockedProvider>
+      <AccessContext.Provider value={access}>
+        <MemoryRouter initialEntries={['/admin']}>
+          <Routes>
+            <Route element={<RequireAdmin />}>
+              <Route
+                path="/admin"
+                element={<input aria-label="Draft book title" defaultValue="Draft" />}
+              />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </AccessContext.Provider>
+    </MockedProvider>
   )
   const { rerender } = render(view())
   await userEvent.setup().type(screen.getByLabelText('Draft book title'), ' changed')

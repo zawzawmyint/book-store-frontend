@@ -33,16 +33,6 @@ export default function App() {
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/account/orders" element={<OrdersPage />} />
               </Route>
-              <Route element={<RequireAdmin />}>
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<Navigate to="books" replace />} />
-                  <Route path="books" element={<AdminBooksPage />} />
-                  <Route path="books/new" element={<BookFormPage />} />
-                  <Route path="books/:id/edit" element={<BookFormPage />} />
-                  <Route path="orders" element={<AdminOrdersPage />} />
-                  <Route path="orders/:id" element={<OrderPage />} />
-                </Route>
-              </Route>
               <Route
                 path="*"
                 element={
@@ -51,6 +41,16 @@ export default function App() {
                   </PageContainer>
                 }
               />
+            </Route>
+            <Route element={<RequireAdmin />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="books" replace />} />
+                <Route path="books" element={<AdminBooksPage />} />
+                <Route path="books/new" element={<BookFormPage />} />
+                <Route path="books/:id/edit" element={<BookFormPage />} />
+                <Route path="orders" element={<AdminOrdersPage />} />
+                <Route path="orders/:id" element={<OrderPage />} />
+              </Route>
             </Route>
           </Routes>
         </AdminAccessProvider>

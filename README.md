@@ -66,7 +66,10 @@ Apollo Client owns catalog and order history queries and mutation state. React H
 
 Store administrators use `/admin` with the same login as customers. Access is granted through the sibling backend's `admin:access` operator command; no account can promote itself. The Account menu shows Admin after server authorization resolves.
 
-- `/admin/books` manages search, archive state, low-stock filtering (five or fewer), pagination, stock adjustments, and archive/restore.
+Admin screens have a dedicated workspace outside the storefront header/footer: a full-height dark forest-green sidebar, sticky account header, neutral content styling, and compact tables/forms. The sidebar uses brighter branding, muted group labels, and a distinct active link. Below 1024px, Admin menu opens the same navigation in a Sheet. Back to store is in the sidebar footer; sign-out is available from the admin Account menu and after access revocation.
+
+- `/admin/books` manages search, archive state, low-stock filtering (five or fewer), pagination, stock adjustments, and archive/restore. Its rows use compact book thumbnails, direct Edit/Adjust stock actions, and a More actions menu for Archive/Restore.
+- Books and Orders show up to five items per page using the shared `AdminPageTable`. Books uses `AdminFilterToolbar` for trimmed search submission and page-specific filters, while retaining URL-filter and pagination ownership. List and book-form headings use `AdminPageHeader`; these components live in `src/features/admin/components/`.
 - `/admin/books/new` creates books with initial stock; `/admin/books/:id/edit` edits metadata without replacing inventory.
 - `/admin/orders` and `/admin/orders/:id` display saved order requests, including legacy guest requests, using captured contact and price snapshots. Payment, shipping, and processing status are not recorded.
 
