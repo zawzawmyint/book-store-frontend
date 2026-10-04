@@ -1,4 +1,4 @@
-import { BookOpenText, ClipboardList, ArrowUpRight, X } from 'lucide-react'
+import { BookOpenText, ClipboardList, Users, ArrowUpRight, X } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Button } from '../../app/components/ui/button'
 import {
@@ -21,6 +21,7 @@ import { AdminAccountMenu } from './components/AdminAccountMenu'
 const sections = [
   { group: 'Catalog', title: 'Books', to: '/admin/books', icon: BookOpenText },
   { group: 'Sales', title: 'Order requests', to: '/admin/orders', icon: ClipboardList },
+  { group: 'People', title: 'Customers', to: '/admin/customers', icon: Users },
 ]
 
 function AdminNavigation() {
@@ -91,7 +92,13 @@ function AdminNavigation() {
 
 export function AdminLayout() {
   const { pathname } = useLocation()
-  const section = pathname.startsWith('/admin/orders') ? 'Orders' : 'Catalog'
+  const section = pathname.startsWith('/admin/orders')
+    ? 'Orders'
+    : pathname.startsWith('/admin/customers')
+      ? 'People'
+      : pathname.startsWith('/admin/profile')
+        ? 'Profile'
+        : 'Catalog'
   return (
     <div className="admin-workspace">
       <SidebarProvider open onOpenChange={() => {}}>

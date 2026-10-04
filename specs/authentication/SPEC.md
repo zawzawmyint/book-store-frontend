@@ -16,12 +16,12 @@ Use Better Auth's React client to let customers create an account, sign in, and 
 
 - Add `/sign-up` with name, email, and password; `/sign-in` with email and password; and `/account/orders` for the signed-in customer's order requests.
 - Use `createAuthClient` from `better-auth/react` for sign-up, sign-in, sign-out, and `useSession` for session restoration. Install `better-auth` in this repository for the client. Do not run a second Better Auth server in the frontend.
-- Successful sign-up establishes a session immediately. Do not request email verification or show a verified-email claim. Defer verification, password reset and other email flows, social login, and guest checkout. Admin UI, originally outside this account feature, is now delivered by [the admin feature](../admin/SPEC.md).
-- Keep `/`, `/books/:id`, and `/cart` public. Guard `/checkout` and `/account/orders`; when signed out, redirect to `/sign-in` with an internal return path. After successful authentication, navigate to that path or `/`. Accept only internal `returnTo` paths.
+- Successful sign-up establishes a session immediately. Do not request email verification or show a verified-email claim. Defer verification, self-service password recovery, and other email flows, social login, and guest checkout. A signed-in person can change their own password from their profile. Admin UI, originally outside this account feature, is now delivered by [the admin feature](../admin/SPEC.md).
+- Keep `/`, `/books/:id`, and `/cart` public. Guard `/checkout`, `/account/orders`, and `/account/profile`; when signed out, redirect to `/sign-in` with an internal return path. After successful authentication, navigate to that path or `/`. Accept only internal `returnTo` paths.
 
 ## Customer experience
 
-- The header shows **Sign in** when signed out and an **Account** menu with **Orders** and **Sign out** when signed in. During session loading, do not show protected content or account-specific navigation.
+- The header shows **Sign in** when signed out and an **Account** menu with **Profile**, **Orders**, and **Sign out** when signed in. Profile opens `/account/profile`, specified in [the profile spec](../profile/SPEC.md). During session loading, do not show protected content or account-specific navigation.
 - Use existing shadcn/ui primitives and React Hook Form with local Zod schemas for auth forms. Provide accessible labels, field errors, server errors, and submission state. Keep the wording clear that accounts are required to submit requests and that the bookstore does not take payment.
 - The cart survives redirect to sign-in, page reload, and sign-out. Checkout shows the session name and email as read-only order contact details and submits only cart lines.
 - On order success, show the existing receipt and clear the cart. On authentication, validation, stock, or network failure, keep the cart and show the error. If the session expires during checkout, route to sign-in and preserve the cart.

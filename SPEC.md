@@ -13,9 +13,10 @@ Provide a browser storefront for finding books, maintaining a cart, and submitti
 - Genre shortcuts set the same search parameter. They are text searches, not a separate exact-match genre filter. A new search returns to the first page.
 - `/books/:id` requests one book and shows its details, price, stock, and add-to-cart action.
 - `/cart` shows cart lines, quantity controls, removal, and a client-side estimated total. Zustand manages shared cart state and persists items in browser local storage using the existing `book-store-cart` key and raw JSON array format. Count and estimated total are derived from items. Previously saved carts remain readable, invalid entries are filtered out, and storage failures leave in-memory cart interactions usable.
-- `/sign-up` and `/sign-in` create or access a Better Auth account. Authentication is required for `/checkout` and `/account/orders`; a guarded route sends guests to sign-in with an internal return path.
+- `/sign-up` and `/sign-in` create or access a Better Auth account. Authentication is required for `/checkout`, `/account/orders`, and `/account/profile`; a guarded route sends guests to sign-in with an internal return path.
 - `/checkout` displays account contact details and sends only book IDs and quantities through `placeOrder`. On success it shows the returned order ID and server-calculated total and clears the cart. On failure it keeps the cart.
 - `/account/orders` lists only the signed-in customer's order requests with pagination.
+- `/account/profile` shows the signed-in email and join date as read-only text. The same person can save their display name and change their password. The storefront Account menu links to Profile before Orders. See [the account profile spec](specs/profile/SPEC.md).
 - A session boundary unmounts routed content during session revalidation and clears Apollo data before rendering after any user ID change, including sign-out.
 - Unknown routes show a not-found page.
 
@@ -26,6 +27,9 @@ Provide a browser storefront for finding books, maintaining a cart, and submitti
 - `/admin/books`, `/admin/books/new`, and `/admin/books/:id/edit` support catalog search/filter/pagination, creation, metadata editing, atomic stock adjustments, and archive/restore confirmations. `AdminFilterToolbar` trims submitted searches, accepts page-specific filters, and leaves Books responsible for URL filters and pagination reset. Catalog rows use compact storefront-palette thumbnails; Edit and Adjust stock stay direct actions, while Archive/Restore is in a per-row More actions menu.
 - Admin list pages share `AdminPageTable` for table structure, empty states, visible item ranges, totals, and pagination, with a shared page size of five used for API limits, offsets, and page counts. `AdminPageHeader` provides reusable titles, descriptions, and actions on list and book-form pages.
 - `/admin/orders` and `/admin/orders/:id` show all saved order requests and captured contact/price snapshots, including legacy guest records. They provide no payment, shipping, or order processing actions.
+- `/admin/customers` lists registered accounts in pages of five, with search, an All/Customers/Admins filter, copyable user IDs, and confirmed grant or revoke of admin access. Each row opens `/admin/customers/:id`. See [the customer directory spec](specs/customers/SPEC.md).
+- `/admin/customers/:id` shows one account and lets an admin set another person's password. The signed-in admin's own page links to `/admin/profile`. See [the customer details spec](specs/customer-details/SPEC.md).
+- `/admin/profile` shows the signed-in admin's email and join date, and lets that person update their own name and password. The admin Account menu opens it before Sign out. See [the account profile spec](specs/profile/SPEC.md).
 - Admin queries use no-cache responses; session changes clear Apollo data, and detected membership revocation hides private views. Route entry and focus revalidate server access. Expired sessions refresh Better Auth state before redirecting to login.
 - Inventory mutation network failures are not automatically retried. Archived cart items fail checkout visibly while preserving the cart. See [the admin feature spec](specs/admin/SPEC.md) for all routes and acceptance criteria.
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, LogOut, UserRound } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useApolloClient } from '@apollo/client/react'
 import { authClient } from '../../../lib/auth-client'
 import { Button } from '../../../app/components/ui/button'
@@ -46,6 +46,9 @@ export function AdminAccountMenu() {
             <p className="text-sm font-medium">{session?.user.name}</p>
             <p className="text-xs text-slate-500">{session?.user.email}</p>
           </div>
+          <DropdownMenuItem asChild>
+            <Link to="/admin/profile">Profile</Link>
+          </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
               void signOut()

@@ -2,7 +2,7 @@
 
 A React + TypeScript + Tailwind bookstore storefront using shadcn/ui primitives, Zustand, React Hook Form, and Zod. This folder is its own Git repository. The backend lives in the sibling `backend` repository and should be started first.
 
-See [SPEC.md](SPEC.md) for the storefront behavior and [specs/authentication/SPEC.md](specs/authentication/SPEC.md) for the account contract.
+See [SPEC.md](SPEC.md) for the storefront behavior, [specs/authentication/SPEC.md](specs/authentication/SPEC.md) for sign-in, and [specs/profile/SPEC.md](specs/profile/SPEC.md) for the account profile.
 
 ## Development workflow
 
@@ -40,7 +40,7 @@ src/
     books/                    Catalog page sections and book components
     cart/                     Cart state, rules, row, and page
     auth/                     Sign-in, sign-up, and route guard
-    account/                  Order history
+    account/                  Order history and profile
     checkout/                 Order request page and receipt
   lib/                        Apollo client and formatting
   generated/                  Generated GraphQL TypeScript documents
@@ -64,14 +64,16 @@ Apollo Client owns catalog and order history queries and mutation state. React H
 
 ## Admin panel
 
-Store administrators use `/admin` with the same login as customers. Access is granted through the sibling backend's `admin:access` operator command; no account can promote itself. The Account menu shows Admin after server authorization resolves.
+Store administrators use `/admin` with the same login as customers. Access is granted through the sibling backend's `admin:access` operator command or from the Customers page; no account can promote itself at sign-up. The storefront Account menu shows Admin after server authorization resolves, and Profile before Orders.
 
-Admin screens have a dedicated workspace outside the storefront header/footer: a full-height dark forest-green sidebar, sticky account header, neutral content styling, and compact tables/forms. The sidebar uses brighter branding, muted group labels, and a distinct active link. Below 1024px, Admin menu opens the same navigation in a Sheet. Back to store is in the sidebar footer; sign-out is available from the admin Account menu and after access revocation.
+Admin screens have a dedicated workspace outside the storefront header/footer: a full-height dark forest-green sidebar, sticky account header, neutral content styling, and compact tables/forms. The sidebar uses brighter branding, muted group labels, and a distinct active link. Below 1024px, Admin menu opens the same navigation in a Sheet. Back to store is in the sidebar footer. The admin Account menu opens `/admin/profile` and signs out; that menu remains available after access revocation.
 
 - `/admin/books` manages search, archive state, low-stock filtering (five or fewer), pagination, stock adjustments, and archive/restore. Its rows use compact book thumbnails, direct Edit/Adjust stock actions, and a More actions menu for Archive/Restore.
-- Books and Orders show up to five items per page using the shared `AdminPageTable`. Books uses `AdminFilterToolbar` for trimmed search submission and page-specific filters, while retaining URL-filter and pagination ownership. List and book-form headings use `AdminPageHeader`; these components live in `src/features/admin/components/`.
+- Books, Orders, and Customers show up to five items per page using the shared `AdminPageTable`. Books and Customers use `AdminFilterToolbar` for trimmed search submission and page-specific filters, while retaining URL-filter and pagination ownership. List and book-form headings use `AdminPageHeader`; these components live in `src/features/admin/components/`.
 - `/admin/books/new` creates books with initial stock; `/admin/books/:id/edit` edits metadata without replacing inventory.
 - `/admin/orders` and `/admin/orders/:id` display saved order requests, including legacy guest requests, using captured contact and price snapshots. Payment, shipping, and processing status are not recorded.
+- `/admin/customers` lists registered accounts with search, an All/Customers/Admins filter, copyable user IDs, and confirmed grant or revoke. `/admin/customers/:id` shows one account. An admin can set another person's password there; their own row links to `/admin/profile`.
+- `/account/profile` lets the signed-in customer update their own name and password. `/admin/profile` does the same for the signed-in admin and stays inside the admin workspace. Email stays read-only. See [the profile spec](specs/profile/SPEC.md).
 
 Admin data is never persisted in browser storage. Session changes clear Apollo data; access loss hides private views. Archived books in existing carts fail checkout with an actionable message and retain the cart. If a stock mutation loses its response, check inventory before deciding whether to submit another adjustment.
 

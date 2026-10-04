@@ -105,9 +105,9 @@ Give store administrators an `/admin` area in the existing React application for
 
 ### Implemented — responsive admin navigation
 
-- At desktop widths (1024px and above), show a left sidebar with Catalog → Books and Sales → Order requests. Keep the active section clear on nested edit/detail routes.
+- At desktop widths (1024px and above), show a left sidebar with Catalog → Books, Sales → Order requests, and People → Customers. Keep the active section clear on nested edit/detail routes.
 - Below 1024px, an Admin menu button opens the same grouped navigation in the Sidebar's modal Sheet. Expose its expanded state to assistive technology. Selecting a link, the Close admin menu button, or Escape closes it and returns focus to the menu button.
-- Keep Back to store in the sidebar footer; on mobile it is reachable inside the navigation Sheet. The admin header has its own account/sign-out menu, also available on access-denied and retry screens. Do not add links to features that do not exist.
+- Keep Back to store in the sidebar footer; on mobile it is reachable inside the navigation Sheet. The admin header Account menu opens `/admin/profile` and signs out, and remains available on access-denied and retry screens. Add a sidebar link only for an implemented section.
 - Verified: desktop navigation sits beside the content; mobile navigation starts collapsed, works by keyboard, closes after navigation, and produces no page overflow at 390px. Sidebar groups leave room for additional implemented sections.
 
 - All actions and dialogs are keyboard accessible with visible focus, dialog focus containment and restoration, associated labels/errors, and announced loading/success/error states.

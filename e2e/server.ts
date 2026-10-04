@@ -27,6 +27,15 @@ for (const email of [
   if (!email.startsWith('customer')) membership.setAdminAccess(result.user.id, true)
   if (email.startsWith('revocable')) revocableId = result.user.id
 }
+for (let index = 1; index <= 3; index += 1) {
+  await auth.api.signUpEmail({
+    body: {
+      name: `Directory Reader ${index}`,
+      email: `directory-${index}@example.com`,
+      password: 'bookstore-admin-test-123',
+    },
+  })
+}
 for (let index = 1; index <= 6; index++) {
   db.prepare('INSERT INTO orders (customer_name, email, total_cents) VALUES (?, ?, 0)').run(
     `Pagination Reader ${index}`,

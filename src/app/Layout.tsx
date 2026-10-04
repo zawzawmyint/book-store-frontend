@@ -53,6 +53,8 @@ export function Layout() {
                   <Button variant="ghost" type="button" className="px-0 text-xs font-bold uppercase tracking-[.12em]">Account</Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <div className="px-3 py-2 text-sm font-medium">{session.user.name}</div>
+                  <DropdownMenuItem asChild><Link to="/account/profile">Profile</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link to="/account/orders">Orders</Link></DropdownMenuItem>
                   {!admin.loading && admin.role === 'ADMIN' && <DropdownMenuItem asChild><Link to="/admin">Admin</Link></DropdownMenuItem>}
                   <DropdownMenuItem onSelect={() => { void signOut() }}>Sign out</DropdownMenuItem>

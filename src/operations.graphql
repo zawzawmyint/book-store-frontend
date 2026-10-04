@@ -141,3 +141,38 @@ query AdminOrder($id: ID!) {
     ...AdminOrderFields
   }
 }
+fragment AdminCustomerFields on AdminCustomer {
+  id
+  name
+  email
+  role
+  createdAt
+}
+query AdminCustomers(
+  $search: String
+  $role: AdminCustomerRoleFilter
+  $limit: Int
+  $offset: Int
+) {
+  adminCustomers(search: $search, role: $role, limit: $limit, offset: $offset) {
+    total
+    items {
+      ...AdminCustomerFields
+    }
+  }
+}
+mutation SetCustomerAdminAccess($userId: ID!, $enabled: Boolean!) {
+  setCustomerAdminAccess(userId: $userId, enabled: $enabled) {
+    ...AdminCustomerFields
+  }
+}
+query AdminCustomer($id: ID!) {
+  adminCustomer(id: $id) {
+    ...AdminCustomerFields
+  }
+}
+mutation ResetCustomerPassword($userId: ID!, $newPassword: String!) {
+  resetCustomerPassword(userId: $userId, newPassword: $newPassword) {
+    ...AdminCustomerFields
+  }
+}

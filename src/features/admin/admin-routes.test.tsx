@@ -40,6 +40,62 @@ it('shows access denied for a signed-in customer on an admin route', async () =>
   expect(screen.queryByText('Manage books')).toBeNull()
 })
 
+it('does not mount a customer detail page for a signed-in customer', async () => {
+  window.history.replaceState({}, '', '/admin/customers/ada')
+  render(
+    <MockedProvider
+      mocks={[
+        {
+          request: { query: ViewerDocument },
+          result: { data: { viewer: { id: 'customer', role: 'CUSTOMER' } } },
+        },
+      ]}
+    >
+      <App />
+    </MockedProvider>,
+  )
+  expect(await screen.findByText('Access denied')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Set password' })).toBeNull()
+  expect(screen.queryByLabelText('New password')).toBeNull()
+})
+
+it('does not mount the admin profile for a signed-in customer', async () => {
+  window.history.replaceState({}, '', '/admin/profile')
+  render(
+    <MockedProvider
+      mocks={[
+        {
+          request: { query: ViewerDocument },
+          result: { data: { viewer: { id: 'customer', role: 'CUSTOMER' } } },
+        },
+      ]}
+    >
+      <App />
+    </MockedProvider>,
+  )
+  expect(await screen.findByText('Access denied')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Save name' })).toBeNull()
+  expect(screen.queryByLabelText('Full name')).toBeNull()
+})
+
+it('does not mount the customer directory for a signed-in customer', async () => {
+  window.history.replaceState({}, '', '/admin/customers')
+  render(
+    <MockedProvider
+      mocks={[
+        {
+          request: { query: ViewerDocument },
+          result: { data: { viewer: { id: 'customer', role: 'CUSTOMER' } } },
+        },
+      ]}
+    >
+      <App />
+    </MockedProvider>,
+  )
+  expect(await screen.findByText('Access denied')).toBeTruthy()
+  expect(screen.queryByText('Registered accounts. Grant or revoke admin access from this page.')).toBeNull()
+})
+
 it('preserves unsaved input during same-account access revalidation and hides it on revocation', async () => {
   const access = {
     role: 'ADMIN',
