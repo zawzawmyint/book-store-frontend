@@ -6,7 +6,7 @@
 
 Give store administrators a `/admin/customers` page in the existing admin workspace for viewing registered accounts and granting or revoking admin access. The page shows name, email, Customer or Admin role, join date, and user ID. The authoritative API contract is in [the backend spec](../../../backend/specs/customers/SPEC.md).
 
-The page does not create accounts, edit names or emails, or reset passwords. Account name and password changes for the signed-in person live on the storefront profile. A detail page for reading one account and resetting another person's password is specified in [the customer details spec](../customer-details/SPEC.md). Those menus stay as they are for this feature.
+The page does not create accounts, edit names or emails, or reset passwords. A customer changes their own name and password on `/account/profile`. An admin does that on `/admin/profile`. A detail page for reading one account and resetting another person's password is specified in [the customer details spec](../customer-details/SPEC.md).
 
 ## Current system and design choice
 
@@ -62,7 +62,7 @@ The page does not create accounts, edit names or emails, or reset passwords. Acc
 - [x] Authorized admins open `/admin/customers` from the People group on desktop and from the mobile Sheet. The link highlights on that route and the Sheet still closes and restores focus.
 - [x] The table shows name, email, Customer or Admin, join date, and user ID for the current page of five, including the signed-in admin when that account is in the result.
 - [x] Search and role filters submit to the API, reset pagination, survive refresh through the URL, and reject over-long search input locally at 100 characters.
-- [x] Copy user ID announces success or failure and does not change membership. Grant and revoke require confirmation, update the row role after success, and offer no create, edit, delete, or profile action.
+- [x] Copy user ID announces success or failure and does not change membership. Grant and revoke require confirmation, update the row role after success, and offer no create, edit, or delete action. View customer opens the detail page.
 - [x] Revoking the signed-in admin shows the self-revoke warning and then the existing access-denied screen. Cancelling either dialog leaves membership unchanged and restores focus to the row action.
 - [x] Guests redirect to sign-in and return to `/admin/customers`. Customers see access denied and mount no customer-directory query or mutation. Sign-out and account switching hide cached rows.
 - [x] Loading, empty, error/retry, partial last pages, and narrow-width contained table scrolling match the other admin lists. Keyboard users can reach search, the role selector, pagination, copy, and the membership dialog.
