@@ -21,12 +21,12 @@ export function DialogContent({ className, children, showCloseButton = true, ...
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
-        className={cn('fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 border border-[#d8d5ca] bg-[#f7f5f0] p-6 text-[#26342e] shadow-xl focus:outline-none', className)}
+        className={cn('fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 border border-border bg-background p-6 text-foreground shadow-xl focus:outline-none', className)}
         {...props}
       >
         {children}
         {showCloseButton && (
-          <DialogPrimitive.Close aria-label="Close dialog" className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#32734f]">
+          <DialogPrimitive.Close aria-label="Close dialog" className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
             <X className="size-4" aria-hidden="true" />
           </DialogPrimitive.Close>
         )}
@@ -45,5 +45,5 @@ export function DialogTitle({ className, ...props }: ComponentProps<typeof Dialo
   return <DialogPrimitive.Title data-slot="dialog-title" className={cn('font-serif text-2xl', className)} {...props} />
 }
 export function DialogDescription({ className, ...props }: ComponentProps<typeof DialogPrimitive.Description>) {
-  return <DialogPrimitive.Description data-slot="dialog-description" className={cn('text-sm text-[#6e756c]', className)} {...props} />
+  return <DialogPrimitive.Description data-slot="dialog-description" className={cn('text-sm text-muted-foreground', className)} {...props} />
 }

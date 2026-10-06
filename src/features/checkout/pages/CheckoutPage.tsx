@@ -7,8 +7,7 @@ import { signInPath } from '../../auth/return-to'
 import { useCartStore } from '../../cart/cart-store'
 import { cartTotal } from '../../cart/cart'
 import { money } from '../../../lib/format'
-import { PLACE_ORDER } from '../../../lib/graphql'
-import type { OrderReceipt } from '../../../lib/graphql'
+import { PlaceOrderDocument, type PlaceOrderMutation } from '../../../generated/graphql'
 import { BackLink } from '../../../app/components/BackLink'
 import { PageContainer } from '../../../app/components/PageContainer'
 import { SummaryPanel } from '../../../app/components/SummaryPanel'
@@ -23,9 +22,9 @@ export function CheckoutPage() {
   const total = cartTotal(items)
   const { data: session } = authClient.useSession()
   const navigate = useNavigate()
-  const [receipt, setReceipt] = useState<OrderReceipt | null>(null)
+  const [receipt, setReceipt] = useState<PlaceOrderMutation['placeOrder'] | null>(null)
   const client = useApolloClient()
-  const [placeOrder, { loading, error }] = useMutation(PLACE_ORDER)
+  const [placeOrder, { loading, error }] = useMutation(PlaceOrderDocument)
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -61,7 +60,7 @@ export function CheckoutPage() {
     return (
       <PageContainer className="message-shell py-24 text-center">
         <h1 className="font-serif text-4xl">Your bag is empty</h1>
-        <Button asChild variant="ghost" className="mt-6 text-[#2c6a4f] underline">
+        <Button asChild variant="ghost" className="mt-6 text-primary underline">
           <Link to="/">Browse books</Link>
         </Button>
       </PageContainer>
@@ -74,26 +73,29 @@ export function CheckoutPage() {
         <div>
           <p className="eyebrow mb-3">Almost there</p>
           <h1 className="font-serif text-5xl tracking-[-.05em]">Checkout</h1>
-          <p className="mt-5 max-w-lg text-sm leading-6 text-[#778073]">
+          <p className="mt-5 max-w-lg text-sm leading-6 text-muted-foreground">
             Your account details will be used for this order request. Payment and delivery are not
             available.
           </p>
           <form onSubmit={submit} className="mt-10 space-y-6">
-            <Card className="border-[#d8d5ca] bg-[#eeeae0] shadow-none">
+            <Card className="border-border bg-muted shadow-none">
               <CardContent className="p-5 text-sm">
                 <p className="font-semibold">{session?.user.name}</p>
-                <p className="mt-1 text-[#687267]">{session?.user.email}</p>
+                <p className="mt-1 text-muted-foreground">{session?.user.email}</p>
               </CardContent>
             </Card>
             {error && (
-              <Alert variant="destructive" className="border-[#e5c9c0] bg-[#fff2ed] text-[#a14134]">
+              <Alert
+                variant="destructive"
+                className="border-destructive bg-destructive-muted text-destructive"
+              >
                 <AlertDescription>{error.message}</AlertDescription>
               </Alert>
             )}
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? 'Saving your request…' : 'Submit order request'} <ArrowRight size={17} />
             </Button>
-            <p className="flex items-center gap-2 text-xs text-[#8a8d83]">
+            <p className="flex items-center gap-2 text-xs text-muted-foreground">
               <LockKeyhole size={15} /> No payment information is requested or stored.
             </p>
           </form>
@@ -102,8 +104,8 @@ export function CheckoutPage() {
           <div className="mt-6 space-y-4">
             {items.map((item) => (
               <div key={item.id} className="flex justify-between gap-4 text-sm">
-                <span className="text-[#707a6e]">
-                  {item.quantity} × {item.title}
+                <span className="text-muted-foreground">
+                  {item.quantity} × <span className="font-serif">{item.title}</span>
                 </span>
                 <span className="shrink-0 font-medium">
                   {money(item.priceCents * item.quantity)}
@@ -111,11 +113,11 @@ export function CheckoutPage() {
               </div>
             ))}
           </div>
-          <div className="mt-7 flex justify-between border-t border-[#d7d5ca] pt-5 font-semibold">
+          <div className="mt-7 flex justify-between border-t border-border pt-5 font-semibold">
             <span>Total</span>
             <span>{money(total)}</span>
           </div>
-          <p className="mt-4 text-xs leading-5 text-[#8a8d83]">
+          <p className="mt-4 text-xs leading-5 text-muted-foreground">
             Final prices and availability are checked by the server when you place the order.
           </p>
         </SummaryPanel>

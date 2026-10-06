@@ -1,22 +1,11 @@
 import { AdminPageTable } from '../components/AdminPageTable'
 import { AdminFilterToolbar } from '../components/AdminFilterToolbar'
 import { AdminPageHeader } from '../components/AdminPageHeader'
-import { useEffect, useRef, useState } from 'react'
-import { MoreHorizontal } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { BookCover } from '../../books/components/BookCover'
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '../../../app/components/ui/dropdown-menu'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
-import {
-  AdminBooksDocument,
-  SetBookArchivedDocument,
-  type AdminBookFieldsFragment,
-} from '../../../generated/graphql'
+import { useQuery } from '@apollo/client/react'
+import { AdminBooksDocument, type AdminBookFieldsFragment } from '../../../generated/graphql'
 import { money } from '../../../lib/format'
 import { Button } from '../../../app/components/ui/button'
 import { Label } from '../../../app/components/ui/label'
@@ -32,10 +21,11 @@ import { TableCell } from '../../../app/components/ui/table'
 import { Badge } from '../../../app/components/ui/badge'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { useAdminAccess, useAdminQueryError } from '../admin-access'
-import { ADMIN_PAGE_SIZE, readPage, refreshCatalog } from '../admin-data'
+import { ADMIN_PAGE_SIZE, readPage } from '../admin-data'
 import { AdminFeedback } from '../components/AdminFeedback'
-import { AdminDialog } from '../components/AdminDialog'
 import { StockDialog } from '../components/StockDialog'
+import { ArchiveBookDialog } from '../components/ArchiveBookDialog'
+import { BookRowActions } from '../components/BookRowActions'
 
 export function BooksPage() {
   const [params, setParams] = useSearchParams()
@@ -49,8 +39,7 @@ export function BooksPage() {
   const lowStockOnly = params.get('low') === 'true'
   const page = readPage(params.get('page'))
   const location = useLocation()
-  const client = useApolloClient()
-  const { handleError } = useAdminAccess()
+  const { role } = useAdminAccess()
   const { data, loading, error, refetch } = useQuery(AdminBooksDocument, {
     variables: {
       search,
@@ -62,13 +51,11 @@ export function BooksPage() {
     fetchPolicy: 'no-cache',
   })
   useAdminQueryError(error)
-  const [archive, { loading: saving }] = useMutation(SetBookArchivedDocument)
   const [action, setAction] = useState<{
     kind: 'stock' | 'archive'
     book: AdminBookFieldsFragment
     opener?: HTMLButtonElement | null
   }>()
-  const [failure, setFailure] = useState('')
   const [notice, setNotice] = useState((location.state as { notice?: string } | null)?.notice ?? '')
   const books = data?.adminBooks
   function change(values: Record<string, string>) {
@@ -86,19 +73,10 @@ export function BooksPage() {
       setParams(next, { replace: true })
     }
   }, [books, loading, page, params, setParams])
-  async function archiveBook() {
-    if (!action) return
-    setFailure('')
-    try {
-      await archive({ variables: { id: action.book.id, archived: !action.book.archived } })
-      setNotice(action.book.archived ? 'Book restored.' : 'Book archived.')
-      setAction(undefined)
-      void refetch().catch(() => {})
-      void refreshCatalog(client).catch(() => {})
-    } catch (e) {
-      handleError(e)
-      setFailure(e instanceof Error ? e.message : 'Unable to save')
-    }
+  function saved(message: string) {
+    setNotice(message)
+    setAction(undefined)
+    void refetch().catch(() => {})
   }
   return (
     <section>
@@ -172,7 +150,7 @@ export function BooksPage() {
                   <BookCover id={book.id} title={book.title} author={book.author} compact />
                   <div>
                     <strong className="font-medium">{book.title}</strong>
-                    <p className="mt-1 text-slate-500">{book.author}</p>
+                    <p className="mt-1 text-muted-foreground">{book.author}</p>
                   </div>
                 </div>
               </TableCell>
@@ -192,117 +170,29 @@ export function BooksPage() {
                 </Badge>
               </TableCell>
               <TableCell>
-                <div className="flex justify-end gap-1">
-                  <Button asChild variant="ghost">
-                    <Link to={`${book.id}/edit`} state={{ returnTo: `/admin/books?${params}` }}>
-                      Edit
-                    </Link>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => {
-                      setFailure('')
-                      setAction({ kind: 'stock', book })
-                    }}
-                  >
-                    Adjust stock
-                  </Button>
-                  <BookRowMenu
-                    book={book}
-                    onArchive={(opener) => {
-                      setFailure('')
-                      setAction({ kind: 'archive', book, opener })
-                    }}
-                  />
-                </div>
+                <BookRowActions
+                  book={book}
+                  returnTo={`/admin/books?${params}`}
+                  isAdmin={role === 'ADMIN'}
+                  onStock={() => setAction({ kind: 'stock', book })}
+                  onArchive={(opener) => setAction({ kind: 'archive', book, opener })}
+                />
               </TableCell>
             </>
           )}
         />
       )}
       {action?.kind === 'stock' && (
-        <StockDialog
-          book={action.book}
-          close={() => setAction(undefined)}
-          saved={(message) => {
-            setNotice(message)
-            setAction(undefined)
-            void refetch().catch(() => {})
-          }}
-        />
+        <StockDialog book={action.book} close={() => setAction(undefined)} saved={saved} />
       )}
       {action?.kind === 'archive' && (
-        <AdminDialog
-          title={`${action.book.archived ? 'Restore' : 'Archive'} ${action.book.title}?`}
+        <ArchiveBookDialog
+          book={action.book}
           close={() => setAction(undefined)}
-          busy={saving}
-          returnFocusTo={action.opener}
-        >
-          <p className="mb-4">
-            {action.book.archived
-              ? 'This book will appear in the store and become available for new orders.'
-              : 'This book will be hidden from the store and unavailable for new orders. Earlier order requests are preserved.'}
-          </p>
-          {failure && (
-            <Alert role="alert" variant="destructive">
-              <AlertDescription>{failure}</AlertDescription>
-            </Alert>
-          )}
-          <Button
-            disabled={saving}
-            onClick={() => {
-              void archiveBook()
-            }}
-          >
-            {saving ? 'Saving…' : `Confirm ${action.book.archived ? 'restore' : 'archive'}`}
-          </Button>
-        </AdminDialog>
+          opener={action.opener}
+          saved={saved}
+        />
       )}
     </section>
-  )
-}
-function BookRowMenu({
-  book,
-  onArchive,
-}: {
-  book: AdminBookFieldsFragment
-  onArchive: (opener: HTMLButtonElement | null) => void
-}) {
-  const trigger = useRef<HTMLButtonElement>(null)
-  const openingDialog = useRef(false)
-  return (
-    <DropdownMenu
-      onOpenChange={(open) => {
-        if (open) openingDialog.current = false
-      }}
-    >
-      <DropdownMenuTrigger asChild>
-        <Button
-          ref={trigger}
-          variant="ghost"
-          className="h-10 w-10 p-0"
-          aria-label={`More actions for ${book.title}`}
-        >
-          <MoreHorizontal className="size-4" aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className="admin-workspace"
-        onCloseAutoFocus={(event) => {
-          if (openingDialog.current) event.preventDefault()
-        }}
-      >
-        <DropdownMenuItem
-          onSelect={() => {
-            openingDialog.current = true
-            onArchive(trigger.current)
-          }}
-        >
-          {book.archived ? 'Restore' : 'Archive'}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   )
 }

@@ -2,7 +2,7 @@
 
 A React + TypeScript + Tailwind bookstore storefront using shadcn/ui primitives, Zustand, React Hook Form, and Zod. This folder is its own Git repository. The backend lives in the sibling `backend` repository and should be started first.
 
-See [SPEC.md](SPEC.md) for the storefront behavior, [specs/authentication/SPEC.md](specs/authentication/SPEC.md) for sign-in, and [specs/profile/SPEC.md](specs/profile/SPEC.md) for the account profile.
+See [SPEC.md](SPEC.md) for the storefront behavior, [specs/icons-typography/SPEC.md](specs/icons-typography/SPEC.md) for icon actions and typography, [specs/appearance/SPEC.md](specs/appearance/SPEC.md) for Light/Dark appearance, [specs/authentication/SPEC.md](specs/authentication/SPEC.md) for sign-in, [specs/profile/SPEC.md](specs/profile/SPEC.md) for the account profile, [specs/staff/SPEC.md](specs/staff/SPEC.md) for workspace roles, [specs/users/SPEC.md](specs/users/SPEC.md) for user-directory compatibility, and [specs/activity/SPEC.md](specs/activity/SPEC.md) for Admin activity history.
 
 ## Development workflow
 
@@ -58,22 +58,23 @@ bun run codegen
 
 ## State ownership
 
-Zustand owns the shared cart items and add, update, and clear actions. Components subscribe through selectors; cart count and estimated total are derived from items. Persistence keeps the existing `book-store-cart` key and raw JSON array format so previously saved carts remain readable. Invalid saved items are filtered out; unavailable browser storage leaves the cart usable in memory.
+Zustand owns the shared cart items and add, update, and clear actions. Components subscribe through selectors; cart count and estimated total are derived from items. Persistence keeps the existing `book-store-cart` key and raw JSON array format so previously saved carts remain readable. Invalid saved items are filtered out; unavailable browser storage leaves the cart usable in memory. Appearance uses the separate `book-store-theme` key, defaults to Dark, and retains an in-memory choice if browser storage is unavailable.
 
 Apollo Client owns catalog and order history queries and mutation state. React Hook Form owns account form values and validation; Better Auth owns the session. A session boundary hides routed content while the session changes and clears Apollo data before a different account is shown. The backend keeps books, stock, and orders in SQLite through Drizzle, with transactions enforcing consistency.
 
 ## Admin panel
 
-Store administrators use `/admin` with the same login as customers. Access is granted through the sibling backend's `admin:access` operator command or from the Customers page; no account can promote itself at sign-up. The storefront Account menu shows Admin after server authorization resolves, and Profile before Orders.
+Staff and administrators use `/admin` with the same login as customers. Public signup creates a Customer. An Admin can assign Customer, Staff, or Admin from Users; the backend operator command can grant Admin or return a user to Customer. The storefront Account menu shows Staff workspace or Admin after server authorization resolves, and Profile before Orders.
 
-Admin screens have a dedicated workspace outside the storefront header/footer: a full-height dark forest-green sidebar, sticky account header, neutral content styling, and compact tables/forms. The sidebar uses brighter branding, muted group labels, and a distinct active link. Below 1024px, Admin menu opens the same navigation in a Sheet. Back to store is in the sidebar footer. The admin Account menu opens `/admin/profile` and signs out; that menu remains available after access revocation.
+Admin screens have a dedicated workspace outside the storefront header/footer: a full-height dark forest-green sidebar, sticky account header, neutral content styling, and compact tables/forms. The sidebar uses brighter branding, muted group labels, and a distinct active link. Below 1024px, the workspace menu opens the same navigation in a Sheet. Back to store is in the sidebar footer. The workspace Account menu opens `/admin/profile` and signs out; it remains available after access revocation.
 
-- `/admin/books` manages search, archive state, low-stock filtering (five or fewer), pagination, stock adjustments, and archive/restore. Its rows use compact book thumbnails, direct Edit/Adjust stock actions, and a More actions menu for Archive/Restore.
-- Books, Orders, and Customers show up to five items per page using the shared `AdminPageTable`. Books and Customers use `AdminFilterToolbar` for trimmed search submission and page-specific filters, while retaining URL-filter and pagination ownership. List and book-form headings use `AdminPageHeader`; these components live in `src/features/admin/components/`.
+- `/admin/books` lets Staff and Admin manage search, archive-state filtering, low-stock filtering (five or fewer), pagination, and stock adjustments. Both can create and edit books, including archived books; only Admin sees Archive/Restore in the More actions menu.
+- Books, Orders, and Users show up to five items per page using the shared `AdminPageTable`. Books and Users use `AdminFilterToolbar` for trimmed search submission and page-specific filters, while retaining URL-filter and pagination ownership. List and book-form headings use `AdminPageHeader`; these components live in `src/features/admin/components/`.
 - `/admin/books/new` creates books with initial stock; `/admin/books/:id/edit` edits metadata without replacing inventory.
-- `/admin/orders` and `/admin/orders/:id` display saved order requests, including legacy guest requests, using captured contact and price snapshots. Payment, shipping, and processing status are not recorded.
-- `/admin/customers` lists registered accounts with search, an All/Customers/Admins filter, copyable user IDs, and confirmed grant or revoke. `/admin/customers/:id` shows one account. An admin can set another person's password there; their own row links to `/admin/profile`.
-- `/account/profile` lets the signed-in customer update their own name and password. `/admin/profile` does the same for the signed-in admin and stays inside the admin workspace. Email stays read-only. See [the profile spec](specs/profile/SPEC.md).
+- `/admin/orders` and `/admin/orders/:id` display saved order requests, including legacy guest requests, using captured contact and price snapshots to Staff and Admin. Payment, shipping, and processing status are not recorded.
+- `/admin/users` is Admin-only and lists registered accounts with search, an All/Customers/Staff/Admin filter, copyable user IDs, and confirmed role changes. `/admin/users/:id` lets an admin set another person's password; their own row links to `/admin/profile`. Legacy `/admin/customers` list and detail URLs redirect with history replacement while preserving their destination, query string, and hash; recognized internal list return state is normalized to the Users route.
+- `/admin/activity` is Admin-only and shows recorded store/account changes with URL-backed actor, action, local-date, and price-only filters. Book-row History links open `/admin/books/:id/history`, including archived books. Staff sees neither navigation item and denied direct URLs do not load history. The server owns attribution and history begins only after the migrated backend is running.
+- `/account/profile` lets the signed-in customer update their own name and password. `/admin/profile` does the same for the signed-in Staff or Admin user and stays inside the workspace. Email stays read-only. See [the profile spec](specs/profile/SPEC.md).
 
 Admin data is never persisted in browser storage. Session changes clear Apollo data; access loss hides private views. Archived books in existing carts fail checkout with an actionable message and retain the cart. If a stock mutation loses its response, check inventory before deciding whether to submit another adjustment.
 
@@ -100,6 +101,8 @@ bun run test:e2e:install
 bun run test:e2e
 ```
 
-Playwright runs Chromium and starts a real API with a freshly seeded in-memory SQLite database from `e2e/server.ts` on port 4100, plus Vite on 4173. Keep both ports free. These tests cover account creation, cart → sign-in → checkout, order history, direct guest API rejection, and stock errors with cart retention. They do not write a development or production database. Browser installation is needed once per machine; repeat when Playwright requires a new browser version.
+Playwright runs Chromium and starts a real API with a freshly seeded in-memory SQLite database from `e2e/server.ts` on port 4100, plus Vite on 4173. Keep both ports free. These tests cover account creation, cart → sign-in → checkout, order history, direct guest API rejection, stock errors with cart retention, and Admin/Staff activity history. They do not write a development or production database. Browser installation is needed once per machine; repeat when Playwright requires a new browser version.
 
 The design uses locally rendered book covers, so browsing does not depend on a remote image service.
+
+The interface uses self-hosted Lora and Source Sans 3 web fonts from `public/fonts/`, with their OFL license files retained alongside the font assets.

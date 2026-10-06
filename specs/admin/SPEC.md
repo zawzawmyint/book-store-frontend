@@ -2,6 +2,8 @@
 
 > **Status:** Implemented. **Date:** 2026-10-02.
 
+> **Role-model update (2026-10-05):** The original two-role access description below is historical. The implemented [Staff specification](../staff/SPEC.md) defines the current Customer/Staff/Admin permissions, Admin-only Users routes, and Staff workspace behavior.
+
 ## Implemented — dedicated admin workspace (2026-10-02)
 
 - Move the existing `/admin` routes outside the storefront layout. Keep authorization, redirects, API contracts, query parameters, and catalog/order workflows intact.
@@ -105,7 +107,7 @@ Give store administrators an `/admin` area in the existing React application for
 
 ### Implemented — responsive admin navigation
 
-- At desktop widths (1024px and above), show a left sidebar with Catalog → Books, Sales → Order requests, and People → Customers. Keep the active section clear on nested edit/detail routes.
+- At desktop widths (1024px and above), show a left sidebar with Catalog → Books, Sales → Order requests, and People → Users. Keep the active section clear on nested edit/detail routes.
 - Below 1024px, an Admin menu button opens the same grouped navigation in the Sidebar's modal Sheet. Expose its expanded state to assistive technology. Selecting a link, the Close admin menu button, or Escape closes it and returns focus to the menu button.
 - Keep Back to store in the sidebar footer; on mobile it is reachable inside the navigation Sheet. The admin header Account menu opens `/admin/profile` and signs out, and remains available on access-denied and retry screens. Add a sidebar link only for an implemented section.
 - Verified: desktop navigation sits beside the content; mobile navigation starts collapsed, works by keyboard, closes after navigation, and produces no page overflow at 390px. Sidebar groups leave room for additional implemented sections.

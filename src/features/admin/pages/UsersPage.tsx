@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Copy, Eye } from 'lucide-react'
+import { IconAction } from '../../../app/components/IconAction'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { CombinedGraphQLErrors } from '@apollo/client'
 import { useMutation, useQuery } from '@apollo/client/react'
 import {
-  AdminCustomersDocument,
-  SetCustomerAdminAccessDocument,
-  type AdminCustomerFieldsFragment,
-  type AdminCustomerRoleFilter,
+  AdminUsersDocument,
+  SetUserRoleDocument,
+  type AdminUserFieldsFragment,
+  type AdminUserRoleFilter,
 } from '../../../generated/graphql'
 import { authClient } from '../../../lib/auth-client'
 import { Button } from '../../../app/components/ui/button'
@@ -28,18 +30,18 @@ import { AdminFilterToolbar } from '../components/AdminFilterToolbar'
 import { AdminPageHeader } from '../components/AdminPageHeader'
 import { AdminPageTable } from '../components/AdminPageTable'
 
-function readRole(value: string | null): AdminCustomerRoleFilter {
-  return value === 'CUSTOMER' || value === 'ADMIN' ? value : 'ALL'
+function readRole(value: string | null): AdminUserRoleFilter {
+  return value === 'CUSTOMER' || value === 'STAFF' || value === 'ADMIN' ? value : 'ALL'
 }
 
-export function CustomersPage() {
+export function UsersPage() {
   const [params, setParams] = useSearchParams()
   const search = (params.get('search') ?? '').slice(0, 100)
   const role = readRole(params.get('role'))
   const page = readPage(params.get('page'))
   const { data: session } = authClient.useSession()
   const { handleError } = useAdminAccess()
-  const { data, loading, error, refetch } = useQuery(AdminCustomersDocument, {
+  const { data, loading, error, refetch } = useQuery(AdminUsersDocument, {
     variables: {
       search,
       role,
@@ -52,11 +54,11 @@ export function CustomersPage() {
   const [notice, setNotice] = useState('')
   const [copyError, setCopyError] = useState('')
   const [action, setAction] = useState<{
-    customer: AdminCustomerFieldsFragment
-    enabled: boolean
+    user: AdminUserFieldsFragment
+    role: AdminUserFieldsFragment['role']
     opener: HTMLButtonElement | null
   }>()
-  const customers = data?.adminCustomers
+  const users = data?.adminUsers
   function change(values: Record<string, string>) {
     const next = new URLSearchParams(params)
     for (const [key, value] of Object.entries(values)) {
@@ -66,12 +68,12 @@ export function CustomersPage() {
     setParams(next)
   }
   useEffect(() => {
-    if (customers && !loading && page > Math.max(1, Math.ceil(customers.total / ADMIN_PAGE_SIZE))) {
+    if (users && !loading && page > Math.max(1, Math.ceil(users.total / ADMIN_PAGE_SIZE))) {
       const next = new URLSearchParams(params)
-      next.set('page', String(Math.max(1, Math.ceil(customers.total / ADMIN_PAGE_SIZE))))
+      next.set('page', String(Math.max(1, Math.ceil(users.total / ADMIN_PAGE_SIZE))))
       setParams(next, { replace: true })
     }
-  }, [customers, loading, page, params, setParams])
+  }, [users, loading, page, params, setParams])
   async function copyId(id: string) {
     setCopyError('')
     try {
@@ -85,8 +87,8 @@ export function CustomersPage() {
   return (
     <section>
       <AdminPageHeader
-        title="Customers"
-        description="Registered accounts. Grant or revoke admin access from this page."
+        title="Users"
+        description="Registered users. Manage customer, staff, and admin roles."
       />
       {notice && (
         <Alert role="status" className="my-4">
@@ -101,28 +103,29 @@ export function CustomersPage() {
       <AdminFilterToolbar
         search={search}
         onSearch={(value) => change({ search: value, page: '' })}
-        searchLabel="Search customers"
+        searchLabel="Search users"
         searchPlaceholder="Name or email"
       >
         <div className="admin-toolbar-field">
-          <Label htmlFor="admin-customer-role">Role</Label>
+          <Label htmlFor="admin-user-role">Role</Label>
           <Select
             value={role}
             onValueChange={(value) => change({ role: value === 'ALL' ? '' : value, page: '' })}
           >
-            <SelectTrigger id="admin-customer-role" className="min-w-36">
+            <SelectTrigger id="admin-user-role" className="min-w-36">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="admin-workspace">
               <SelectItem value="ALL">All</SelectItem>
               <SelectItem value="CUSTOMER">Customers</SelectItem>
+              <SelectItem value="STAFF">Staff</SelectItem>
               <SelectItem value="ADMIN">Admins</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </AdminFilterToolbar>
       <AdminFeedback loading={loading} error={error} retry={refetch} />
-      {!loading && !error && customers && (
+      {!loading && !error && users && (
         <AdminPageTable
           columns={[
             { label: 'Name' },
@@ -132,46 +135,52 @@ export function CustomersPage() {
             { label: 'User ID' },
             { label: 'Actions' },
           ]}
-          items={customers.items}
-          rowKey={(customer) => customer.id}
-          label="customers"
+          items={users.items}
+          rowKey={(user) => user.id}
+          label="users"
           emptyMessage="No accounts match."
           page={page}
-          total={customers.total}
+          total={users.total}
           onPageChange={(next) => change({ page: String(next) })}
           tableClassName="min-w-[880px]"
-          renderRow={(customer) => (
+          renderRow={(user) => (
             <>
-              <TableCell>{customer.name}</TableCell>
-              <TableCell>{customer.email}</TableCell>
-              <TableCell>{customer.role === 'ADMIN' ? 'Admin' : 'Customer'}</TableCell>
-              <TableCell>{new Date(customer.createdAt).toLocaleDateString()}</TableCell>
+              <TableCell>{user.name}</TableCell>
+              <TableCell>{user.email}</TableCell>
               <TableCell>
-                <span className="font-mono text-xs break-all">{customer.id}</span>
+                {user.role === 'ADMIN' ? 'Admin' : user.role === 'STAFF' ? 'Staff' : 'Customer'}
+              </TableCell>
+              <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+              <TableCell>
+                <span className="font-sans text-xs break-all">{user.id}</span>
               </TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="ghost" asChild>
-                    <Link to={customer.id} state={{ returnTo: `/admin/customers?${params}` }}>
-                      View customer
+                  <IconAction asChild label={`View user ${user.name}`} workspace>
+                    <Link to={user.id} state={{ returnTo: `/admin/users?${params}` }}>
+                      <Eye aria-hidden="true" />
                     </Link>
-                  </Button>
-                  <Button type="button" variant="ghost" onClick={() => void copyId(customer.id)}>
-                    Copy user ID
-                  </Button>
+                  </IconAction>
+                  <IconAction
+                    label={`Copy user ID for ${user.name}`}
+                    workspace
+                    onClick={() => void copyId(user.id)}
+                  >
+                    <Copy aria-hidden="true" />
+                  </IconAction>
                   <Button
                     type="button"
                     variant="ghost"
                     onClick={(event) => {
                       setCopyError('')
                       setAction({
-                        customer,
-                        enabled: customer.role !== 'ADMIN',
+                        user,
+                        role: user.role,
                         opener: event.currentTarget,
                       })
                     }}
                   >
-                    {customer.role === 'ADMIN' ? 'Revoke admin' : 'Grant admin'}
+                    Change role
                   </Button>
                 </div>
               </TableCell>
@@ -180,10 +189,10 @@ export function CustomersPage() {
         />
       )}
       {action && (
-        <MembershipDialog
-          customer={action.customer}
-          enabled={action.enabled}
-          self={session?.user.id === action.customer.id}
+        <RoleDialog
+          user={action.user}
+          role={action.role}
+          isSelf={session?.user.id === action.user.id}
           opener={action.opener}
           refresh={() => refetch()}
           close={() => setAction(undefined)}
@@ -198,30 +207,32 @@ export function CustomersPage() {
   )
 }
 
-function MembershipDialog({
-  customer,
-  enabled,
-  self,
+function RoleDialog({
+  user,
+  role,
+  isSelf,
   opener,
   refresh,
   close,
   saved,
 }: {
-  customer: AdminCustomerFieldsFragment
-  enabled: boolean
-  self: boolean
+  user: AdminUserFieldsFragment
+  role: AdminUserFieldsFragment['role']
+  isSelf: boolean
   opener: HTMLButtonElement | null
   refresh: () => Promise<unknown>
   close: () => void
   saved: (message: string) => void
 }) {
-  const { handleError } = useAdminAccess()
-  const [changeAccess, { loading }] = useMutation(SetCustomerAdminAccessDocument)
+  const { handleError, retry, confirmRole } = useAdminAccess()
+  const navigate = useNavigate()
+  const [selectedRole, setSelectedRole] = useState(role)
+  const [changeAccess, { loading }] = useMutation(SetUserRoleDocument)
   const [error, setError] = useState('')
   const [unknown, setUnknown] = useState(false)
   const [checked, setChecked] = useState(false)
   const [checking, setChecking] = useState(false)
-  async function checkCustomers() {
+  async function checkUsers() {
     setChecking(true)
     try {
       await refresh()
@@ -232,7 +243,7 @@ function MembershipDialog({
         close()
         return
       }
-      setError(failure instanceof Error ? failure.message : 'Unable to refresh customers')
+      setError(failure instanceof Error ? failure.message : 'Unable to refresh users')
     } finally {
       setChecking(false)
     }
@@ -240,11 +251,17 @@ function MembershipDialog({
   async function confirm() {
     setError('')
     try {
-      const response = await changeAccess({ variables: { userId: customer.id, enabled } })
-      const updated = response.data?.setCustomerAdminAccess
+      const response = await changeAccess({ variables: { userId: user.id, role: selectedRole } })
+      const updated = response.data?.setUserRole
       if (!updated) throw new Error('The result is unknown')
+      if (isSelf && updated.role !== 'ADMIN') {
+        await confirmRole(updated.role)
+        retry()
+        navigate(updated.role === 'STAFF' ? '/admin/books' : '/', { replace: true })
+        return
+      }
       saved(
-        `${updated.name} is now ${updated.role === 'ADMIN' ? 'an admin' : 'a customer'}.`,
+        `${updated.name} is now ${updated.role === 'ADMIN' ? 'an admin' : updated.role === 'STAFF' ? 'a staff member' : 'a customer'}.`,
       )
     } catch (failure) {
       handleError(failure)
@@ -259,23 +276,45 @@ function MembershipDialog({
       }
       setUnknown(true)
       setChecked(false)
-      setError('The result is unknown. Refresh the customer list before confirming again.')
+      setError('The result is unknown. Refresh the user list before confirming again.')
     }
   }
   return (
     <AdminDialog
-      title={`${enabled ? 'Grant' : 'Revoke'} admin for ${customer.name}?`}
+      title={`Change role for ${user.name}?`}
       close={close}
       busy={loading || checking}
       returnFocusTo={opener}
     >
       <div className="mb-4 space-y-3">
+        <p>Current role: {role === 'ADMIN' ? 'Admin' : role === 'STAFF' ? 'Staff' : 'Customer'}.</p>
+        <Label htmlFor="new-user-role">New role</Label>
+        <select
+          id="new-user-role"
+          className="w-full rounded-md border border-control bg-input text-foreground p-3"
+          value={selectedRole}
+          disabled={loading || checking}
+          onChange={(event) => setSelectedRole(event.target.value as typeof role)}
+        >
+          <option value="CUSTOMER">Customer</option>
+          <option value="STAFF">Staff</option>
+          <option value="ADMIN">Admin</option>
+        </select>
         <p>
-          {enabled
+          {selectedRole === 'ADMIN'
             ? 'This account will be able to open the admin workspace and can still shop as a customer.'
-            : 'Admin access ends on the next request. The customer account and existing order requests remain.'}
+            : selectedRole === 'STAFF'
+              ? 'Staff can add and edit books, change prices, adjust stock, and view orders. User management and archive/restore remain admin-only.'
+              : 'Workspace access ends on the next request. The user account and existing order requests remain.'}
         </p>
-        {!enabled && self && <p>This will remove your own admin access.</p>}
+        {selectedRole !== 'ADMIN' && isSelf && (
+          <p>
+            This will remove your own admin access.
+            {selectedRole === 'STAFF'
+              ? ' You will retain books and orders access, but lose user management and archive/restore.'
+              : ' You will lose all workspace access.'}
+          </p>
+        )}
       </div>
       {error && (
         <Alert role="alert" variant="destructive" className="mb-4">
@@ -289,10 +328,10 @@ function MembershipDialog({
             variant="ghost"
             disabled={checking}
             onClick={() => {
-              void checkCustomers()
+              void checkUsers()
             }}
           >
-            Refresh customer list
+            Refresh user list
           </Button>
           {checked && (
             <p role="status" className="mb-4 text-sm">
@@ -302,8 +341,12 @@ function MembershipDialog({
           )}
         </>
       )}
-      <Button type="button" disabled={loading || checking || (unknown && !checked)} onClick={() => void confirm()}>
-        {loading ? 'Saving…' : `Confirm ${enabled ? 'grant' : 'revoke'}`}
+      <Button
+        type="button"
+        disabled={selectedRole === role || loading || checking || (unknown && !checked)}
+        onClick={() => void confirm()}
+      >
+        {loading ? 'Saving…' : 'Confirm role change'}
       </Button>
     </AdminDialog>
   )

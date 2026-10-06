@@ -5,10 +5,14 @@ import userEvent from '@testing-library/user-event'
 import { MockedProvider } from '@apollo/client/testing/react'
 import { MemoryRouter } from 'react-router-dom'
 import { useCartStore } from '../../cart/cart-store'
-import { PLACE_ORDER } from '../../../lib/graphql'
+import { PlaceOrderDocument } from '../../../generated/graphql'
 import { CheckoutPage } from './CheckoutPage'
 
-vi.mock('../../../lib/auth-client', () => ({ authClient: { useSession: () => ({ data: { user: { name: 'Ada Reader', email: 'ada@example.com' } } }) } }))
+vi.mock('../../../lib/auth-client', () => ({
+  authClient: {
+    useSession: () => ({ data: { user: { name: 'Ada Reader', email: 'ada@example.com' } } }),
+  },
+}))
 
 afterEach(() => {
   cleanup()
@@ -16,13 +20,38 @@ afterEach(() => {
   localStorage.clear()
 })
 
-const item = { id: '1', title: 'A book', author: 'Author', genre: 'Fiction', priceCents: 1200, stock: 3, quantity: 1 }
-const request = { query: PLACE_ORDER, variables: { input: { items: [{ bookId: '1', quantity: 1 }] } } }
-const result = { data: { placeOrder: { id: '1', totalCents: 1200, items: [{ title: 'A book', quantity: 1, unitPriceCents: 1200 }] } } }
+const item = {
+  id: '1',
+  title: 'A book',
+  author: 'Author',
+  genre: 'Fiction',
+  priceCents: 1200,
+  stock: 3,
+  quantity: 1,
+}
+const request = {
+  query: PlaceOrderDocument,
+  variables: { input: { items: [{ bookId: '1', quantity: 1 }] } },
+}
+const result = {
+  data: {
+    placeOrder: {
+      id: '1',
+      totalCents: 1200,
+      items: [{ title: 'A book', quantity: 1, unitPriceCents: 1200 }],
+    },
+  },
+}
 
 function checkout(mocks: React.ComponentProps<typeof MockedProvider>['mocks'] = []) {
   useCartStore.setState({ items: [item] })
-  render(<MockedProvider mocks={mocks}><MemoryRouter><CheckoutPage /></MemoryRouter></MockedProvider>)
+  render(
+    <MockedProvider mocks={mocks}>
+      <MemoryRouter>
+        <CheckoutPage />
+      </MemoryRouter>
+    </MockedProvider>,
+  )
   return userEvent.setup()
 }
 

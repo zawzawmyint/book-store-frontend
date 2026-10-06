@@ -15,6 +15,7 @@ export const AccessContext = createContext({
   expired: false,
   retry: () => {},
   handleError: (_error: unknown) => {},
+  confirmRole: async (_role: string) => {},
 })
 export const useAdminAccess = () => useContext(AccessContext)
 export function useAdminQueryError(error: unknown) {

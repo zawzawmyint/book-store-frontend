@@ -134,7 +134,7 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
             className="mt-2"
           />
           {errors.description && (
-            <p id="description-error" className="mt-1 text-sm text-red-800">
+            <p id="description-error" className="mt-1 text-sm text-destructive">
               {errors.description.message}
             </p>
           )}
@@ -160,7 +160,7 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        <div className="flex gap-3 border-t border-slate-200 pt-5 sm:col-span-2">
+        <div className="flex gap-3 border-t border-border pt-5 sm:col-span-2">
           <Button type="submit" disabled={creating || updating}>
             {creating || updating ? 'Saving…' : 'Save book'}
           </Button>

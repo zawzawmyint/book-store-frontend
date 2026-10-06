@@ -1,13 +1,14 @@
 // @vitest-environment jsdom
+import { TooltipProvider } from '../../../app/components/ui/tooltip'
 import { afterEach, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MockedProvider } from '@apollo/client/testing/react'
 import { GraphQLError } from 'graphql'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { AdminCustomerDocument, ResetCustomerPasswordDocument } from '../../../generated/graphql'
+import { AdminUserDocument, ResetUserPasswordDocument } from '../../../generated/graphql'
 import { AccessContext } from '../admin-access'
-import { CustomerPage } from './CustomerPage'
+import { UserPage } from './UserPage'
 
 const session = vi.hoisted(() => ({ id: 'admin-1' }))
 vi.mock('../../../lib/auth-client', () => ({
@@ -29,9 +30,10 @@ const access = {
   expired: false,
   retry: () => {},
   handleError: () => {},
+  confirmRole: async () => {},
 }
 const ada = {
-  __typename: 'AdminCustomer' as const,
+  __typename: 'AdminUser' as const,
   id: 'ada',
   name: 'Ada Reader',
   email: 'ada@example.com',
@@ -39,13 +41,13 @@ const ada = {
   createdAt: '2026-01-02T00:00:00.000Z',
 }
 function renderPage(entry: string | { pathname: string; state?: unknown }, mocks: unknown[]) {
-  return render(
+  return renderWithTooltip(
     <MockedProvider mocks={mocks as never}>
       <AccessContext.Provider value={access}>
         <MemoryRouter initialEntries={[entry as never]}>
           <Routes>
-            <Route path="/admin/customers/:id" element={<CustomerPage />} />
-            <Route path="/admin/customers" element={<p>Customer list</p>} />
+            <Route path="/admin/users/:id" element={<UserPage />} />
+            <Route path="/admin/users" element={<p>User list</p>} />
             <Route path="/admin/profile" element={<p>Profile page</p>} />
           </Routes>
         </MemoryRouter>
@@ -53,29 +55,47 @@ function renderPage(entry: string | { pathname: string; state?: unknown }, mocks
     </MockedProvider>,
   )
 }
-function customerMock(customer: { [Key in keyof typeof ada]: Key extends 'role' ? 'ADMIN' | 'CUSTOMER' : (typeof ada)[Key] } = ada) {
+function userMock(
+  user: {
+    [Key in keyof typeof ada]: Key extends 'role' ? 'ADMIN' | 'CUSTOMER' : (typeof ada)[Key]
+  } = ada,
+) {
   return {
-    request: { query: AdminCustomerDocument, variables: { id: customer.id } },
-    result: { data: { adminCustomer: customer } },
+    request: { query: AdminUserDocument, variables: { id: user.id } },
+    result: { data: { adminUser: user } },
     maxUsageCount: 5,
   }
 }
+
+it.each([
+  [
+    '/admin/customers?search=Ada&role=CUSTOMER&page=2',
+    '/admin/users?search=Ada&role=CUSTOMER&page=2',
+  ],
+  ['https://example.com/admin/users?search=Ada', '/admin/users'],
+  ['//example.com/admin/users?search=Ada', '/admin/users'],
+  ['/admin/users-other?search=Ada', '/admin/users'],
+])('normalizes or rejects return state %s', async (returnTo, expected) => {
+  renderPage({ pathname: '/admin/users/ada', state: { returnTo } }, [userMock()])
+  await screen.findByRole('heading', { name: 'Ada Reader' })
+  expect(screen.getByRole('link', { name: 'Back to users' }).getAttribute('href')).toBe(expected)
+})
 
 it('shows another account and rejects a short or mismatched password before saving', async () => {
   const user = userEvent.setup()
   renderPage(
     {
-      pathname: '/admin/customers/ada',
-      state: { returnTo: '/admin/customers?search=Ada&role=CUSTOMER&page=2' },
+      pathname: '/admin/users/ada',
+      state: { returnTo: '/admin/users?search=Ada&role=CUSTOMER&page=2' },
     },
-    [customerMock()],
+    [userMock()],
   )
   expect(await screen.findByRole('heading', { name: 'Ada Reader' })).toBeTruthy()
   expect(screen.getByText('ada@example.com')).toBeTruthy()
   expect(screen.getByText('Customer')).toBeTruthy()
   expect(screen.getByText(new Date(ada.createdAt).toLocaleDateString())).toBeTruthy()
-  expect(screen.getByRole('link', { name: 'Back to customers' }).getAttribute('href')).toBe(
-    '/admin/customers?search=Ada&role=CUSTOMER&page=2',
+  expect(screen.getByRole('link', { name: 'Back to users' }).getAttribute('href')).toBe(
+    '/admin/users?search=Ada&role=CUSTOMER&page=2',
   )
   await user.type(screen.getByLabelText('New password'), 'short')
   await user.type(screen.getByLabelText('Confirm new password'), 'short')
@@ -90,14 +110,14 @@ it('shows another account and rejects a short or mismatched password before savi
 
 it('sets a password, announces success, and clears the fields', async () => {
   const user = userEvent.setup()
-  renderPage('/admin/customers/ada', [
-    customerMock(),
+  renderPage('/admin/users/ada', [
+    userMock(),
     {
       request: {
-        query: ResetCustomerPasswordDocument,
+        query: ResetUserPasswordDocument,
         variables: { userId: 'ada', newPassword: 'new-password-123' },
       },
-      result: { data: { resetCustomerPassword: ada } },
+      result: { data: { resetUserPassword: ada } },
     },
   ])
   await screen.findByRole('heading', { name: 'Ada Reader' })
@@ -112,15 +132,17 @@ it('sets a password, announces success, and clears the fields', async () => {
 
 it('keeps the password fields when the reset is rejected', async () => {
   const user = userEvent.setup()
-  renderPage('/admin/customers/ada', [
-    customerMock(),
+  renderPage('/admin/users/ada', [
+    userMock(),
     {
       request: {
-        query: ResetCustomerPasswordDocument,
+        query: ResetUserPasswordDocument,
         variables: { userId: 'ada', newPassword: 'new-password-123' },
       },
       result: {
-        errors: [new GraphQLError('User was not found', { extensions: { code: 'BAD_USER_INPUT' } })],
+        errors: [
+          new GraphQLError('User was not found', { extensions: { code: 'BAD_USER_INPUT' } }),
+        ],
       },
     },
   ])
@@ -135,23 +157,44 @@ it('keeps the password fields when the reset is rejected', async () => {
 
 it('shows the signed-in admin their details without a password form', async () => {
   session.id = 'ada'
-  renderPage('/admin/customers/ada', [customerMock({ ...ada, role: 'ADMIN', email: 'admin@example.com' })])
+  renderPage('/admin/users/ada', [userMock({ ...ada, role: 'ADMIN', email: 'admin@example.com' })])
   expect(await screen.findByRole('heading', { name: 'Ada Reader' })).toBeTruthy()
   expect(screen.getByText('Admin')).toBeTruthy()
   expect(screen.queryByLabelText('New password')).toBeNull()
-  expect(screen.getByRole('link', { name: 'your profile' }).getAttribute('href')).toBe('/admin/profile')
+  expect(screen.getByRole('link', { name: 'your profile' }).getAttribute('href')).toBe(
+    '/admin/profile',
+  )
 })
 
 it('shows an unknown account message and no password form', async () => {
-  renderPage('/admin/customers/missing', [
+  renderPage('/admin/users/missing', [
     {
-      request: { query: AdminCustomerDocument, variables: { id: 'missing' } },
+      request: { query: AdminUserDocument, variables: { id: 'missing' } },
       result: {
-        errors: [new GraphQLError('User was not found', { extensions: { code: 'BAD_USER_INPUT' } })],
+        errors: [
+          new GraphQLError('User was not found', { extensions: { code: 'BAD_USER_INPUT' } }),
+        ],
       },
     },
   ])
   expect((await screen.findByRole('alert')).textContent).toContain('User was not found')
   expect(screen.queryByLabelText('New password')).toBeNull()
   expect(screen.queryByRole('button', { name: 'Set password' })).toBeNull()
+})
+
+function renderWithTooltip(ui: Parameters<typeof render>[0]) {
+  const result = render(<TooltipProvider>{ui}</TooltipProvider>)
+  return {
+    ...result,
+    rerender: (next: typeof ui) => result.rerender(<TooltipProvider>{next}</TooltipProvider>),
+  }
+}
+
+Object.defineProperty(globalThis, 'ResizeObserver', {
+  configurable: true,
+  value: class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  },
 })

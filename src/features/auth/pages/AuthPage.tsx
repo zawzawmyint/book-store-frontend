@@ -75,7 +75,7 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
     <PageContainer className="mx-auto max-w-xl py-16 sm:py-24">
       <p className="eyebrow mb-3">Your account</p>
       <h1 className="font-serif text-5xl">{isSignUp ? 'Create an account' : 'Sign in'}</h1>
-      <p className="mt-4 text-sm leading-6 text-[#778073]">
+      <p className="mt-4 text-sm leading-6 text-muted-foreground">
         Sign in to submit an order request. No payment is collected.
       </p>
       <form noValidate onSubmit={handleSubmit(submit)} className="mt-9 space-y-5">
@@ -110,7 +110,7 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
           error={errors.password?.message}
         />
         {serverError && (
-          <Alert variant="destructive" className="border-[#e5c9c0] bg-[#fff2ed] text-[#a14134]">
+          <Alert variant="destructive" className="border-destructive bg-destructive-muted text-destructive">
             <AlertDescription>{serverError}</AlertDescription>
           </Alert>
         )}
@@ -120,7 +120,7 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
       </form>
       <p className="mt-6 text-sm">
         {isSignUp ? 'Already have an account?' : 'New to the bookstore?'}{' '}
-        <Link className="font-semibold text-[#28674a] underline" to={otherPath}>
+        <Link className="font-semibold text-primary underline" to={otherPath}>
           {isSignUp ? 'Sign in' : 'Create an account'}
         </Link>
       </p>

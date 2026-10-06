@@ -6,7 +6,7 @@
 
 Add `/account/profile` so a signed-in customer can see their account and update their own name and password. The API contract is in [the backend spec](../../../backend/specs/profile/SPEC.md).
 
-The admin Account menu opens `/admin/profile` inside the admin workspace. That page uses the same account actions for the signed-in admin. An admin resets another customer's password on the detail page specified in [the customer details spec](../customer-details/SPEC.md).
+The Staff or Admin Account menu opens `/admin/profile` inside the workspace. That page uses the same account actions for the signed-in privileged user. Only an admin resets another user's password through the detail page specified in [the staff roles spec](../staff/SPEC.md).
 
 ## Page
 
@@ -27,7 +27,7 @@ The admin Account menu opens `/admin/profile` inside the admin workspace. That p
 - [x] A signed-in customer can open Profile from the storefront Account menu, change their name, and see that name in the menu and on the profile page.
 - [x] A signed-in customer can change their password with the current password and cannot submit a mismatched or too-short new password.
 - [x] Email stays read-only. Guests are sent to sign-in and returned to `/account/profile`.
-- [x] An admin can open `/admin/profile` from the admin Account menu and stay in the admin workspace. The Customers page still has no edit-profile action.
+- [x] A Staff or Admin user can open `/admin/profile` from the workspace Account menu and stay in the workspace. The Users page still has no edit-profile action.
 - [x] Add component tests for validation, success, and the wrong current password. Extend Playwright for the storefront menu, a name change, and the admin menu link.
 - [x] Run frontend `bun run test`, `bun run lint`, `bun run build`, and `bun run test:e2e`. Verify the page in the browser, including both menus, name save, and password validation.
 

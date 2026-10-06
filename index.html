@@ -2,6 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script id="theme-bootstrap">
+      // Keep the storage contract and fallback in sync with src/lib/theme.ts.
+      ;(() => {
+        let theme = 'dark'
+        try {
+          if (localStorage.getItem('book-store-theme') === 'light') theme = 'light'
+        } catch {}
+        const root = document.documentElement
+        root.dataset.theme = theme
+        root.classList.toggle('dark', theme === 'dark')
+        root.style.colorScheme = theme
+        root.style.backgroundColor = theme === 'dark' ? '#131c18' : '#f7f5f0'
+        root.style.color = theme === 'dark' ? '#edf1e9' : '#26342e'
+      })()
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#234a3b" />

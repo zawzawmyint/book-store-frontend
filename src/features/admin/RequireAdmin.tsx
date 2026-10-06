@@ -8,24 +8,29 @@ import { Alert, AlertDescription } from '../../app/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '../../app/components/ui/card'
 import { Skeleton } from '../../app/components/ui/skeleton'
 import { AdminAccountMenu } from './components/AdminAccountMenu'
+import { ThemeSwitch } from '../../app/components/ThemeSwitch'
 
 function AdminAccessScreen({ children }: { children: ReactNode }) {
   return (
     <div className="admin-workspace min-h-screen">
-      <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6">
-        <span className="text-sm font-semibold">The Quiet Shelf admin</span>
-        <AdminAccountMenu />
+      <header className="flex h-16 items-center justify-between gap-3 border-b border-border bg-surface px-4 sm:px-6">
+        <span className="min-w-0 truncate text-sm font-semibold">The Quiet Shelf admin</span>
+        <div className="flex shrink-0 items-center gap-2">
+          <ThemeSwitch />
+          <AdminAccountMenu />
+        </div>
       </header>
       <main className="mx-auto max-w-xl px-4 py-16">{children}</main>
     </div>
   )
 }
 
-export function RequireAdmin() {
+export function RequireAdmin({ adminOnly = false }: { adminOnly?: boolean }) {
   const { data: session, isPending } = authClient.useSession()
   const location = useLocation()
   const access = useAdminAccess()
-  if (isPending || (access.loading && access.role !== 'ADMIN'))
+  const permitted = access.role === 'ADMIN' || (!adminOnly && access.role === 'STAFF')
+  if (isPending || (access.loading && !permitted))
     return (
       <AdminAccessScreen>
         <div role="status" aria-label="Checking admin access" className="space-y-4">
@@ -57,7 +62,7 @@ export function RequireAdmin() {
         <Button onClick={access.retry}>Retry access check</Button>
       </AdminAccessScreen>
     )
-  if (access.role !== 'ADMIN')
+  if (!permitted)
     return (
       <AdminAccessScreen>
         <Card>

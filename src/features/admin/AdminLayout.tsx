@@ -1,4 +1,4 @@
-import { BookOpenText, ClipboardList, Users, ArrowUpRight, X } from 'lucide-react'
+import { BookOpenText, ClipboardList, Users, ArrowUpRight, X, History } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Button } from '../../app/components/ui/button'
 import {
@@ -17,14 +17,18 @@ import {
   useSidebar,
 } from '../../app/components/ui/sidebar'
 import { AdminAccountMenu } from './components/AdminAccountMenu'
+import { useAdminAccess } from './admin-access'
+import { ThemeSwitch } from '../../app/components/ThemeSwitch'
 
 const sections = [
   { group: 'Catalog', title: 'Books', to: '/admin/books', icon: BookOpenText },
   { group: 'Sales', title: 'Order requests', to: '/admin/orders', icon: ClipboardList },
-  { group: 'People', title: 'Customers', to: '/admin/customers', icon: Users },
+  { group: 'People', title: 'Users', to: '/admin/users', icon: Users },
+  { group: 'Store', title: 'Activity', to: '/admin/activity', icon: History },
 ]
 
 function AdminNavigation() {
+  const { role } = useAdminAccess()
   const { setOpenMobile, isMobile } = useSidebar()
   const { pathname } = useLocation()
   return (
@@ -36,7 +40,9 @@ function AdminNavigation() {
           </span>
           <div className="flex-1">
             <p className="text-sm font-semibold tracking-wide">The Quiet Shelf</p>
-            <p className="admin-nav-muted mt-1 text-xs">Admin workspace</p>
+            <p className="admin-nav-muted mt-1 text-xs">
+              {role === 'STAFF' ? 'Staff workspace' : 'Admin workspace'}
+            </p>
           </div>
           {isMobile && (
             <Button
@@ -51,30 +57,35 @@ function AdminNavigation() {
         </SidebarHeader>
         <SidebarContent className="px-2 py-4">
           <nav id="admin-navigation" aria-label="Admin navigation">
-            {sections.map(({ group, title, to, icon: Icon }) => (
-              <SidebarGroup key={to}>
-                <SidebarGroupLabel className="admin-nav-muted mb-1 text-[10px] font-semibold uppercase tracking-[.16em]">
-                  {group}
-                </SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton
-                        asChild
-                        size="lg"
-                        isActive={pathname === to || pathname.startsWith(to + '/')}
-                        className="admin-nav-link gap-3 rounded-lg px-3 font-medium"
-                      >
-                        <NavLink to={to} onClick={() => setOpenMobile(false)}>
-                          <Icon aria-hidden="true" />
-                          <span>{title}</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            ))}
+            {sections
+              .filter(
+                (section) =>
+                  !['/admin/users', '/admin/activity'].includes(section.to) || role === 'ADMIN',
+              )
+              .map(({ group, title, to, icon: Icon }) => (
+                <SidebarGroup key={to}>
+                  <SidebarGroupLabel className="admin-nav-muted mb-1 text-[10px] font-semibold uppercase tracking-[.16em]">
+                    {group}
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          asChild
+                          size="lg"
+                          isActive={pathname === to || pathname.startsWith(to + '/')}
+                          className="admin-nav-link gap-3 rounded-lg px-3 font-medium"
+                        >
+                          <NavLink to={to} onClick={() => setOpenMobile(false)}>
+                            <Icon aria-hidden="true" />
+                            <span>{title}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              ))}
           </nav>
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border p-4">
@@ -91,14 +102,17 @@ function AdminNavigation() {
 }
 
 export function AdminLayout() {
+  const { role } = useAdminAccess()
   const { pathname } = useLocation()
-  const section = pathname.startsWith('/admin/orders')
-    ? 'Orders'
-    : pathname.startsWith('/admin/customers')
-      ? 'People'
-      : pathname.startsWith('/admin/profile')
-        ? 'Profile'
-        : 'Catalog'
+  const section = pathname.startsWith('/admin/activity')
+    ? 'Store'
+    : pathname.startsWith('/admin/orders')
+      ? 'Orders'
+      : pathname.startsWith('/admin/users')
+        ? 'People'
+        : pathname.startsWith('/admin/profile')
+          ? 'Profile'
+          : 'Catalog'
   return (
     <div className="admin-workspace">
       <SidebarProvider open onOpenChange={() => {}}>
@@ -107,20 +121,25 @@ export function AdminLayout() {
         </a>
         <AdminNavigation />
         <div className="min-w-0 flex-1">
-          <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 sm:px-8">
+          <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-border bg-surface px-4 sm:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <SidebarTrigger
                 aria-label="Admin menu"
                 aria-controls="admin-navigation"
                 className="lg:hidden"
               />
-              <h1 className="truncate text-sm font-semibold">The Quiet Shelf admin</h1>
-              <span className="hidden text-slate-300 sm:inline" aria-hidden="true">
+              <h1 className="truncate text-sm font-semibold">
+                {role === 'STAFF' ? 'The Quiet Shelf staff' : 'The Quiet Shelf admin'}
+              </h1>
+              <span className="hidden text-muted-foreground sm:inline" aria-hidden="true">
                 /
               </span>
-              <span className="hidden text-sm text-slate-500 sm:inline">{section}</span>
+              <span className="hidden text-sm text-muted-foreground sm:inline">{section}</span>
             </div>
-            <AdminAccountMenu />
+            <div className="flex shrink-0 items-center gap-2">
+              <ThemeSwitch />
+              <AdminAccountMenu />
+            </div>
           </header>
           <main id="admin-main" tabIndex={-1} className="p-4 outline-none sm:p-8">
             <Outlet />

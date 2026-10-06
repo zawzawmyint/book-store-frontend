@@ -15,18 +15,31 @@ export function AdminAccessProvider({ children }: { children: React.ReactNode })
     notifyOnNetworkStatusChange: true,
   })
   const [blocked, setBlocked] = useState<string>()
+  const [confirmedRole, setConfirmedRole] = useState<string>()
   const previousPath = useRef(pathname)
   const previousRole = useRef<string | undefined>(undefined)
+  const confirmationGeneration = useRef(0)
   const handleError = useCallback(
     (failure: unknown) => {
       const code = accessErrorCode(failure)
       if (code) {
+        const generation = confirmationGeneration.current
         setBlocked(code)
-        void client.clearStore()
-        if (code === 'UNAUTHENTICATED') void refreshSession({ query: { disableCookieCache: true } })
+        void client
+          .clearStore()
+          .then(async () => {
+            if (code === 'UNAUTHENTICATED')
+              await refreshSession({ query: { disableCookieCache: true } })
+            else {
+              await refetch()
+              if (generation === confirmationGeneration.current) setConfirmedRole(undefined)
+              setBlocked(undefined)
+            }
+          })
+          .catch(() => {})
       }
     },
-    [client, refreshSession],
+    [client, refreshSession, refetch],
   )
   const retry = useCallback(() => {
     if (blocked === 'UNAUTHENTICATED' || data?.viewer === null) {
@@ -34,8 +47,22 @@ export function AdminAccessProvider({ children }: { children: React.ReactNode })
       return
     }
     setBlocked(undefined)
-    void refetch().catch(() => {})
+    const generation = confirmationGeneration.current
+    void refetch()
+      .then(() => {
+        if (generation === confirmationGeneration.current) setConfirmedRole(undefined)
+      })
+      .catch(() => {})
   }, [refetch, refreshSession, blocked, data?.viewer])
+  const confirmRole = useCallback(
+    async (role: string) => {
+      confirmationGeneration.current += 1
+      setConfirmedRole(role)
+      previousRole.current = role
+      await client.clearStore()
+    },
+    [client],
+  )
   useEffect(() => {
     if (pathname !== previousPath.current && pathname.startsWith('/admin') && session?.user) retry()
     previousPath.current = pathname
@@ -55,13 +82,14 @@ export function AdminAccessProvider({ children }: { children: React.ReactNode })
   return (
     <AccessContext.Provider
       value={{
-        role: blocked === 'FORBIDDEN' ? 'CUSTOMER' : data?.viewer?.role,
-        loading: isPending || loading,
+        role: blocked === 'FORBIDDEN' ? undefined : (confirmedRole ?? data?.viewer?.role),
+        loading: isPending || loading || (blocked === 'FORBIDDEN' && !error),
         error,
         expired:
           blocked === 'UNAUTHENTICATED' || (!loading && !!session?.user && data?.viewer === null),
         retry,
         handleError,
+        confirmRole,
       }}
     >
       {children}

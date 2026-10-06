@@ -1,6 +1,8 @@
-# The Quiet Shelf storefront — admin customer details specification
+# The Quiet Shelf storefront — historical admin customer details specification
 
-> **Status:** Implemented. **Date:** 2026-10-04.
+> **Status:** Historical route record. Implemented 2026-10-04; superseded 2026-10-05 by [the user directory specification](../users/SPEC.md).
+>
+> The `/admin/customers/:id`, `adminCustomer`, and `resetCustomerPassword` names below are no longer canonical. Existing detail bookmarks redirect to `/admin/users/:id`; the canonical UI and Admin-only user-management permission are in [the user directory](../users/SPEC.md) and [Staff](../staff/SPEC.md) specifications.
 
 ## Goal and agreed scope
 

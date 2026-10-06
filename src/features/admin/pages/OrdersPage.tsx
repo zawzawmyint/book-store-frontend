@@ -4,7 +4,8 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@apollo/client/react'
 import { AdminOrdersDocument } from '../../../generated/graphql'
 import { money } from '../../../lib/format'
-import { Button } from '../../../app/components/ui/button'
+import { IconAction } from '../../../app/components/IconAction'
+import { Eye } from 'lucide-react'
 import { TableCell } from '../../../app/components/ui/table'
 import { Badge } from '../../../app/components/ui/badge'
 import { useAdminQueryError } from '../admin-access'
@@ -50,16 +51,16 @@ export function OrdersPage() {
               <TableCell>{order.createdAt}</TableCell>
               <TableCell>
                 {order.customerName}
-                <p className="mt-1 text-xs text-slate-500">{order.email}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{order.email}</p>
                 {!order.userId && <Badge variant="secondary">Legacy guest request</Badge>}
               </TableCell>
               <TableCell className="admin-numeric">{money(order.totalCents)}</TableCell>
               <TableCell>
-                <Button asChild variant="ghost">
+                <IconAction asChild label={`View request #${order.id}`} workspace>
                   <Link to={order.id} state={{ returnTo: `/admin/orders?${params}` }}>
-                    View request
+                    <Eye aria-hidden="true" />
                   </Link>
-                </Button>
+                </IconAction>
               </TableCell>
             </>
           )}

@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { ChevronDown, LogOut, UserRound } from 'lucide-react'
+import { LogOut, UserRound } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useApolloClient } from '@apollo/client/react'
 import { authClient } from '../../../lib/auth-client'
-import { Button } from '../../../app/components/ui/button'
+import { IconAction } from '../../../app/components/IconAction'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,16 +35,14 @@ export function AdminAccountMenu() {
     <div className="relative">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" aria-label="Account" className="gap-2">
+          <IconAction label="Account" workspace>
             <UserRound size={16} aria-hidden="true" />
-            <span className="hidden sm:inline">Account</span>
-            <ChevronDown size={14} aria-hidden="true" />
-          </Button>
+          </IconAction>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="admin-workspace min-w-52">
-          <div className="border-b border-slate-200 px-3 py-2">
+          <div className="border-b border-border px-3 py-2">
             <p className="text-sm font-medium">{session?.user.name}</p>
-            <p className="text-xs text-slate-500">{session?.user.email}</p>
+            <p className="text-xs text-muted-foreground">{session?.user.email}</p>
           </div>
           <DropdownMenuItem asChild>
             <Link to="/admin/profile">Profile</Link>
@@ -61,7 +59,7 @@ export function AdminAccountMenu() {
       {error && (
         <p
           role="alert"
-          className="absolute right-0 top-full z-20 mt-2 w-64 rounded-md border border-red-200 bg-white p-3 text-sm text-red-700 shadow-sm"
+          className="absolute right-0 top-full z-20 mt-2 w-64 rounded-md border border-destructive bg-destructive-muted p-3 text-sm text-destructive shadow-sm"
         >
           {error}
         </p>

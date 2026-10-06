@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useApolloClient, useQuery } from '@apollo/client/react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MY_ORDERS } from '../../../lib/graphql'
+import { MyOrdersDocument } from '../../../generated/graphql'
 import { money } from '../../../lib/format'
 import { PageContainer } from '../../../app/components/PageContainer'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
@@ -17,7 +17,7 @@ export function OrdersPage() {
   const [page, setPage] = useState(0)
   const navigate = useNavigate()
   const client = useApolloClient()
-  const { data, loading, error } = useQuery(MY_ORDERS, {
+  const { data, loading, error } = useQuery(MyOrdersDocument, {
     variables: { limit: pageSize, offset: page * pageSize },
     fetchPolicy: 'no-cache',
   })
@@ -47,25 +47,28 @@ export function OrdersPage() {
     <PageContainer className="py-12 sm:py-20">
       <p className="eyebrow mb-3">Your account</p>
       <h1 className="font-serif text-5xl">Your orders</h1>
-      <p className="mt-4 text-sm text-[#778073]">
+      <p className="mt-4 text-sm text-muted-foreground">
         Your saved order requests. No payment was collected.
       </p>
       {loading && (
         <div role="status" aria-label="Loading your orders" className="mt-10 space-y-6">
           <span className="sr-only">Loading your orders…</span>
-          <Skeleton className="h-32 w-full bg-[#e8e5dc]" />
-          <Skeleton className="h-32 w-full bg-[#e8e5dc]" />
+          <Skeleton className="h-32 w-full bg-muted" />
+          <Skeleton className="h-32 w-full bg-muted" />
         </div>
       )}
       {error && !unauthenticated && (
-        <Alert variant="destructive" className="mt-10 border-[#e5c9c0] bg-[#fff2ed] text-[#a14134]">
+        <Alert
+          variant="destructive"
+          className="mt-10 border-destructive bg-destructive-muted text-destructive"
+        >
           <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       )}
       {!loading && !error && orders?.items.length === 0 && (
         <div className="mt-12">
           <p>No order requests yet.</p>
-          <Button asChild variant="ghost" className="mt-3 text-[#28674a] underline">
+          <Button asChild variant="ghost" className="mt-3 text-primary underline">
             <Link to="/">Browse books</Link>
           </Button>
         </div>
@@ -74,23 +77,23 @@ export function OrdersPage() {
         <>
           <div className="mt-10 space-y-6">
             {orders.items.map((order) => (
-              <Card key={order.id} className="border-[#d8d5ca] bg-[#f2efe7] shadow-none">
+              <Card key={order.id} className="border-border bg-surface shadow-none">
                 <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-4">
                   <div>
-                      <h2 className="font-serif text-2xl">Order #{order.id}</h2>
-                    <p className="mt-1 text-xs text-[#778073]">
+                    <h2 className="font-serif text-2xl">Order #{order.id}</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">
                       {new Date(order.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <strong>{money(order.totalCents)}</strong>
                 </CardHeader>
                 <CardContent>
-                  <Separator className="mb-4 bg-[#d8d5ca]" />
+                  <Separator className="mb-4 bg-border" />
                   <ul className="space-y-2 text-sm">
                     {order.items.map((item, index) => (
                       <li key={`${order.id}-${index}`} className="flex justify-between gap-4">
                         <span>
-                          {item.quantity} × {item.title}
+                          {item.quantity} × <span className="font-serif">{item.title}</span>
                         </span>
                         <span>{money(item.quantity * item.unitPriceCents)}</span>
                       </li>
@@ -109,7 +112,7 @@ export function OrdersPage() {
             >
               Previous
             </Button>
-            <span className="text-sm text-[#778073]">
+            <span className="text-sm text-muted-foreground">
               Page {page + 1} of {Math.ceil(orders.total / pageSize)}
             </span>
             <Button

@@ -37,7 +37,7 @@ export function BookCover({
         style={{ backgroundColor: background, color: accent }}
       >
         <span className="absolute inset-y-0 left-0 w-1 bg-black/15" />
-        <span className="border-y border-current/40 py-1 font-serif text-lg">
+        <span className="border-y border-current/40 py-1 font-cover text-lg">
           {title.charAt(0)}
         </span>
       </div>
@@ -55,7 +55,7 @@ export function BookCover({
       </span>
       <div className="my-auto border-y border-current/40 py-6">
         <span
-          className="font-serif text-[clamp(1.1rem,2.7vw,2rem)] leading-[1.05] tracking-tight"
+          className="font-cover text-[clamp(1.1rem,2.7vw,2rem)] leading-[1.05] tracking-tight"
           style={{ fontSize: large ? 'clamp(1.5rem, 3vw, 2.7rem)' : undefined }}
         >
           {title}

@@ -4,7 +4,7 @@ import { cn } from '../../../lib/utils'
 
 export function Card({ className, asChild = false, ...props }: ComponentProps<'div'> & { asChild?: boolean }) {
   const Comp = asChild ? Slot : 'div'
-  return <Comp data-slot="card" className={cn('border border-[#d8d5ca] bg-[#f2efe7]', className)} {...props} />
+  return <Comp data-slot="card" className={cn('border border-border bg-surface', className)} {...props} />
 }
 
 export function CardHeader({ className, ...props }: ComponentProps<'div'>) {
@@ -16,7 +16,7 @@ export function CardTitle({ className, ...props }: ComponentProps<'h2'>) {
 }
 
 export function CardDescription({ className, ...props }: ComponentProps<'p'>) {
-  return <p data-slot="card-description" className={cn('text-sm text-[#6e756c]', className)} {...props} />
+  return <p data-slot="card-description" className={cn('text-sm text-muted-foreground', className)} {...props} />
 }
 
 export function CardContent({ className, ...props }: ComponentProps<'div'>) {

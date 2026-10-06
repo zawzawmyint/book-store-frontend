@@ -17,19 +17,19 @@ export function CartPage() {
   return (
     <PageContainer className="py-12 sm:py-20">
       <BackLink to="/">Continue browsing</BackLink>
-      <div className="mt-7 flex items-end justify-between border-b border-[#dcd9d0] pb-7">
+      <div className="mt-7 flex items-end justify-between border-b border-border pb-7">
         <div>
           <p className="eyebrow mb-3">Your selection</p>
           <h1 className="font-serif text-5xl tracking-[-.05em]">Your bag</h1>
         </div>
-        <span className="text-sm text-[#8a8e84]">
+        <span className="text-sm text-muted-foreground">
           {count} {count === 1 ? 'book' : 'books'}
         </span>
       </div>
       {items.length === 0 ? (
         <div className="py-28 text-center">
           <p className="font-serif text-3xl">Nothing here yet.</p>
-          <p className="mt-3 text-sm text-[#81877d]">
+          <p className="mt-3 text-sm text-muted-foreground">
             There are good stories waiting on the shelves.
           </p>
           <Button asChild className="mt-8">
@@ -40,14 +40,14 @@ export function CartPage() {
         </div>
       ) : (
         <div className="grid gap-12 pt-9 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-16">
-          <div className="divide-y divide-[#e0ddd5]">
+          <div className="divide-y divide-border">
             {items.map((item) => (
               <CartLine key={item.id} item={item} update={update} />
             ))}
           </div>
           <SummaryPanel title="Order summary">
-            <div className="mt-7 flex justify-between border-b border-[#d8d5ca] pb-5 text-sm">
-              <span className="text-[#737c71]">
+            <div className="mt-7 flex justify-between border-b border-border pb-5 text-sm">
+              <span className="text-muted-foreground">
                 Subtotal · {count} {count === 1 ? 'book' : 'books'}
               </span>
               <strong>{money(total)}</strong>
@@ -56,7 +56,7 @@ export function CartPage() {
               <span>Total</span>
               <span>{money(total)}</span>
             </div>
-            <p className="mt-3 text-xs leading-5 text-[#8b8d82]">
+            <p className="mt-3 text-xs leading-5 text-muted-foreground">
               Submitting an order request does not collect payment or shipping details.
             </p>
             <Button asChild className="mt-7 flex w-full">

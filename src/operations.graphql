@@ -141,38 +141,80 @@ query AdminOrder($id: ID!) {
     ...AdminOrderFields
   }
 }
-fragment AdminCustomerFields on AdminCustomer {
+fragment AdminUserFields on AdminUser {
   id
   name
   email
   role
   createdAt
 }
-query AdminCustomers(
-  $search: String
-  $role: AdminCustomerRoleFilter
-  $limit: Int
-  $offset: Int
-) {
-  adminCustomers(search: $search, role: $role, limit: $limit, offset: $offset) {
+query AdminUsers($search: String, $role: AdminUserRoleFilter, $limit: Int, $offset: Int) {
+  adminUsers(search: $search, role: $role, limit: $limit, offset: $offset) {
     total
     items {
-      ...AdminCustomerFields
+      ...AdminUserFields
     }
   }
 }
-mutation SetCustomerAdminAccess($userId: ID!, $enabled: Boolean!) {
-  setCustomerAdminAccess(userId: $userId, enabled: $enabled) {
-    ...AdminCustomerFields
+mutation SetUserRole($userId: ID!, $role: UserRole!) {
+  setUserRole(userId: $userId, role: $role) {
+    ...AdminUserFields
   }
 }
-query AdminCustomer($id: ID!) {
-  adminCustomer(id: $id) {
-    ...AdminCustomerFields
+query AdminUser($id: ID!) {
+  adminUser(id: $id) {
+    ...AdminUserFields
   }
 }
-mutation ResetCustomerPassword($userId: ID!, $newPassword: String!) {
-  resetCustomerPassword(userId: $userId, newPassword: $newPassword) {
-    ...AdminCustomerFields
+mutation ResetUserPassword($userId: ID!, $newPassword: String!) {
+  resetUserPassword(userId: $userId, newPassword: $newPassword) {
+    ...AdminUserFields
+  }
+}
+
+fragment ActivityEventFields on ActivityEvent {
+  id
+  actorUserId
+  actorName
+  actorRole
+  source
+  action
+  targetType
+  targetId
+  targetName
+  changes {
+    field
+    before
+    after
+  }
+  stockDelta
+  createdAt
+}
+query AdminActivity(
+  $actorUserId: ID
+  $action: ActivityAction
+  $changedField: ActivityField
+  $targetType: ActivityTargetType
+  $targetId: ID
+  $from: String
+  $to: String
+  $limit: Int
+  $offset: Int
+) {
+  adminActivity(
+    actorUserId: $actorUserId
+    action: $action
+    changedField: $changedField
+    targetType: $targetType
+    targetId: $targetId
+    from: $from
+    to: $to
+    limit: $limit
+    offset: $offset
+  ) {
+    total
+    items {
+      ...ActivityEventFields
+    }
   }
 }

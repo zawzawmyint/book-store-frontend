@@ -1,5 +1,6 @@
 import { useId, type ReactNode } from 'react'
-import { Button } from '../../../app/components/ui/button'
+import { Search } from 'lucide-react'
+import { IconAction } from '../../../app/components/IconAction'
 import { Input } from '../../../app/components/ui/input'
 import { Label } from '../../../app/components/ui/label'
 
@@ -38,9 +39,15 @@ export function AdminFilterToolbar({
             maxLength={100}
             placeholder={searchPlaceholder}
           />
-          <Button type="submit" variant="outline">
-            Search
-          </Button>
+          <IconAction
+            label="Search"
+            tooltip={searchLabel}
+            workspace
+            type="submit"
+            variant="outline"
+          >
+            <Search aria-hidden="true" />
+          </IconAction>
         </div>
       </div>
       {children}

@@ -55,14 +55,14 @@ export function AdminPagination({
   const end = itemCount ? Math.min(total, offset + itemCount) : 0
   return (
     <nav aria-label="Pagination" className="mt-4 flex flex-wrap items-center justify-between gap-3">
-      <span className="text-sm text-slate-500">
+      <span className="text-sm text-muted-foreground">
         Showing {start}–{end} of {total} {label}
       </span>
       <div className="flex items-center gap-3">
         <Button variant="outline" disabled={page <= 1} onClick={() => change(page - 1)}>
           Previous
         </Button>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-muted-foreground">
           Page {page} of {Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE))}
         </span>
         <Button

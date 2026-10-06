@@ -1,6 +1,8 @@
-# The Quiet Shelf storefront — admin customer directory specification
+# The Quiet Shelf storefront — historical admin customer directory specification
 
-> **Status:** Implemented. **Date:** 2026-10-03.
+> **Status:** Historical route record. Implemented 2026-10-03; superseded 2026-10-05 by [the user directory specification](../users/SPEC.md).
+>
+> The `/admin/customers` page and `adminCustomers` operation described below are no longer canonical. Existing list and detail bookmarks redirect to `/admin/users` routes; the canonical UI and Staff-aware permissions are in [the user directory](../users/SPEC.md) and [Staff](../staff/SPEC.md) specifications.
 
 ## Goal and agreed scope
 

@@ -43,11 +43,11 @@ export function AccountProfile({ tone }: { tone: 'store' | 'admin' }) {
     defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
   })
   const alertClass =
-    tone === 'store' ? 'border-[#e5c9c0] bg-[#fff2ed] text-[#a14134]' : undefined
+    tone === 'store' ? 'border-destructive bg-destructive-muted text-destructive' : undefined
   const labelClass =
     tone === 'store'
-      ? 'text-xs font-bold uppercase tracking-[.14em] text-[#778073]'
-      : 'text-xs font-bold uppercase tracking-[.14em] text-slate-500'
+      ? 'text-xs font-bold uppercase tracking-[.14em] text-muted-foreground'
+      : 'text-xs font-bold uppercase tracking-[.14em] text-muted-foreground'
 
   async function saveName(fields: NameFields) {
     setNameError('')

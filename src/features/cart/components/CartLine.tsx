@@ -14,7 +14,7 @@ export function CartLine({
 }) {
   return (
     <div className="flex gap-5 py-7 first:pt-0 sm:gap-8">
-      <Link to={`/books/${item.id}`} className="w-24 shrink-0 bg-[#e6e2d9] p-2 sm:w-32 sm:p-3">
+      <Link to={`/books/${item.id}`} className="w-24 shrink-0 bg-cover-panel p-2 sm:w-32 sm:p-3">
         <BookCover id={item.id} title={item.title} author={item.author} />
       </Link>
       <div className="flex min-w-0 flex-1 flex-col">
@@ -25,16 +25,16 @@ export function CartLine({
         >
           {item.title}
         </Link>
-        <p className="mt-1 text-sm text-[#85877d]">{item.author}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{item.author}</p>
         <p className="mt-3 text-sm font-semibold">{money(item.priceCents)}</p>
         <div className="mt-auto flex items-end justify-between pt-5">
-          <div className="inline-flex items-center border border-[#cfcfc3]">
+          <div className="inline-flex items-center border border-control">
             <Button
               type="button"
               variant="ghost"
               aria-label={`Remove one ${item.title}`}
               onClick={() => update(item.id, item.quantity - 1)}
-              className="p-2 hover:bg-[#eeece6]"
+              className="p-2 hover:bg-muted"
             >
               <Minus size={14} />
             </Button>
@@ -45,7 +45,7 @@ export function CartLine({
               aria-label={`Add one ${item.title}`}
               disabled={item.quantity >= item.stock}
               onClick={() => update(item.id, item.quantity + 1)}
-              className="p-2 hover:bg-[#eeece6] disabled:opacity-30"
+              className="p-2 hover:bg-muted disabled:opacity-30"
             >
               <Plus size={14} />
             </Button>
@@ -55,7 +55,7 @@ export function CartLine({
             variant="ghost"
             aria-label={`Remove ${item.title} from bag`}
             onClick={() => update(item.id, 0)}
-            className="p-2 text-[#9b9f95] hover:text-[#a34c3b]"
+            className="p-2 text-muted-foreground hover:text-destructive"
           >
             <Trash2 size={17} />
           </Button>

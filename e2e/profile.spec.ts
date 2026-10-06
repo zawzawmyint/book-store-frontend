@@ -14,7 +14,7 @@ test('a customer updates their name from the profile page', async ({ page }) => 
   await page.getByLabel('Full name').fill('Ada Updated')
   await page.getByRole('button', { name: 'Save name' }).click()
   await expect(page.getByText('Name updated.', { exact: true })).toBeVisible()
-  await page.getByText('Account', { exact: true }).click()
+  await page.getByRole('button', { name: 'Account', exact: true }).click()
   await expect(page.getByText('Ada Updated', { exact: true })).toBeVisible()
   await page.keyboard.press('Escape')
   await page.getByLabel('New password', { exact: true }).fill('short')

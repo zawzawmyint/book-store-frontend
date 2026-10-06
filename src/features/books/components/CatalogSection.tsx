@@ -2,9 +2,10 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useQuery } from '@apollo/client/react'
 import { Search } from 'lucide-react'
+import { IconAction } from '../../../app/components/IconAction'
 import { useSearchParams } from 'react-router-dom'
 import { BookCard } from './BookCard'
-import { BOOKS_QUERY } from '../../../lib/graphql'
+import { BooksDocument } from '../../../generated/graphql'
 import { PAGE_SIZE } from '../catalog'
 import { Button } from '../../../app/components/ui/button'
 import { Input } from '../../../app/components/ui/input'
@@ -17,7 +18,7 @@ export function CatalogSection() {
   const search = params.get('search') || ''
   const page = Math.max(0, Number(params.get('page') || 0) || 0)
   const [draft, setDraft] = useState(search)
-  const { data, loading, error, refetch } = useQuery(BOOKS_QUERY, {
+  const { data, loading, error, refetch } = useQuery(BooksDocument, {
     variables: { search, limit: PAGE_SIZE, offset: page * PAGE_SIZE },
   })
   const books = data?.books.items || []
@@ -44,12 +45,12 @@ export function CatalogSection() {
             Stories to get lost in
           </h2>
         </div>
-        <p className="max-w-xs text-sm leading-6 text-[#7b7d74]">
+        <p className="max-w-xs text-sm leading-6 text-muted-foreground">
           A small shelf of timeless favorites, waiting to be discovered again.
         </p>
       </div>
       {/* Filter by genre */}
-      <div className="flex flex-col gap-5 border-y border-[#dedbd3] py-5 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-5 border-y border-border py-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by genre">
           {categories.map((category) => {
             const active = category === 'All books' ? !search : search === category
@@ -60,7 +61,7 @@ export function CatalogSection() {
                 onClick={() => chooseCategory(category)}
                 variant="ghost"
                 aria-pressed={active}
-                className={`rounded-full px-4 py-2 text-xs font-semibold transition-colors ${active ? 'bg-[#2e5b46] text-white hover:bg-[#2e5b46]' : 'bg-[#ebe9e2] text-[#677166] hover:bg-[#deded5]'}`}
+                className={`rounded-full px-4 py-2 text-xs font-semibold transition-colors ${active ? 'bg-primary text-primary-foreground hover:bg-primary' : 'bg-muted text-muted-foreground hover:bg-muted'}`}
               >
                 {category}
               </Button>
@@ -71,26 +72,21 @@ export function CatalogSection() {
         <form
           onSubmit={submit}
           role="search"
-          className="flex min-w-0 items-center gap-2 border-b border-[#acb4a8] pb-2 lg:w-[250px]"
+          className="flex min-w-0 items-center gap-2 border-b border-control pb-2 lg:w-[250px]"
         >
-          <Search size={18} className="shrink-0 text-[#748277]" />
           <Input
             aria-label="Search books"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder="Search title or author"
-            className="min-w-0 border-0 bg-transparent px-0 py-0 text-sm outline-none placeholder:text-[#a3a69e] focus:border-0 focus-visible:ring-0"
+            className="min-w-0 border-0 bg-transparent px-0 py-0 text-sm outline-none placeholder:text-muted-foreground focus:border-0 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-4"
           />
-          <Button
-            type="submit"
-            variant="ghost"
-            className="h-auto p-0 text-xs font-bold text-[#2e6249] hover:bg-transparent"
-          >
-            Go
-          </Button>
+          <IconAction label="Search books" type="submit" variant="ghost" className="text-primary">
+            <Search aria-hidden="true" />
+          </IconAction>
         </form>
       </div>
-      <div className="mb-8 mt-6 flex items-center justify-between text-xs text-[#8b8e85]">
+      <div className="mb-8 mt-6 flex items-center justify-between text-xs text-muted-foreground">
         <span>
           {loading
             ? 'Finding stories…'
@@ -101,7 +97,7 @@ export function CatalogSection() {
             type="button"
             onClick={() => chooseCategory('All books')}
             variant="ghost"
-            className="h-auto p-0 font-semibold text-[#31694e] hover:bg-transparent hover:underline"
+            className="h-auto p-0 font-semibold text-primary hover:bg-transparent hover:underline"
           >
             Clear search
           </Button>
@@ -109,7 +105,7 @@ export function CatalogSection() {
       </div>
       {/* Error */}
       {error && (
-        <Alert variant="destructive" className="rounded-sm p-5 text-[#a14134]">
+        <Alert variant="destructive" className="rounded-sm p-5 text-destructive">
           <AlertDescription>
             The shelves could not load.{' '}
             <Button
@@ -127,15 +123,17 @@ export function CatalogSection() {
       {loading && (
         <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 8 }, (_, i) => (
-            <Skeleton key={i} className="h-96 rounded-none bg-[#e6e3dc]" />
+            <Skeleton key={i} className="h-96 rounded-none bg-muted" />
           ))}
         </div>
       )}
       {!loading && !error && books.length === 0 && (
-        <Card className="rounded-sm border-0 bg-[#eeece5]">
+        <Card className="rounded-sm border-0 bg-muted">
           <CardContent className="px-6 py-20 text-center">
             <p className="font-serif text-3xl">No books on this shelf.</p>
-            <p className="mt-2 text-sm text-[#81857b]">Try another title, author, or genre.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Try another title, author, or genre.
+            </p>
           </CardContent>
         </Card>
       )}
@@ -161,7 +159,7 @@ export function CatalogSection() {
           >
             Previous
           </Button>
-          <span className="text-sm text-[#8b8e85]">Page {page + 1}</span>
+          <span className="text-sm text-muted-foreground">Page {page + 1}</span>
           <Button
             type="button"
             variant="ghost"

@@ -15,7 +15,7 @@ export function FormField({ id, label, error, ...inputProps }: FormFieldProps) {
         aria-describedby={error ? `${id}-error` : undefined}
       />
       {error && (
-        <p id={`${id}-error`} role="alert" className="mt-2 text-sm text-[#a14134]">
+        <p id={`${id}-error`} role="alert" className="mt-2 text-sm text-destructive">
           {error}
         </p>
       )}
