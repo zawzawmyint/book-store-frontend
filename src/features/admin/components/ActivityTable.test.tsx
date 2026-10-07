@@ -89,3 +89,32 @@ Object.defineProperty(globalThis, 'ResizeObserver', {
     disconnect() {}
   },
 })
+it('links audited workflow targets to order details and labels status changes', () => {
+  renderWithTooltip(
+    <MemoryRouter>
+      <ActivityTable
+        items={[
+          {
+            ...event,
+            action: 'ORDER_STATUS_CHANGED',
+            targetType: 'ORDER',
+            targetId: '17',
+            targetName: 'Order request #17',
+            changes: [{ field: 'ORDER_STATUS', before: 'SUBMITTED', after: 'ACCEPTED' }],
+            stockDelta: null,
+          },
+        ]}
+        total={1}
+        page={1}
+        onPageChange={() => {}}
+      />
+    </MemoryRouter>,
+  )
+  expect(screen.getByText('Order status changed')).toBeTruthy()
+  expect(screen.getByText('Order status')).toBeTruthy()
+  expect(screen.getByText('Previous: Submitted')).toBeTruthy()
+  expect(screen.getByText('New: Accepted')).toBeTruthy()
+  expect(screen.getByRole('link', { name: 'View order request' }).getAttribute('href')).toBe(
+    '/admin/orders/17',
+  )
+})

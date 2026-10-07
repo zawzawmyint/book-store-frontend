@@ -250,8 +250,10 @@ test('admin manages catalog, stock, archive/restore and saved order requests', a
   await page.screenshot({ path: 'test-results/admin-mobile.png', fullPage: true })
   await page.getByRole('button', { name: 'Admin menu', exact: true }).click()
   await page.getByRole('link', { name: 'Order requests', exact: true }).click()
-  const legacy = page.getByRole('row').filter({ hasText: 'legacy-e2e@example.com' })
-  await legacy.getByRole('link', { name: 'View request' }).click()
+  const saved = page
+    .getByRole('row')
+    .filter({ has: page.getByRole('cell', { name: '#7', exact: true }) })
+  await saved.getByRole('link', { name: 'View request' }).click()
   await page.getByRole('button', { name: 'Admin menu', exact: true }).click()
   await expect(
     page
@@ -260,10 +262,11 @@ test('admin manages catalog, stock, archive/restore and saved order requests', a
   ).toHaveAttribute('aria-current', 'page')
   await page.getByRole('button', { name: 'Close admin menu', exact: true }).click()
   await expect(page.getByRole('heading', { name: /Order request #/ })).toBeVisible()
-  await expect(page.getByText('Legacy guest request', { exact: true })).toBeVisible()
-  await expect(page.getByRole('listitem')).toContainText('1 × Legacy saved title')
-  await expect(page.getByText('$12.34 each', { exact: true })).toBeVisible()
-  await expect(page.getByRole('listitem')).toContainText('$12.34')
+  await expect(page.getByText('Legacy guest request', { exact: true })).toHaveCount(0)
+  const savedLine = page.getByRole('listitem').filter({ hasText: 'Saved request title' })
+  await expect(savedLine).toContainText('1 × Saved request title')
+  await expect(savedLine).toContainText('$12.34 each')
+  await expect(page.getByText('$12.34', { exact: true }).first()).toBeVisible()
   await page.screenshot({ path: 'test-results/admin-order.png', fullPage: true })
 })
 
@@ -400,28 +403,28 @@ test('revocation blocks the current session and removes private order content', 
   request,
 }) => {
   await signIn(page, 'revocable-e2e@example.com', '/admin/orders')
-  await expect(page.getByText('legacy-e2e@example.com')).toBeVisible()
+  await expect(page.getByRole('cell', { name: '#7', exact: true })).toBeVisible()
   expect((await request.post('http://localhost:4100/__test__/revoke-admin')).ok()).toBe(true)
   await page.evaluate(() => window.dispatchEvent(new Event('focus')))
   await expect(page.getByRole('heading', { name: 'Access denied' })).toBeVisible()
-  await expect(page.getByText('legacy-e2e@example.com')).toHaveCount(0)
+  await expect(page.getByRole('cell', { name: '#7', exact: true })).toHaveCount(0)
   await page.getByRole('button', { name: 'Account', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Sign out' }).click()
   await signIn(page, 'customer-e2e@example.com', '/admin/orders')
   await expect(page.getByRole('heading', { name: 'Access denied' })).toBeVisible()
-  await expect(page.getByText('legacy-e2e@example.com')).toHaveCount(0)
+  await expect(page.getByRole('cell', { name: '#7', exact: true })).toHaveCount(0)
 })
 
 test('expired admin sessions return to a usable sign-in form without private content', async ({
   page,
 }) => {
   await signIn(page, 'admin-e2e@example.com', '/admin/orders')
-  await expect(page.getByText('legacy-e2e@example.com')).toBeVisible()
+  await expect(page.getByRole('cell', { name: '#7', exact: true })).toBeVisible()
   await page.context().clearCookies()
   await page.evaluate(() => window.dispatchEvent(new Event('focus')))
   await expect(page).toHaveURL(/\/sign-in\?returnTo=/)
   await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
-  await expect(page.getByText('legacy-e2e@example.com')).toHaveCount(0)
+  await expect(page.getByRole('cell', { name: '#7', exact: true })).toHaveCount(0)
 })
 
 test('admin account menu opens the admin profile', async ({ page }) => {

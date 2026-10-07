@@ -14,10 +14,10 @@ Use Better Auth's React client to let customers create an account, sign in, and 
 
 ## Scope and routes
 
-- Add `/sign-up` with name, email, and password; `/sign-in` with email and password; and `/account/orders` for the signed-in customer's order requests.
+- Add `/sign-up` with name, email, and password; `/sign-in` with email and password; `/account/orders`; and owner-scoped `/account/orders/:id` for the signed-in customer's order requests.
 - Use `createAuthClient` from `better-auth/react` for sign-up, sign-in, sign-out, and `useSession` for session restoration. Install `better-auth` in this repository for the client. Do not run a second Better Auth server in the frontend.
 - Successful sign-up establishes a session immediately. Do not request email verification or show a verified-email claim. Defer verification, self-service password recovery, and other email flows, social login, and guest checkout. A signed-in person can change their own password from their profile. Admin UI, originally outside this account feature, is now delivered by [the admin feature](../admin/SPEC.md).
-- Keep `/`, `/books/:id`, and `/cart` public. Guard `/checkout`, `/account/orders`, and `/account/profile`; when signed out, redirect to `/sign-in` with an internal return path. After successful authentication, navigate to that path or `/`. Accept only internal `returnTo` paths.
+- Keep `/`, `/books/:id`, and `/cart` public. Guard `/checkout`, `/account/orders`, `/account/orders/:id`, and `/account/profile`; when signed out, redirect to `/sign-in` with an internal return path. After successful authentication, navigate to that path or `/`. Accept only internal `returnTo` paths.
 
 ## Customer experience
 
@@ -25,14 +25,14 @@ Use Better Auth's React client to let customers create an account, sign in, and 
 - Use existing shadcn/ui primitives and React Hook Form with local Zod schemas for auth forms. Provide accessible labels, field errors, server errors, and submission state. Keep the wording clear that accounts are required to submit requests and that the bookstore does not take payment.
 - The cart survives redirect to sign-in, page reload, and sign-out. Checkout shows the session name and email as read-only order contact details and submits only cart lines.
 - On order success, show the existing receipt and clear the cart. On authentication, validation, stock, or network failure, keep the cart and show the error. If the session expires during checkout, route to sign-in and preserve the cart.
-- `/account/orders` lists only the current customer's requests newest first, with ID, date, total, and line items. Provide loading, empty, error, and pagination states.
+- `/account/orders` lists only the current customer's requests newest first, with ID, date, status, total, line items, and detail links. `/account/orders/:id` renders saved request details and a customer-safe timeline; missing/non-owned IDs share a not-found state. Provide loading, empty, error, retry, and pagination states.
 - Signing out clears account-specific Apollo cache data and redirects to `/`; it does not erase the public cart.
 
 ## API integration and state ownership
 
 - Use relative `/api/auth` and `/graphql` browser URLs by default. Proxy both paths through Vite in development and through the same storefront origin in deployment. Make the Vite API target configurable so normal development uses port 4000 and Playwright's isolated API uses port 4100. If a direct cross-origin API URL is configured, include credentials and use only the backend's allowed origin.
 - **Breaking GraphQL change:** update `PlaceOrderInput` to `{ items: [OrderItemInput!]! }`, removing submitted name and email. Update `src/operations.graphql` and regenerate `src/generated/graphql.ts`; do not hand-edit generated types. Deploy with the matching backend change.
-- Add an operation for `myOrders(limit: 20, offset: 0)` returning `{ total, items { id, createdAt, totalCents, items { title, quantity, unitPriceCents } } }`. The server, not the client, determines whose orders are returned.
+- Add operations for `myOrders(limit: 20, offset: 0)` with status-bearing entries and `myOrder(id)` with customer-safe history. The server, not the client, determines whose orders are returned; customer history omits workspace actor attribution.
 - Better Auth's `useSession` owns frontend session state. Do not duplicate sessions in Zustand or persist credentials or session tokens in local storage.
 - Zustand continues to own cart items and actions. Preserve the existing `book-store-cart` key and raw array format; derive count and estimated total from items.
 - React Hook Form owns auth form state; Apollo owns catalog and account order query data. Clear account-specific cached data when the session ends so a later customer cannot see it.

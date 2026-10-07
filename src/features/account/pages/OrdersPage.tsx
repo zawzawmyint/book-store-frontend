@@ -1,8 +1,9 @@
+import { OrderStatusBadge } from '../../orders/OrderStatusBadge'
 import { useEffect, useState } from 'react'
 import { useApolloClient, useQuery } from '@apollo/client/react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MyOrdersDocument } from '../../../generated/graphql'
-import { money } from '../../../lib/format'
+import { money, serverDate } from '../../../lib/format'
 import { PageContainer } from '../../../app/components/PageContainer'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { Button } from '../../../app/components/ui/button'
@@ -82,9 +83,10 @@ export function OrdersPage() {
                   <div>
                     <h2 className="font-serif text-2xl">Order #{order.id}</h2>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {new Date(order.createdAt).toLocaleDateString()}
+                      {serverDate(order.createdAt).toLocaleDateString()}
                     </p>
                   </div>
+                  <OrderStatusBadge status={order.status} />
                   <strong>{money(order.totalCents)}</strong>
                 </CardHeader>
                 <CardContent>
@@ -99,6 +101,9 @@ export function OrdersPage() {
                       </li>
                     ))}
                   </ul>
+                  <Button asChild variant="ghost" className="mt-4">
+                    <Link to={`/account/orders/${order.id}`}>View details</Link>
+                  </Button>
                 </CardContent>
               </Card>
             ))}

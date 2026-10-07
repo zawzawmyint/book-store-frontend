@@ -1,3 +1,4 @@
+import { OrderStatusBadge } from '../../orders/OrderStatusBadge'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { PageContainer } from '../../../app/components/PageContainer'
@@ -24,6 +25,12 @@ export function OrderReceiptView({
       <p className="mt-5 text-sm leading-6 text-muted-foreground">
         Your order request is saved. No payment was collected.
       </p>
+      <div className="mt-5">
+        <OrderStatusBadge status={receipt.status} />
+      </div>
+      <Button asChild className="mt-5">
+        <Link to={`/account/orders/${receipt.id}`}>View order details</Link>
+      </Button>
       <Card className="mx-auto mt-9 max-w-md border-0 bg-muted text-left shadow-none">
         <CardContent className="p-7">
           <div className="flex justify-between pb-4 text-sm">

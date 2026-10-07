@@ -81,17 +81,17 @@ Give store administrators an `/admin` area in the existing React application for
 - Refetch affected admin list/detail data and public catalog/detail/genres after successful catalog writes; invalidate stale public book detail data when archive returns null. Do not optimistically change inventory or order totals.
 - Existing cart lines remain readable after catalog edits/archive. Checkout failures caused by archived or unavailable books retain the cart and show a clear message so the customer can remove the affected item. Cart prices remain estimates; the backend calculates actual totals.
 
-## Phase 3 — order viewing
+## Phase 3 — order viewing (superseded where noted)
 
-- `/admin/orders`: paginated `adminOrders` listing, at most five rows per page, newest first using the backend's timestamp and ID ordering. Show request ID, date, captured customer name/email, total, and a View link. Include legacy guest requests without implying account ownership.
-- `/admin/orders/:id`: `adminOrder` detail with request ID, date, captured contact details, total, and line-item titles, quantities, and unit prices. Compute displayed line subtotals from saved unit prices and quantities; show the stored order total as authoritative.
-- Label these records as **order requests**. Do not imply payment, shipment, or fulfillment, and do not show processing actions or invented status badges.
+- `/admin/orders`: paginated `adminOrders` listing, at most five rows per page, newest first using the backend's timestamp and ID ordering. The implemented [order workflow](../order-workflow/SPEC.md) adds a URL-backed status filter and status column.
+- `/admin/orders/:id`: `adminOrder` detail retains captured contact/price snapshots and adds the attributed timeline and confirmed allowed processing actions defined by the order workflow.
+- Label these records as **order requests**. Do not imply payment, shipment, or fulfillment. The order workflow supplies real status badges and transitions.
 - Provide loading, empty, error/retry, missing-order, and pagination states. Preserve the listing page when returning from a detail view. Render customer-provided strings as text, never HTML.
 - Query contact and order data only inside the authorized admin route. Never persist admin response data in local storage or the cart store.
 
 ## API integration and ownership
 
-- Add typed operations for `viewer`, `adminBooks`, `adminBook`, `createBook`, `updateBook`, `adjustBookStock`, `setBookArchived`, `adminOrders`, and `adminOrder` to `src/operations.graphql`. Regenerate `src/generated/graphql.ts` against the matching backend; do not hand-edit generated code.
+- Add typed operations for `viewer`, `adminBooks`, `adminBook`, `createBook`, `updateBook`, `adjustBookStock`, `setBookArchived`, `adminOrders`, and `adminOrder` to `src/operations.graphql`. The implemented order workflow extends these with status fields/filter, `setOrderStatus`, and attributed history. Regenerate `src/generated/graphql.ts` against the matching backend; do not hand-edit generated code.
 - Keep same-origin `/graphql` and `/api/auth` proxies. No separate API URL or session token storage is required.
 - `src/features/admin/` owns guards, layout, pages, dialogs, and local form schemas. Existing `src/app/App.tsx`, `src/app/Layout.tsx`, and `src/app/SessionBoundary.tsx` integrate routes, navigation, and privacy boundaries. Shared primitives remain in `src/app/components/ui/`.
 - Apollo owns viewer, book, and order data; Better Auth owns session identity; local form state owns unsaved edits. Zustand continues to own only the customer cart and its existing storage format.
@@ -123,7 +123,7 @@ Give store administrators an `/admin` area in the existing React application for
 - [x] Admins can search/filter/page books, create/edit metadata, adjust stock, and archive/restore with the specified validation and confirmation behavior.
 - [x] Price input converts exactly to cents; metadata edits never submit stock; inventory errors retain input and display refreshed stock. Ambiguous mutation failures do not trigger automatic retries.
 - [x] Successful writes refresh affected admin/public data. Archived books disappear from browsing; stale-cart checkout fails visibly and preserves the cart.
-- [x] Admins can list and view all order requests, including legacy guest history, with saved contact/price snapshots and no invented payment or processing state.
+- [x] Admins can list and view all order requests with saved contact/price snapshots. The separate order workflow adds real status processing without invented payment or shipping state.
 - [x] Forms, tables, dialogs, navigation, and error states work with a keyboard and at narrow viewport widths.
 - [x] Before implementation, add focused failing component/unit tests for access states, exact price parsing, form validation, mutation failures, and cache privacy. Add Playwright journeys for guest/customer rejection, admin book/inventory/archive workflows, revoked access, and order viewing.
 - [x] Playwright provisions admin membership only in its isolated test API/database fixture. It never modifies development or production permissions or data, and no test-only public promotion endpoint ships.
@@ -131,7 +131,7 @@ Give store administrators an `/admin` area in the existing React application for
 
 ## Delivered decisions
 
-The delivered design uses one application with a separate admin layout, existing login, server-reported roles, a fixed low-stock threshold of 5, atomic stock adjustments, and read-only order administration. Both feature specs describe delivered behavior.
+The delivered design uses one application with a separate admin layout, existing login, server-reported roles, a fixed low-stock threshold of 5, and atomic stock adjustments. The separate implemented order workflow supersedes read-only order administration. Both feature specs describe delivered behavior.
 
 ## Verification evidence
 

@@ -76,7 +76,7 @@ export function AdminAccessProvider({ children }: { children: React.ReactNode })
     if (loading || !data) return
     if (data.viewer === null && session?.user)
       void refreshSession({ query: { disableCookieCache: true } })
-    if (previousRole.current === 'ADMIN' && data.viewer?.role !== 'ADMIN') void client.clearStore()
+    if (previousRole.current && previousRole.current !== data.viewer?.role) void client.clearStore()
     previousRole.current = data.viewer?.role
   }, [data, loading, session?.user, client, refreshSession])
   return (

@@ -1,3 +1,4 @@
+import { OrderPage as CustomerOrderPage } from '../features/account/pages/OrderPage'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './Layout'
 import { HomePage } from '../features/books/pages/HomePage'
@@ -11,7 +12,7 @@ import { OrdersPage } from '../features/account/pages/OrdersPage'
 import { ProfilePage } from '../features/account/pages/ProfilePage'
 import { SessionBoundary } from './SessionBoundary'
 import { AdminAccessProvider } from '../features/admin/AdminAccessProvider'
-import { RequireAdmin } from '../features/admin/RequireAdmin'
+import { RequireWorkspaceAccess } from '../features/admin/RequireWorkspaceAccess'
 import { AdminLayout } from '../features/admin/AdminLayout'
 import { BooksPage as AdminBooksPage } from '../features/admin/pages/BooksPage'
 import { BookFormPage } from '../features/admin/pages/BookFormPage'
@@ -41,6 +42,7 @@ export default function App() {
                 <Route element={<RequireSession />}>
                   <Route path="/checkout" element={<CheckoutPage />} />
                   <Route path="/account/orders" element={<OrdersPage />} />
+                  <Route path="/account/orders/:id" element={<CustomerOrderPage />} />
                   <Route path="/account/profile" element={<ProfilePage />} />
                 </Route>
                 <Route
@@ -52,7 +54,7 @@ export default function App() {
                   }
                 />
               </Route>
-              <Route element={<RequireAdmin />}>
+              <Route element={<RequireWorkspaceAccess />}>
                 <Route path="/admin" element={<AdminLayout />}>
                   <Route index element={<Navigate to="books" replace />} />
                   <Route path="books" element={<AdminBooksPage />} />
@@ -60,7 +62,7 @@ export default function App() {
                   <Route path="books/:id/edit" element={<BookFormPage />} />
                   <Route path="orders" element={<AdminOrdersPage />} />
                   <Route path="orders/:id" element={<OrderPage />} />
-                  <Route element={<RequireAdmin adminOnly />}>
+                  <Route element={<RequireWorkspaceAccess adminOnly />}>
                     <Route path="activity" element={<ActivityPage />} />
                     <Route path="books/:id/history" element={<BookHistoryPage />} />
                     <Route path="users" element={<UsersPage />} />

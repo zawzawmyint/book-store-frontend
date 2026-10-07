@@ -25,7 +25,7 @@ function AdminAccessScreen({ children }: { children: ReactNode }) {
   )
 }
 
-export function RequireAdmin({ adminOnly = false }: { adminOnly?: boolean }) {
+export function RequireWorkspaceAccess({ adminOnly = false }: { adminOnly?: boolean }) {
   const { data: session, isPending } = authClient.useSession()
   const location = useLocation()
   const access = useAdminAccess()

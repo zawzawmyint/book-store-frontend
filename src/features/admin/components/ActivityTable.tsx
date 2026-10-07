@@ -56,8 +56,18 @@ export function ActivityTable({
             <TableCell>
               <span className="break-words">{event.targetName}</span>
               <p className="text-xs text-muted-foreground">
-                {event.targetType === 'BOOK' ? 'Book' : 'User'} #{event.targetId}
+                {event.targetType === 'BOOK'
+                  ? 'Book'
+                  : event.targetType === 'ORDER'
+                    ? 'Order request'
+                    : 'User'}{' '}
+                #{event.targetId}
               </p>
+              {event.targetType === 'ORDER' && validBookId(event.targetId) && (
+                <Link className="text-primary underline" to={`/admin/orders/${event.targetId}`}>
+                  View order request
+                </Link>
+              )}
               {!bookHistory && event.targetType === 'BOOK' && validBookId(event.targetId) && (
                 <IconAction
                   asChild

@@ -8,7 +8,7 @@ import { ViewerDocument } from '../../generated/graphql'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { AdminAccessProvider } from './AdminAccessProvider'
 import { AccessContext, useAdminAccess } from './admin-access'
-import { RequireAdmin } from './RequireAdmin'
+import { RequireWorkspaceAccess } from './RequireWorkspaceAccess'
 import userEvent from '@testing-library/user-event'
 import { gql, InMemoryCache } from '@apollo/client'
 
@@ -27,7 +27,7 @@ it('lets staff enter the workspace but rejects user-management routes', async ()
       <AccessContext.Provider value={access}>
         <MemoryRouter>
           <Routes>
-            <Route element={<RequireAdmin adminOnly={adminOnly} />}>
+            <Route element={<RequireWorkspaceAccess adminOnly={adminOnly} />}>
               <Route path="/" element={<p>Permitted workspace</p>} />
             </Route>
           </Routes>
@@ -138,7 +138,7 @@ it('offers a retry when role revalidation fails after a forbidden action', async
       <MemoryRouter>
         <AdminAccessProvider>
           <Routes>
-            <Route element={<RequireAdmin />}>
+            <Route element={<RequireWorkspaceAccess />}>
               <Route path="/" element={<PermissionProbe />} />
             </Route>
           </Routes>
@@ -281,7 +281,7 @@ it('preserves unsaved input during same-account access revalidation and hides it
       <AccessContext.Provider value={access}>
         <MemoryRouter initialEntries={['/admin']}>
           <Routes>
-            <Route element={<RequireAdmin />}>
+            <Route element={<RequireWorkspaceAccess />}>
               <Route
                 path="/admin"
                 element={<input aria-label="Draft book title" defaultValue="Draft" />}
@@ -338,4 +338,42 @@ Object.defineProperty(globalThis, 'ResizeObserver', {
     unobserve() {}
     disconnect() {}
   },
+})
+it('clears private order data when staff access is revoked during revalidation', async () => {
+  const cache = new InMemoryCache()
+  cache.writeFragment({
+    id: 'AdminOrder:private',
+    fragment: gql`
+      fragment PrivateOrder on AdminOrder {
+        id
+        email
+      }
+    `,
+    data: { __typename: 'AdminOrder', id: 'private', email: 'reader@example.com' },
+  })
+  renderWithTooltip(
+    <MockedProvider
+      cache={cache}
+      mocks={[
+        {
+          request: { query: ViewerDocument },
+          result: { data: { viewer: { id: 'customer', role: 'STAFF' } } },
+        },
+        {
+          request: { query: ViewerDocument },
+          result: { data: { viewer: { id: 'customer', role: 'CUSTOMER' } } },
+        },
+      ]}
+    >
+      <MemoryRouter>
+        <AdminAccessProvider>
+          <PermissionProbe />
+        </AdminAccessProvider>
+      </MemoryRouter>
+    </MockedProvider>,
+  )
+  await screen.findByText('Resolved role: STAFF')
+  window.dispatchEvent(new Event('focus'))
+  await screen.findByText('Resolved role: CUSTOMER')
+  expect(cache.extract()['AdminOrder:private']).toBeUndefined()
 })

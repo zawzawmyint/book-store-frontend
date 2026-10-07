@@ -1,6 +1,6 @@
 # The Quiet Shelf storefront — order workflow
 
-> **Status:** Proposed. **Date:** 2026-10-07. No UI or API changes have been implemented.
+> **Status:** Implemented. **Date:** 2026-10-07. The paired backend schema and workflow UI are delivered.
 
 ## Goal and scope
 
@@ -93,12 +93,12 @@ wipe on normal startup; the database reset is a development setup action.
 
 ## Components and integration
 
-Existing files affected include `src/app/App.tsx`,
+Implemented files include `src/app/App.tsx`,
 `src/features/account/pages/OrdersPage.tsx`,
 `src/features/checkout/components/OrderReceiptView.tsx`,
 `src/features/admin/pages/OrdersPage.tsx`, `src/features/admin/pages/OrderPage.tsx`,
 `src/features/admin/admin-access.ts`, and Activity presentation/filter consumers.
-Proposed new customer detail component: `src/features/account/pages/OrderPage.tsx`.
+The customer detail component is `src/features/account/pages/OrderPage.tsx`.
 Keep feature-specific dialogs/timeline rendering in their feature; share a status
 label/presentation helper only where customer/workspace views actually reuse it.
 
@@ -111,32 +111,33 @@ No new frontend dependency, credential handling, or browser storage is required.
 
 ## Acceptance criteria and validation
 
-- [ ] Customer placement shows Submitted and opens an owner-scoped detail page.
-- [ ] Staff accepts/completes/cancels allowed requests; customer progress updates
+- [x] Customer placement shows Submitted and opens an owner-scoped detail page.
+- [x] Staff accepts/completes/cancels allowed requests; customer progress updates
       when detail is refreshed or revisited. Real-time push/polling is out of scope.
-- [ ] Admin can perform the same actions and inspect their Activity records.
-- [ ] Cancel reason is visible to the owner; stock restores once and history persists.
-- [ ] Status filtering, counts, pagination, and return navigation remain consistent.
-- [ ] Freshly reseeded accounts see empty order lists and can place new workflow
+- [x] Admin can perform the same actions and inspect their Activity records.
+- [x] Cancel reason is visible to the owner; stock restores once and history persists.
+- [x] Status filtering, counts, pagination, and return navigation remain consistent.
+- [x] Freshly reseeded accounts see empty order lists and can place new workflow
       requests; no legacy labels, filters, or null-status branches remain.
-- [ ] Invalid transitions, conflict, uncertain network outcomes, and role/session
+- [x] Invalid transitions, conflict, uncertain network outcomes, and role/session
       loss do not show a false success or automatically replay an action.
-- [ ] Cross-account and direct URL access do not expose private orders or history.
-- [ ] Keyboard/dialog focus, mobile layout, Light/Dark, loading, empty, and retry
+- [x] Cross-account and direct URL access do not expose private orders or history.
+- [x] Keyboard/dialog focus, mobile layout, Light/Dark, loading, empty, and retry
       states remain usable; no unsanitized HTML rendering of cancellation reasons.
 
-Add focused component tests for controls/filter/validation/conflict handling and
-Playwright journeys for all three roles, Submitted→Accepted→Completed,
+Focused component tests cover controls, validation, conflicts, refetch handling,
+safe customer history, filters, and session/role boundaries. The isolated Playwright
+suite covers all three roles, Submitted→Accepted→Completed,
 Submitted/Accepted→Cancelled, repeated cancellation, saved-price preservation,
-archived-book restoration, fresh-data setup, direct access denial, and session loss.
-Use the isolated in-memory API, never the development database. Run frontend
-tests/lint/build/codegen/full browser suite alongside backend verification.
+archived-book restoration, fresh-data setup, direct access denial, session loss,
+mobile, keyboard focus, and Light/Dark appearance. It never writes development data.
 
-## Release and review
+## Delivery and verification
 
-Coordinate the explicit local database reset, backend migration, and frontend
-deployment before enabling processing. Existing data preservation is out of scope.
-Preserve the current implemented specs until delivery; then reconcile root,
-authentication, Staff, and Activity documentation and mark this proposal implemented
-only after acceptance checks pass. Use the backend's database rollback procedure.
-The local reset policy is agreed; review the paired contracts before implementation.
+The explicit local development reset produced twelve sample books, the three demo
+accounts, and no old orders. Ordinary startup and sign-out do not clear browser
+storage. Backend and frontend code generation, backend tests (102), frontend tests
+(89), lint, and production builds passed. The full isolated Playwright suite passed
+32 journeys, followed by two focused workflow visual/spacing checks. Existing-data
+preservation remains out of scope; use the backend migration procedure for any
+environment that needs the fresh-data guard explained in the paired specification.

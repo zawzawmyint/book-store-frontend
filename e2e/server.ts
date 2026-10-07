@@ -5,6 +5,7 @@ import { createAuth } from '../../backend/src/auth.js'
 import { createAdminRepository } from '../../backend/src/modules/admin/admin.repository.js'
 import { operatorActor } from '../../backend/src/modules/activity/activity.types.js'
 import { seedDemoAccounts } from '../../backend/src/database/demo-seed.js'
+import { createOrderRepository } from '../../backend/src/modules/orders/order.repository.js'
 
 // Browser tests get a fresh catalog without writing a development database file.
 const db = createDatabase(':memory:')
@@ -40,20 +41,25 @@ for (let index = 1; index <= 3; index += 1) {
     },
   })
 }
+const orderRepository = createOrderRepository(db)
+const fixtureCustomer = { id: adminId, name: 'Test Reader', email: 'admin-e2e@example.com' }
 for (let index = 1; index <= 6; index++) {
-  db.prepare('INSERT INTO orders (customer_name, email, total_cents) VALUES (?, ?, 0)').run(
-    `Pagination Reader ${index}`,
-    `pagination-${index}@example.com`,
-  )
+  orderRepository.saveOrder(fixtureCustomer, [{ bookId: '2', quantity: 1 }])
 }
-const legacyOrder = db
-  .prepare(
-    "INSERT INTO orders (customer_name, email, total_cents) VALUES ('Legacy Reader', 'legacy-e2e@example.com', 1234)",
-  )
-  .run()
-db.prepare(
-  "INSERT INTO order_items (order_id, book_id, title, quantity, unit_price_cents) VALUES (?, 1, 'Legacy saved title', 1, 1234)",
-).run(legacyOrder.lastInsertRowid)
+// Save a genuine snapshot, then change the catalog metadata without rewriting it.
+const snapshotBook = db.prepare('SELECT title, price_cents FROM books WHERE id = 12').get() as {
+  title: string
+  price_cents: number
+}
+db.prepare('UPDATE books SET title = ?, price_cents = ? WHERE id = 12').run(
+  'Saved request title',
+  1234,
+)
+orderRepository.saveOrder(fixtureCustomer, [{ bookId: '12', quantity: 1 }])
+db.prepare('UPDATE books SET title = ?, price_cents = ? WHERE id = 12').run(
+  snapshotBook.title,
+  snapshotBook.price_cents,
+)
 const app = await createApp(db, options)
 app.post('/__test__/seed-demo', async (_req, res) => {
   await seedDemoAccounts(db, options, 'test')

@@ -12,7 +12,7 @@ The page does not create accounts, edit names or emails, or reset passwords. A c
 
 ## Current system and design choice
 
-- Admin routes already use `AdminLayout`, `RequireAdmin`, `AdminPageHeader`, `AdminPageTable`, and `AdminFilterToolbar`. Books and order requests request five rows per page and keep filters in the URL.
+- Admin routes already use `AdminLayout`, `RequireWorkspaceAccess`, `AdminPageHeader`, `AdminPageTable`, and `AdminFilterToolbar`. Books and order requests request five rows per page and keep filters in the URL.
 - Access still comes from `viewer.role`. Customers never mount admin data queries. The operator command in [the admin spec](../../../backend/specs/admin/SPEC.md) remains available, and this page performs the same grant and revoke for a signed-in admin.
 - Add the directory inside this application. Registered accounts are the only people listed; order-request contact snapshots stay on `/admin/orders`. Archive confirmation is the pattern for the membership dialog: explain the effect, require confirmation, and restore focus to the row action on cancel.
 
