@@ -1,3 +1,4 @@
+import { PaymentStatus } from '../../orders/PaymentStatus'
 import { authClient } from '../../../lib/auth-client'
 import { useEffect } from 'react'
 import { useApolloClient, useQuery } from '@apollo/client/react'
@@ -73,6 +74,7 @@ export function OrderPage() {
               {serverDate(order.createdAt).toLocaleString()}
             </time>
             <OrderStatusBadge status={order.status} />
+            <PaymentStatus payment={order.payment} />
           </CardHeader>
           <CardContent>
             <ul className="space-y-4">
@@ -94,8 +96,20 @@ export function OrderPage() {
               <span>{money(order.totalCents)}</span>
             </p>
             <p className="mt-4 text-sm">
-              This is an order request. No payment or shipping is recorded.
+              Completed means handling finished. Delivery is not integrated.
             </p>
+            {order.payment.required &&
+              order.payment.status === 'PENDING' &&
+              order.status === 'SUBMITTED' && (
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Button asChild>
+                    <Link to={`/checkout/return/${order.id}`}>Resume payment</Link>
+                  </Button>
+                  <Button asChild variant="ghost">
+                    <Link to={`/checkout/return/${order.id}`}>Check payment status</Link>
+                  </Button>
+                </div>
+              )}
             <OrderTimeline history={order.history} />
           </CardContent>
         </Card>

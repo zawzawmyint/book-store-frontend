@@ -106,7 +106,7 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
       <p className="eyebrow mb-3">Your account</p>
       <h1 className="font-serif text-5xl">{isSignUp ? 'Create an account' : 'Sign in'}</h1>
       <p className="mt-4 text-sm leading-6 text-muted-foreground">
-        Sign in to submit an order request. No payment is collected.
+        Sign in to continue to Stripe test payment.
       </p>
       <form noValidate onSubmit={handleSubmit(submit)} className="mt-9 space-y-5">
         {isSignUp && (

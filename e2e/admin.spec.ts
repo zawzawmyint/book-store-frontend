@@ -299,7 +299,7 @@ test('archived books in an existing cart fail checkout while keeping the cart', 
     if ((await response.json()).errors) throw new Error('Archive failed')
   }, id)
   await page.goto('/checkout')
-  await page.getByRole('button', { name: 'Submit order request' }).click()
+  await page.getByRole('button', { name: 'Continue to payment' }).click()
   await expect(page.getByRole('alert')).toContainText('unavailable')
   await page.goto('/cart')
   await expect(page.getByRole('link', { name: 'Archive checkout book', exact: true })).toBeVisible()

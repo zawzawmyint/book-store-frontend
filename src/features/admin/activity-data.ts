@@ -1,8 +1,10 @@
+import { paymentLabels } from '../orders/payment-status'
 import { orderStatusLabels } from '../orders/order-status'
 import type { AdminActivityQueryVariables } from '../../generated/graphql'
 import { money } from '../../lib/format'
 
 export const activityActions = {
+  ORDER_PAYMENT_CHANGED: 'Payment status changed',
   ORDER_STATUS_CHANGED: 'Order status changed',
   BOOK_CREATED: 'Book created',
   BOOK_UPDATED: 'Book updated',
@@ -13,6 +15,7 @@ export const activityActions = {
   USER_PASSWORD_RESET: 'User password reset',
 } as const
 export const activityFields = {
+  ORDER_PAYMENT_STATUS: 'Payment status',
   ORDER_STATUS: 'Order status',
   TITLE: 'Title',
   AUTHOR: 'Author',
@@ -90,6 +93,8 @@ export function activityValue(field: string, value: string | null | undefined) {
     return money(Number(value))
   if (field === 'ORDER_STATUS' && Object.hasOwn(orderStatusLabels, value))
     return orderStatusLabels[value as keyof typeof orderStatusLabels]
+  if (field === 'ORDER_PAYMENT_STATUS' && Object.hasOwn(paymentLabels, value))
+    return paymentLabels[value as keyof typeof paymentLabels]
   if (field === 'ROLE' && ['ADMIN', 'STAFF', 'CUSTOMER'].includes(value))
     return value[0] + value.slice(1).toLowerCase()
   if (field === 'ARCHIVED' && ['true', 'false'].includes(value))

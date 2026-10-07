@@ -3,7 +3,8 @@ import type { MyOrderQuery } from '../../generated/graphql'
 import { orderStatusLabels } from './order-status'
 type Event = NonNullable<MyOrderQuery['myOrder']>['history'][number] & {
   actorName?: string
-  actorRole?: string
+  actorRole?: string | null
+  actorType?: string
 }
 export function OrderTimeline({
   history,
@@ -26,9 +27,7 @@ export function OrderTimeline({
               {serverDate(event.createdAt).toLocaleString()}
             </time>
             {event.toStatus === 'COMPLETED' && (
-              <p className="text-sm">
-                Request handling finished. No payment or delivery is recorded.
-              </p>
+              <p className="text-sm">Request handling finished. Delivery is not integrated.</p>
             )}
             {event.cancellationReason && (
               <p className="mt-2 whitespace-pre-wrap break-words">
@@ -37,7 +36,9 @@ export function OrderTimeline({
             )}
             {attributed && (
               <p className="text-sm">
-                {event.actorName} · Recorded role: {event.actorRole?.[0]}
+                {event.actorType === 'SYSTEM' ? 'System' : event.actorName}
+                {event.actorRole && ' · Recorded role: '}
+                {event.actorRole?.[0]}
                 {event.actorRole?.slice(1).toLowerCase()}
               </p>
             )}

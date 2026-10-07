@@ -1,5 +1,8 @@
 # The Quiet Shelf storefront specification
 
+> The [implemented Stripe checkout specification](specs/stripe-checkout/SPEC.md) covers
+> hosted test payment, payment-aware order processing, expiry, and refund feedback.
+
 > This document describes implemented behavior. See [the authentication feature spec](specs/authentication/SPEC.md) for the detailed account contract and [the demo-login feature spec](specs/demo-login/SPEC.md) for optional local demo controls.
 
 > The implemented Staff permission model is defined in [the staff roles specification](specs/staff/SPEC.md), with user-directory compatibility details in [the user directory specification](specs/users/SPEC.md). Customer-named admin URLs remain redirects for existing bookmarks.
@@ -15,7 +18,9 @@ The implemented [appearance specification](specs/appearance/SPEC.md) defines the
 
 The implemented [activity history specification](specs/activity/SPEC.md) defines an Admin-only Activity page and book history. It requires the coordinated backend migration and deployment.
 
-Provide a browser storefront for finding books, maintaining a cart, and submitting an authenticated order request to the separate GraphQL API. The checkout does not collect payment or shipping details.
+Provide a browser storefront for finding books, maintaining a cart, and beginning an
+authenticated Stripe hosted Checkout payment through the separate GraphQL API. Checkout
+does not collect shipping details, and delivery is not integrated.
 
 ## Routes and behavior
 
@@ -26,7 +31,11 @@ Provide a browser storefront for finding books, maintaining a cart, and submitti
 - `/cart` shows cart lines, quantity controls, removal, and a client-side estimated total. Zustand manages shared cart state and persists items in browser local storage using the existing `book-store-cart` key and raw JSON array format. Count and estimated total are derived from items. Previously saved carts remain readable, invalid entries are filtered out, and storage failures leave in-memory cart interactions usable.
 - `/sign-up` and `/sign-in` create or access a Better Auth account. Authentication is required for `/checkout`, `/account/orders`, `/account/orders/:id`, and `/account/profile`; a guarded route sends guests to sign-in with an internal return path.
 - When Vite is in development, `VITE_DEMO_LOGIN=true`, and the browser uses a loopback host, `/sign-in` also offers the three local demo accounts seeded by the backend. Their normal Better Auth sign-in destinations are `/` for Customer and `/admin/books` for Staff or Admin; production, non-loopback, sign-up, and signed-in states show no demo controls.
-- `/checkout` displays account contact details and sends only book IDs and quantities through `placeOrder`. On success it shows the returned order ID, Submitted status, and server-calculated total, links to the owner-scoped detail, and clears the cart. On failure it keeps the cart.
+- `/checkout` displays account contact details and sends only book IDs, quantities, and
+  a generated request key through `createCheckout`. It redirects only to the returned
+  Stripe hosted test URL. A confirmed paid return clears only an unchanged submitted
+  cart; unavailable or failed attempts retain it. `/checkout/return/:orderId` refreshes
+  backend payment state and offers bounded confirmation polling/resume where allowed.
 - `/account/orders` lists only the signed-in customer's order requests with pagination, status badges, and detail links. `/account/orders/:id` shows that owner's saved request and safe oldest-first status timeline; a missing or non-owned request has the same not-found state.
 - `/account/profile` shows the signed-in email and join date as read-only text. The same person can save their display name and change their password. The storefront Account menu links to Profile before Orders. See [the account profile spec](specs/profile/SPEC.md).
 - The storefront header and workspace headers, including workspace access screens, expose an icon-only, keyboard-accessible Light/Dark switch. Its sun/moon icon shows the current mode; its Dark mode switch semantics and tooltip state describe the next action. It uses the `book-store-theme` browser-storage key, accepts only `light` and `dark`, and falls back to Dark when the key is missing, invalid, removed, or unavailable. Preferences synchronize across tabs; device appearance is not used.
@@ -39,7 +48,11 @@ Provide a browser storefront for finding books, maintaining a cart, and submitti
 - Admin routes render outside the storefront shell, with neutral surfaces, compact tables/forms, and sans-serif headings. A full-height dark forest-green grouped sidebar stays visible at desktop widths (1024px and above); smaller screens use the same navigation in an accessible Admin menu Sheet. Its brighter brand icon, muted group labels, and rounded active link with a mint accent maintain visible navigation states. The menu closes after navigation or Escape and restores focus, and nested routes retain active navigation. Back to store is in the sidebar footer. A compact sticky header provides account/sign-out access; access-denied and retry screens retain an account menu.
 - `/admin/books`, `/admin/books/new`, and `/admin/books/:id/edit` support catalog search/filter/pagination, creation, metadata editing, and atomic stock adjustments for Staff and Admin. Only Admin sees or can use archive/restore confirmations. `AdminFilterToolbar` trims submitted searches, accepts page-specific filters, and leaves Books responsible for URL filters and pagination reset. `BookRowActions` owns row links, role-specific History and More-actions controls, and archive-menu focus handling; `ArchiveBookDialog` owns archive confirmation, busy/error feedback, refresh, and focus return. `StockDialog` remains the stock interaction boundary. Catalog rows use compact storefront-palette thumbnails; Edit and Adjust stock stay direct actions, while Archive/Restore is in a per-row More actions menu for Admin.
 - Admin list pages share `AdminPageTable` for table structure, empty states, visible item ranges, totals, and pagination, with a shared page size of five used for API limits, offsets, and page counts. `AdminPageHeader` provides reusable titles, descriptions, and actions on list and book-form pages.
-- `/admin/orders` and `/admin/orders/:id` show all saved order requests and captured contact/price snapshots to Staff and Admin. The list has URL-backed status filtering and five-item pagination. Both roles can confirm only allowed transitions; cancellation requires a customer-visible reason, restores saved stock exactly once, and never implies payment or shipping. Workspace detail shows attributed status history; owner detail does not.
+- `/admin/orders` and `/admin/orders/:id` show saved orders, captured contact/price
+  snapshots, and payment state to Staff and Admin. The list has URL-backed status
+  filtering and five-item pagination. Payment-required orders can be accepted/completed
+  only after verified payment; paid cancellation restores stock once and queues a full
+  refund. Workspace detail shows attributed status history; owner detail does not.
 - `/admin/users` is Admin-only and lists registered accounts in pages of five, with search, an All/Customers/Staff/Admin filter, copyable user IDs, and confirmed role changes. Each row opens `/admin/users/:id`. See [the staff roles specification](specs/staff/SPEC.md).
 - `/admin/users/:id` is Admin-only, shows one account, and lets an admin set another person's password. The signed-in admin's own page links to `/admin/profile`. `/admin/customers` and `/admin/customers/:id` replace browser history while redirecting to the equivalent user route, preserving the ID, query string, and hash. A recognized internal legacy list return location is normalized to `/admin/users`; other return state is not used.
 - `/admin/activity` is Admin-only and lists recorded catalog, account, and order-status changes newest first. It has URL-backed actor, action, local-date, and price-change filters, with five-item pagination. `/admin/books/:id/history` is Admin-only and presents that book's retained history, including cancellation stock-restoration events and archived or deleted-target snapshots. Only Admin sees Activity navigation and book-row History links; denied direct routes do not mount activity queries. History begins after the migrated backend is running and never backfills earlier changes.
@@ -49,11 +62,14 @@ Provide a browser storefront for finding books, maintaining a cart, and submitti
 
 ## GraphQL integration
 
-- `src/operations.graphql` defines catalog, order placement/receipt, owner detail/history, workspace order, status-transition, and activity operations; generated types are committed from codegen.
+- `src/operations.graphql` defines catalog, checkout creation/resume/refresh, receipt,
+  owner detail/history, workspace order/refund retry, status-transition, and Activity
+  operations; generated types are committed from codegen.
 - `src/generated/graphql.ts` contains generated typed documents and response/variable types; it is regenerated with `bun run codegen` when operations or the backend schema change.
 - Storefront and workspace code import generated documents and types directly from `src/generated/graphql.ts`. `src/lib/apollo-client.ts` owns Apollo client setup; it does not define operation aliases.
 - Apollo Client sends credentialed requests to `VITE_GRAPHQL_URL` when set, otherwise `/graphql`. Better Auth's React client uses `/api/auth`. Vite proxies both paths to `VITE_API_TARGET` (default `http://localhost:4000`) during development.
-- The backend is authoritative for stock, prices, and order totals. Locally displayed cart totals are estimates until an order request succeeds.
+- The backend is authoritative for stock, prices, order totals, and payment state.
+  Locally displayed cart totals are estimates until checkout reserves the order.
 
 ## UI and validation
 

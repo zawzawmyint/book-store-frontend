@@ -92,7 +92,13 @@ export function OrderStatusDialog({
     } catch (failure) {
       handleError(failure)
       if (CombinedGraphQLErrors.is(failure)) {
-        if (failure.errors.some((entry) => entry.extensions?.code === 'CONFLICT')) {
+        if (
+          failure.errors.some(
+            (entry) =>
+              entry.extensions?.code === 'CONFLICT' ||
+              entry.extensions?.code === 'PAYMENT_UNAVAILABLE',
+          )
+        ) {
           setConflicted(true)
           setUncertain(true)
           setChecked(false)
@@ -140,7 +146,13 @@ export function OrderStatusDialog({
               disabled={loading || checking}
               onChange={(event) => setDraft(event.target.value)}
             />
-            <p className="text-sm">The saved book quantities return to stock.</p>
+            <p className="text-sm">
+              {order.payment.status === 'PAID'
+                ? 'A full refund will be requested. Cancellation does not confirm the refund.'
+                : order.payment.required
+                  ? 'The payment session must close before the reservation is released. An uncertain result needs confirmation.'
+                  : 'The saved book quantities return to stock.'}
+            </p>
           </>
         ) : (
           <p className="text-sm">This does not change stock.</p>

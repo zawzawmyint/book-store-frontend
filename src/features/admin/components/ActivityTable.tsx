@@ -44,9 +44,13 @@ export function ActivityTable({
             </TableCell>
             <TableCell>
               <span className="break-words">
-                {event.source === 'OPERATOR' ? 'Operator command' : event.actorName}
+                {event.source === 'SYSTEM'
+                  ? 'System'
+                  : event.source === 'OPERATOR'
+                    ? 'Operator command'
+                    : event.actorName}
               </span>
-              {event.source !== 'OPERATOR' && (
+              {event.source !== 'OPERATOR' && event.source !== 'SYSTEM' && (
                 <p className="mt-1 text-xs text-muted-foreground">
                   Recorded role: {activityValue('ROLE', event.actorRole)}
                 </p>

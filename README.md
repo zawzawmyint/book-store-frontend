@@ -37,7 +37,11 @@ React page → Apollo Client → POST /graphql → Express resolver → SQLite
 React page ← Apollo Client ← GraphQL response ← Express resolver
 ```
 
-The catalog and detail screens run GraphQL queries. Zustand manages the cart and persists its items in browser storage. Better Auth's React client manages account forms and session state. Checkout requires sign-in and sends cart lines in a `placeOrder` mutation; the backend derives the customer from the session, checks the items, calculates the final total, and returns a Submitted request. The request takes no payment.
+The catalog and detail screens run GraphQL queries. Zustand manages the cart and
+persists its items in browser storage. Better Auth's React client manages account
+forms and session state. Checkout requires sign-in and sends cart lines plus a
+request key in `createCheckout`; the backend derives the customer, reserves stock,
+and returns a Stripe hosted Checkout URL for test payment. Delivery is not integrated.
 
 ## Structure
 
@@ -52,7 +56,7 @@ src/
     cart/                     Cart state, rules, row, and page
     auth/                     Sign-in, sign-up, and route guard
     account/                  Order history and profile
-    checkout/                 Order request page and receipt
+    checkout/                 Hosted payment page, return handling, and receipt
   lib/                        Apollo client and formatting
   generated/                  Generated GraphQL TypeScript documents
   index.css                   Shared visual classes and base styles
@@ -82,7 +86,11 @@ Admin screens have a dedicated workspace outside the storefront header/footer: a
 - `/admin/books` lets Staff and Admin manage search, archive-state filtering, low-stock filtering (five or fewer), pagination, and stock adjustments. Both can create and edit books, including archived books; only Admin sees Archive/Restore in the More actions menu.
 - Books, Orders, and Users show up to five items per page using the shared `AdminPageTable`. Books and Users use `AdminFilterToolbar` for trimmed search submission and page-specific filters, while retaining URL-filter and pagination ownership. List and book-form headings use `AdminPageHeader`; these components live in `src/features/admin/components/`.
 - `/admin/books/new` creates books with initial stock; `/admin/books/:id/edit` edits metadata without replacing inventory.
-- `/admin/orders` and `/admin/orders/:id` display saved order requests using captured contact and price snapshots to Staff and Admin. The list filters by status in its URL; detail shows the attributed timeline. Both roles can accept, complete, or cancel only through allowed confirmed transitions. Cancellation requires a customer-visible reason and restores saved stock once. Payment and shipping are not recorded.
+- `/admin/orders` and `/admin/orders/:id` display saved orders using captured contact,
+  price, and payment snapshots to Staff and Admin. The list filters by status in its
+  URL; detail shows the attributed timeline. Payment-required orders can be accepted
+  or completed only after verified payment. Cancellation requires a customer-visible
+  reason, restores saved stock once, and queues a full refund for paid orders.
 - `/admin/users` is Admin-only and lists registered accounts with search, an All/Customers/Staff/Admin filter, copyable user IDs, and confirmed role changes. `/admin/users/:id` lets an admin set another person's password; their own row links to `/admin/profile`. Legacy `/admin/customers` list and detail URLs redirect with history replacement while preserving their destination, query string, and hash; recognized internal list return state is normalized to the Users route.
 - `/admin/activity` is Admin-only and shows recorded store, account, and order-status changes with URL-backed actor, action, local-date, and price-only filters. Book-row History links open `/admin/books/:id/history`, including archived books and cancellation stock restoration. Staff sees neither navigation item and denied direct URLs do not load history. The server owns attribution and history begins only after the migrated backend is running.
 - `/account/profile` lets the signed-in customer update their own name and password. `/admin/profile` does the same for the signed-in Staff or Admin user and stays inside the workspace. Email stays read-only. See [the profile spec](specs/profile/SPEC.md).
@@ -93,7 +101,11 @@ See [the admin spec](specs/admin/SPEC.md) and the backend README for provisionin
 
 ## Customer account flow
 
-Sign-in and sign-up use React Hook Form with a Zod resolver from `@hookform/resolvers`. Checkout shows the signed-in account's name and email as read-only details and submits only cart lines. Server errors remain visible, failed submissions keep the cart, and a successful request clears it and shows the receipt. Signing out clears account-specific Apollo data but preserves the cart.
+Sign-in and sign-up use React Hook Form with a Zod resolver from `@hookform/resolvers`.
+Checkout shows the signed-in account's name and email as read-only details and opens
+Stripe hosted Checkout for test payment. Server errors remain visible and failed or
+uncertain attempts keep the cart. Confirmed payment clears only the unchanged submitted
+cart. Signing out clears account-specific Apollo data but preserves the cart.
 
 ## Checks
 
@@ -112,7 +124,13 @@ bun run test:e2e:install
 bun run test:e2e
 ```
 
-Playwright runs Chromium and starts a real API with a freshly seeded in-memory SQLite database from `e2e/server.ts` on port 4100, plus Vite on 4173. Keep both ports free. These tests cover account creation, cart → sign-in → checkout, owner-safe order detail, all workflow roles and transitions, cancellation restoration, direct guest API rejection, session/role loss, responsive keyboard behavior, appearance, and Admin/Staff activity history. They do not write a development or production database. Browser installation is needed once per machine; repeat when Playwright requires a new browser version.
+Playwright runs Chromium and starts a real API with a freshly seeded in-memory SQLite
+database from `e2e/server.ts` on port 4100, plus Vite on 4173. Keep both ports free.
+These tests cover account creation, cart → sign-in → hosted-payment handling, owner-safe
+order detail, payment-aware workflow transitions/refunds, session and role loss,
+responsive keyboard behavior, appearance, and Admin/Staff activity history. They do not
+write a development or production database. Browser installation is needed once per
+machine; repeat when Playwright requires a new browser version.
 
 The design uses locally rendered book covers, so browsing does not depend on a remote image service.
 

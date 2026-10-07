@@ -1,9 +1,10 @@
+import { PaymentStatus } from '../../orders/PaymentStatus'
 import { OrderStatusBadge } from '../../orders/OrderStatusBadge'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { PageContainer } from '../../../app/components/PageContainer'
 import { money } from '../../../lib/format'
-import type { PlaceOrderMutation } from '../../../generated/graphql'
+import type { CustomerOrderFieldsFragment } from '../../../generated/graphql'
 import { Button } from '../../../app/components/ui/button'
 import { Card, CardContent } from '../../../app/components/ui/card'
 import { Separator } from '../../../app/components/ui/separator'
@@ -12,7 +13,7 @@ export function OrderReceiptView({
   receipt,
   name,
 }: {
-  receipt: PlaceOrderMutation['placeOrder']
+  receipt: Pick<CustomerOrderFieldsFragment, 'id' | 'status' | 'items' | 'totalCents' | 'payment'>
   name: string
 }) {
   return (
@@ -23,10 +24,11 @@ export function OrderReceiptView({
         Thank you, {name.trim().split(' ')[0]}.
       </h1>
       <p className="mt-5 text-sm leading-6 text-muted-foreground">
-        Your order request is saved. No payment was collected.
+        Your order is saved. Payment status is confirmed by the server.
       </p>
       <div className="mt-5">
         <OrderStatusBadge status={receipt.status} />
+        <PaymentStatus payment={receipt.payment} />
       </div>
       <Button asChild className="mt-5">
         <Link to={`/account/orders/${receipt.id}`}>View order details</Link>

@@ -11,9 +11,10 @@ Keep the existing storefront/workspace layouts, session boundary, generated Apol
 operations, shadcn/ui controls, and established feedback/access patterns.
 
 Include order status badges, workspace status filtering/actions, customer detail
-and timeline, cancellation reasons, and Admin Activity integration. Exclude payment,
-delivery claims, notifications, customer cancellation, bulk processing, line editing,
-reopening, and dashboards. Keep checkout wording as an order request.
+and timeline, cancellation reasons, and Admin Activity integration. Payment state and
+full-refund feedback are delivered by [the Stripe checkout specification](../stripe-checkout/SPEC.md).
+Delivery claims, notifications, customer cancellation, bulk processing, line editing,
+reopening, and dashboards remain out of scope.
 
 ## Customer journey
 

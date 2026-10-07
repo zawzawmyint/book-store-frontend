@@ -1,3 +1,4 @@
+import { hostedPayment } from './hosted-payment'
 import { expect, test, type Page } from '@playwright/test'
 
 const origin = 'http://localhost:4173'
@@ -27,11 +28,12 @@ test('customer submits, staff accepts and completes, and admin reviews the histo
   page,
   browser,
 }) => {
+  await hostedPayment(page)
   await signIn(page, 'Customer', '/')
   await page.goto('/books/1')
   await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
   await page.goto('/checkout')
-  await page.getByRole('button', { name: 'Submit order request' }).click()
+  await page.getByRole('button', { name: 'Continue to payment' }).click()
   await page.getByRole('link', { name: 'View order details', exact: true }).click()
   await expect(page).toHaveURL(/\/account\/orders\/\d+$/)
   const id = page.url().split('/').at(-1)!
@@ -106,11 +108,11 @@ test('admin cancels submitted and staff cancels accepted with archived restorati
     await signIn(customerPage, 'Customer', '/')
     const submitted = await gql(
       customerPage,
-      'mutation ($input: PlaceOrderInput!) { placeOrder(input: $input) { id status } }',
-      { input: { items: [{ bookId, quantity: 1 }] } },
+      'mutation ($input: CreateCheckoutInput!) { createCheckout(input: $input) { order { id status } } }',
+      { input: { requestKey: crypto.randomUUID(), items: [{ bookId, quantity: 1 }] } },
     )
     expect(submitted.errors).toBeUndefined()
-    const submittedId = submitted.data.placeOrder.id
+    const submittedId = submitted.data.createCheckout.order.id
     await page.goto(`/admin/orders/${submittedId}`)
     await expect(page.getByRole('button', { name: 'Complete request', exact: true })).toHaveCount(0)
     await page.getByRole('button', { name: 'Cancel request', exact: true }).click()
@@ -142,12 +144,16 @@ test('admin cancels submitted and staff cancels accepted with archived restorati
     expect(returned.data.adminBook.stock).toBe(5)
     const placed = await gql(
       customerPage,
-      'mutation ($input: PlaceOrderInput!) { placeOrder(input: $input) { id status totalCents } }',
-      { input: { items: [{ bookId, quantity: 2 }] } },
+      'mutation ($input: CreateCheckoutInput!) { createCheckout(input: $input) { order { id status totalCents } } }',
+      { input: { requestKey: crypto.randomUUID(), items: [{ bookId, quantity: 2 }] } },
     )
     expect(placed.errors).toBeUndefined()
-    const id = placed.data.placeOrder.id
-    expect(placed.data.placeOrder.totalCents).toBe(2468)
+    const id = placed.data.createCheckout.order.id
+    expect(placed.data.createCheckout.order.totalCents).toBe(2468)
+    await customerPage.request.post(`http://localhost:4100/__test__/pay/${id}`)
+    await gql(customerPage, 'mutation ($id: ID!) { refreshOrderPayment(orderId: $id) { id } }', {
+      id,
+    })
     expect(
       (
         await gql(page, 'mutation ($id: ID!) { setBookArchived(id: $id, archived: true) { id } }', {
