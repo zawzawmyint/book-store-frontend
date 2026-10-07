@@ -31,6 +31,12 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   const returnTo = safeReturnTo(params.get('returnTo'))
   const { data: session, isPending: sessionPending } = authClient.useSession()
   const [serverError, setServerError] = useState('')
+  const [demoPending, setDemoPending] = useState(false)
+  const [demoTarget, setDemoTarget] = useState<string | null>(null)
+  const demoEnabled =
+    import.meta.env.DEV &&
+    import.meta.env.VITE_DEMO_LOGIN === 'true' &&
+    ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)
   const {
     register,
     handleSubmit,
@@ -39,6 +45,7 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   } = useForm<Fields>({ resolver: zodResolver(schema) })
 
   async function submit(fields: Fields) {
+    if (demoPending) return
     if (mode === 'sign-up' && !fields.name?.trim()) {
       setError('name', { message: 'Enter your name.' })
       return
@@ -62,13 +69,36 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
     navigate(returnTo, { replace: true })
   }
 
+  async function signInDemo(role: 'Customer' | 'Staff' | 'Admin') {
+    if (demoPending || isSubmitting) return
+    const target = role === 'Customer' ? '/' : '/admin/books'
+    setDemoPending(true)
+    setDemoTarget(target)
+    setServerError('')
+    try {
+      const result = await authClient.signIn.email({
+        email: `demo-${role.toLowerCase()}@example.com`,
+        password: 'BookstoreDemo123!',
+      })
+      if (result.error) throw new Error('Demo sign-in failed')
+      navigate(target, { replace: true })
+    } catch {
+      setDemoTarget(null)
+      setServerError(
+        'Unable to sign in to the demo account. Check the API connection and run bun run demo:seed in the backend, then retry.',
+      )
+    } finally {
+      setDemoPending(false)
+    }
+  }
+
   if (sessionPending)
     return (
       <div role="status" className="py-24 text-center">
         Loading your account…
       </div>
     )
-  if (session?.user) return <Navigate to={returnTo} replace />
+  if (session?.user) return <Navigate to={demoTarget ?? returnTo} replace />
   const isSignUp = mode === 'sign-up'
   const otherPath = `${isSignUp ? '/sign-in' : '/sign-up'}?returnTo=${encodeURIComponent(returnTo)}`
   return (
@@ -110,14 +140,43 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
           error={errors.password?.message}
         />
         {serverError && (
-          <Alert variant="destructive" className="border-destructive bg-destructive-muted text-destructive">
+          <Alert
+            variant="destructive"
+            className="border-destructive bg-destructive-muted text-destructive"
+          >
             <AlertDescription>{serverError}</AlertDescription>
           </Alert>
         )}
-        <Button type="submit" disabled={isSubmitting} className="w-full">
+        <Button type="submit" disabled={isSubmitting || demoPending} className="w-full">
           {isSubmitting ? 'Please wait…' : isSignUp ? 'Create account' : 'Sign in'}
         </Button>
       </form>
+      {!isSignUp && demoEnabled && (
+        <section aria-label="Demo accounts" className="mt-8 border-t border-border pt-6">
+          <h2 className="text-sm font-semibold">Try a demo account</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Choose a role to explore the local store.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            {(['Customer', 'Staff', 'Admin'] as const).map((role) => (
+              <Button
+                key={role}
+                type="button"
+                variant="outline"
+                disabled={isSubmitting || demoPending}
+                onClick={() => void signInDemo(role)}
+              >
+                Demo {role}
+              </Button>
+            ))}
+          </div>
+          {demoPending && (
+            <p role="status" className="mt-3 text-sm">
+              Signing in to your demo account…
+            </p>
+          )}
+        </section>
+      )}
       <p className="mt-6 text-sm">
         {isSignUp ? 'Already have an account?' : 'New to the bookstore?'}{' '}
         <Link className="font-semibold text-primary underline" to={otherPath}>

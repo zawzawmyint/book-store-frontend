@@ -2,7 +2,7 @@
 
 A React + TypeScript + Tailwind bookstore storefront using shadcn/ui primitives, Zustand, React Hook Form, and Zod. This folder is its own Git repository. The backend lives in the sibling `backend` repository and should be started first.
 
-See [SPEC.md](SPEC.md) for the storefront behavior, [specs/icons-typography/SPEC.md](specs/icons-typography/SPEC.md) for icon actions and typography, [specs/appearance/SPEC.md](specs/appearance/SPEC.md) for Light/Dark appearance, [specs/authentication/SPEC.md](specs/authentication/SPEC.md) for sign-in, [specs/profile/SPEC.md](specs/profile/SPEC.md) for the account profile, [specs/staff/SPEC.md](specs/staff/SPEC.md) for workspace roles, [specs/users/SPEC.md](specs/users/SPEC.md) for user-directory compatibility, and [specs/activity/SPEC.md](specs/activity/SPEC.md) for Admin activity history.
+See [SPEC.md](SPEC.md) for the storefront behavior, [specs/icons-typography/SPEC.md](specs/icons-typography/SPEC.md) for icon actions and typography, [specs/appearance/SPEC.md](specs/appearance/SPEC.md) for Light/Dark appearance, [specs/authentication/SPEC.md](specs/authentication/SPEC.md) for sign-in, [specs/demo-login/SPEC.md](specs/demo-login/SPEC.md) for optional local demo controls, [specs/profile/SPEC.md](specs/profile/SPEC.md) for the account profile, [specs/staff/SPEC.md](specs/staff/SPEC.md) for workspace roles, [specs/users/SPEC.md](specs/users/SPEC.md) for user-directory compatibility, and [specs/activity/SPEC.md](specs/activity/SPEC.md) for Admin activity history.
 
 ## Development workflow
 
@@ -18,6 +18,17 @@ bun run dev
 ```
 
 Open `http://localhost:5173`. Vite uses port 5173 strictly and stops if it is occupied, keeping the storefront URL aligned with the backend's trusted origin. Vite forwards `/graphql` and `/api/auth` to the local backend. Set `VITE_API_TARGET` if the local API uses another port. Deploy both paths through the same storefront origin so session cookies work reliably.
+
+## Local demo login
+
+For a local role demo, first run `bun run demo:seed` in the sibling backend. Set
+`VITE_DEMO_LOGIN=true` in `.env.local`, then restart Vite because Vite reads this
+flag at startup. Sign out if necessary and open `/sign-in` on a loopback host to
+use Demo Customer, Staff, or Admin. These controls are development-only and do not
+appear on non-loopback hosts, production builds, sign-up, or for a signed-in user.
+The accounts share a local-only password; role enforcement stays on the backend.
+See [the frontend demo-login specification](specs/demo-login/SPEC.md) and
+[the backend seed specification](../backend/specs/demo-login/SPEC.md).
 
 ## How it connects
 

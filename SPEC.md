@@ -1,6 +1,6 @@
 # The Quiet Shelf storefront specification
 
-> This document describes implemented behavior. See [the authentication feature spec](specs/authentication/SPEC.md) for the detailed account contract.
+> This document describes implemented behavior. See [the authentication feature spec](specs/authentication/SPEC.md) for the detailed account contract and [the demo-login feature spec](specs/demo-login/SPEC.md) for optional local demo controls.
 
 > The implemented Staff permission model is defined in [the staff roles specification](specs/staff/SPEC.md), with user-directory compatibility details in [the user directory specification](specs/users/SPEC.md). Customer-named admin URLs remain redirects for existing bookmarks.
 
@@ -22,6 +22,7 @@ Provide a browser storefront for finding books, maintaining a cart, and submitti
 - `/books/:id` requests one book and shows its details, price, stock, and add-to-cart action.
 - `/cart` shows cart lines, quantity controls, removal, and a client-side estimated total. Zustand manages shared cart state and persists items in browser local storage using the existing `book-store-cart` key and raw JSON array format. Count and estimated total are derived from items. Previously saved carts remain readable, invalid entries are filtered out, and storage failures leave in-memory cart interactions usable.
 - `/sign-up` and `/sign-in` create or access a Better Auth account. Authentication is required for `/checkout`, `/account/orders`, and `/account/profile`; a guarded route sends guests to sign-in with an internal return path.
+- When Vite is in development, `VITE_DEMO_LOGIN=true`, and the browser uses a loopback host, `/sign-in` also offers the three local demo accounts seeded by the backend. Their normal Better Auth sign-in destinations are `/` for Customer and `/admin/books` for Staff or Admin; production, non-loopback, sign-up, and signed-in states show no demo controls.
 - `/checkout` displays account contact details and sends only book IDs and quantities through `placeOrder`. On success it shows the returned order ID and server-calculated total and clears the cart. On failure it keeps the cart.
 - `/account/orders` lists only the signed-in customer's order requests with pagination.
 - `/account/profile` shows the signed-in email and join date as read-only text. The same person can save their display name and change their password. The storefront Account menu links to Profile before Orders. See [the account profile spec](specs/profile/SPEC.md).
