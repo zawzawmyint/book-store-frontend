@@ -4,7 +4,7 @@
 
 ## Goal and agreed scope
 
-Allow STAFF to use the existing store workspace for books, prices, stock, and order viewing while ADMIN alone manages users and archive/restore. Preserve the implemented [Users directory](../users/SPEC.md) and follow [the backend staff contract](../../../backend/specs/staff/SPEC.md). [Activity history](../activity/SPEC.md) is delivered separately: Staff changes are recorded, but Staff receives no history screens, filters, or controls.
+Allow STAFF to use the existing store workspace for books, prices, stock, order viewing, and the allowed order transitions while ADMIN alone manages users and archive/restore. Preserve the implemented [Users directory](../users/SPEC.md) and follow [the backend staff contract](../../../backend/specs/staff/SPEC.md). [Activity history](../activity/SPEC.md) is delivered separately: Staff changes are recorded, but Staff receives no Activity-history screens, filters, or controls. The detailed processing UX is in [the order workflow specification](../order-workflow/SPEC.md).
 
 ## Registration and role assignment flow
 
@@ -30,7 +30,7 @@ For self-demotion show an explicit warning: becoming STAFF removes user manageme
 
 ## Client authorization and refresh behavior
 
-Use the resolved role to derive the same fixed permission map as the backend. A workspace entry guard accepts STAFF/ADMIN; user routes use an additional MANAGE_USERS guard. Hide buttons using permission checks, while relying on server checks for real authorization.
+Use the resolved role to derive the same fixed permission map as the backend. A workspace entry guard accepts STAFF/ADMIN; user routes use an additional MANAGE_USERS guard; both privileged roles receive PROCESS_ORDERS. Hide buttons using permission checks, while relying on server checks for real authorization.
 
 Update `AdminAccessProvider`, `admin-access.ts`, and `RequireAdmin` so FORBIDDEN from an admin-only operation does not automatically set a staff user's role to CUSTOMER. Revalidate viewer and show the permission denial. Confirmed CUSTOMER or a lost session hides workspace content; confirmed STAFF retains permitted workspace content. Clear private Apollo data on ADMIN-to-STAFF transitions as well as transitions to CUSTOMER, preventing stale user-management data from remaining visible. Preserve session-expiry handling, route/focus revalidation, and same-account form preservation where access remains allowed. After a self-role mutation, confirm the returned authoritative role in the provider, clear private Apollo data before navigation, and navigate to Books for STAFF or the storefront for CUSTOMER without refetching the old directory. If the subsequent viewer refresh fails, retain that confirmed role and expose retry rather than restoring stale private data.
 
@@ -40,7 +40,7 @@ Update `AdminAccessProvider`, `admin-access.ts`, and `RequireAdmin` so FORBIDDEN
 - `src/features/admin/pages/UsersPage.tsx`: Staff filters/labels and role-selection dialog with self-demotion and uncertain-result handling.
 - `src/features/admin/AdminLayout.tsx`, access provider/guards, book pages, account menus, and storefront account navigation: permitted routes/actions and role-aware wording.
 - `src/app/App.tsx`: nested user-management guard while retaining canonical and legacy routes. Keep LegacyUsersRedirect compatibility within that protected section.
-- User detail/profile pages remain scoped to existing permissions. No change to cart persistence, customer order fields, or order request processing.
+- User detail/profile pages remain scoped to existing permissions. Cart persistence and saved contact/price snapshots remain unchanged; order status and history follow the delivered workflow specification.
 - Extend component and browser tests; add STAFF fixtures only to the existing isolated e2e database. No production promotion endpoint is introduced by test helpers.
 
 ## Release and documentation
@@ -53,7 +53,7 @@ After verification update root SPEC, README, admin/users/profile/authentication 
 
 - [x] Signup still creates CUSTOMER; an ADMIN assigns STAFF through Users with clear confirmation and the same account can access permitted workspace pages.
 - [x] Directory labels/filters support Customer, Staff, Admin; role controls use SetUserRole exclusively and refresh after success.
-- [x] STAFF can create/edit books and prices, adjust stock, and view orders with existing validation and pagination.
+- [x] STAFF can create/edit books and prices, adjust stock, view orders, and use only their allowed order-processing controls.
 - [x] STAFF sees no Users or archive/restore actions; direct canonical/legacy user URLs show denied access and issue no private user query.
 - [x] A denied staff action leaves permitted workspace access usable; ADMIN-to-STAFF transitions hide and clear private user-management data.
 - [x] Live-session demotion, self-demotion, sign-out, expired sessions, and uncertain mutation responses behave as specified.

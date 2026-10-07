@@ -339,3 +339,41 @@ Object.defineProperty(globalThis, 'ResizeObserver', {
     disconnect() {}
   },
 })
+it('clears private order data when staff access is revoked during revalidation', async () => {
+  const cache = new InMemoryCache()
+  cache.writeFragment({
+    id: 'AdminOrder:private',
+    fragment: gql`
+      fragment PrivateOrder on AdminOrder {
+        id
+        email
+      }
+    `,
+    data: { __typename: 'AdminOrder', id: 'private', email: 'reader@example.com' },
+  })
+  renderWithTooltip(
+    <MockedProvider
+      cache={cache}
+      mocks={[
+        {
+          request: { query: ViewerDocument },
+          result: { data: { viewer: { id: 'customer', role: 'STAFF' } } },
+        },
+        {
+          request: { query: ViewerDocument },
+          result: { data: { viewer: { id: 'customer', role: 'CUSTOMER' } } },
+        },
+      ]}
+    >
+      <MemoryRouter>
+        <AdminAccessProvider>
+          <PermissionProbe />
+        </AdminAccessProvider>
+      </MemoryRouter>
+    </MockedProvider>,
+  )
+  await screen.findByText('Resolved role: STAFF')
+  window.dispatchEvent(new Event('focus'))
+  await screen.findByText('Resolved role: CUSTOMER')
+  expect(cache.extract()['AdminOrder:private']).toBeUndefined()
+})

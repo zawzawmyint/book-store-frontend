@@ -30,6 +30,7 @@ mutation PlaceOrder($input: PlaceOrderInput!) {
   placeOrder(input: $input) {
     id
     totalCents
+    status
     items {
       title
       quantity
@@ -44,6 +45,7 @@ query MyOrders($limit: Int, $offset: Int) {
     items {
       id
       createdAt
+      status
       totalCents
       items {
         title
@@ -118,6 +120,7 @@ mutation SetBookArchived($id: ID!, $archived: Boolean!) {
 fragment AdminOrderFields on AdminOrder {
   id
   userId
+  status
   customerName
   email
   createdAt
@@ -128,17 +131,54 @@ fragment AdminOrderFields on AdminOrder {
     unitPriceCents
   }
 }
-query AdminOrders($limit: Int, $offset: Int) {
-  adminOrders(limit: $limit, offset: $offset) {
+query AdminOrders($status: OrderStatusFilter, $limit: Int, $offset: Int) {
+  adminOrders(status: $status, limit: $limit, offset: $offset) {
     total
     items {
       ...AdminOrderFields
     }
   }
 }
+fragment AdminOrderDetail on AdminOrder {
+  ...AdminOrderFields
+  history {
+    id
+    fromStatus
+    toStatus
+    createdAt
+    cancellationReason
+    actorName
+    actorRole
+  }
+}
 query AdminOrder($id: ID!) {
   adminOrder(id: $id) {
-    ...AdminOrderFields
+    ...AdminOrderDetail
+  }
+}
+mutation SetOrderStatus($input: SetOrderStatusInput!) {
+  setOrderStatus(input: $input) {
+    ...AdminOrderDetail
+  }
+}
+query MyOrder($id: ID!) {
+  myOrder(id: $id) {
+    id
+    createdAt
+    totalCents
+    status
+    items {
+      title
+      quantity
+      unitPriceCents
+    }
+    history {
+      id
+      fromStatus
+      toStatus
+      createdAt
+      cancellationReason
+    }
   }
 }
 fragment AdminUserFields on AdminUser {

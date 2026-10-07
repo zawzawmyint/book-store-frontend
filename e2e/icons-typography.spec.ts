@@ -69,12 +69,17 @@ test('admin icon actions retain navigation, search, and copy feedback', async ({
   await page.keyboard.press('Escape')
   await page.getByLabel('Search books').fill('The Great Gatsby')
   await page.getByRole('button', { name: 'Search', exact: true }).click()
+  await expect(page).toHaveURL(/search=The\+Great\+Gatsby/)
   const row = page.getByRole('row').filter({ hasText: 'The Great Gatsby' })
   const edit = row.getByRole('link', { name: 'Edit The Great Gatsby', exact: true })
   await expect(edit).toBeVisible()
-  const size = await edit.boundingBox()
-  expect(size!.width).toBeGreaterThanOrEqual(44)
-  expect(size!.height).toBeGreaterThanOrEqual(44)
+  // The search refetch briefly replaces the previous table with loading feedback.
+  await expect
+    .poll(async () => {
+      const size = await edit.boundingBox()
+      return size ? Math.min(size.width, size.height) : 0
+    })
+    .toBeGreaterThanOrEqual(44)
   await page.getByRole('switch', { name: 'Dark mode', exact: true }).click()
   await row.getByRole('button', { name: 'Adjust stock', exact: true }).click()
   expect(

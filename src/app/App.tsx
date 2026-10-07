@@ -1,3 +1,4 @@
+import { OrderPage as CustomerOrderPage } from '../features/account/pages/OrderPage'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './Layout'
 import { HomePage } from '../features/books/pages/HomePage'
@@ -41,6 +42,7 @@ export default function App() {
                 <Route element={<RequireSession />}>
                   <Route path="/checkout" element={<CheckoutPage />} />
                   <Route path="/account/orders" element={<OrdersPage />} />
+                  <Route path="/account/orders/:id" element={<CustomerOrderPage />} />
                   <Route path="/account/profile" element={<ProfilePage />} />
                 </Route>
                 <Route

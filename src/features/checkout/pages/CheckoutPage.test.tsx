@@ -37,6 +37,7 @@ const result = {
   data: {
     placeOrder: {
       id: '1',
+      status: 'SUBMITTED',
       totalCents: 1200,
       items: [{ title: 'A book', quantity: 1, unitPriceCents: 1200 }],
     },

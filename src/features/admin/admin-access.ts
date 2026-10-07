@@ -24,3 +24,7 @@ export function useAdminQueryError(error: unknown) {
     if (error) handleError(error)
   }, [error, handleError])
 }
+
+export function hasCapability(role: string | undefined, capability: 'PROCESS_ORDERS') {
+  return capability === 'PROCESS_ORDERS' && (role === 'ADMIN' || role === 'STAFF')
+}

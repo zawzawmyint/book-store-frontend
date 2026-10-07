@@ -1,7 +1,9 @@
+import { orderStatusLabels } from '../orders/order-status'
 import type { AdminActivityQueryVariables } from '../../generated/graphql'
 import { money } from '../../lib/format'
 
 export const activityActions = {
+  ORDER_STATUS_CHANGED: 'Order status changed',
   BOOK_CREATED: 'Book created',
   BOOK_UPDATED: 'Book updated',
   BOOK_STOCK_ADJUSTED: 'Stock adjusted',
@@ -11,6 +13,7 @@ export const activityActions = {
   USER_PASSWORD_RESET: 'User password reset',
 } as const
 export const activityFields = {
+  ORDER_STATUS: 'Order status',
   TITLE: 'Title',
   AUTHOR: 'Author',
   GENRE: 'Genre',
@@ -85,6 +88,8 @@ export function activityValue(field: string, value: string | null | undefined) {
     Number.isSafeInteger(Number(value))
   )
     return money(Number(value))
+  if (field === 'ORDER_STATUS' && Object.hasOwn(orderStatusLabels, value))
+    return orderStatusLabels[value as keyof typeof orderStatusLabels]
   if (field === 'ROLE' && ['ADMIN', 'STAFF', 'CUSTOMER'].includes(value))
     return value[0] + value.slice(1).toLowerCase()
   if (field === 'ARCHIVED' && ['true', 'false'].includes(value))

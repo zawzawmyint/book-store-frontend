@@ -12,7 +12,7 @@ Show who changed what and when, using the [backend activity contract](../../../b
 
 **In scope**
 
-- Admin-only `/admin/activity`, with paginated events and actor/action/date filters.
+- Admin-only `/admin/activity`, with paginated events and actor/action/date filters, including order status changes.
 - Admin-only `/admin/books/:id/history`, reached from a book's **History** link and using the same event display components.
 - Expandable before/after details, price-change filtering, operator attribution, and clear empty/loading/error states.
 
@@ -41,7 +41,7 @@ Show who changed what and when, using the [backend activity contract](../../../b
 
 ## Activity page and filtering
 
-- Each row shows time, actor name and recorded role (or **Operator command**), readable action, target snapshot name, and a details control. Display the recorded role, not the actor's current role.
+- Each row shows time, actor name and recorded role (or **Operator command**), readable action, target snapshot name, and a details control. Display the recorded role, not the actor's current role. Order-status targets link to their workspace request detail; cancellation reasons and customer contact data are not displayed in Activity.
 - Filter by user ID (labeled Actor user ID), action, and date range. A **Price changes only** control supplies `changedField: PRICE_CENTS`, including combined metadata/price edits. Avoid a new user-search API or actor picker in the first version.
 - Store submitted filters and page in URL parameters: `actorUserId`, `action`, `changedField`, `from`, `to`, `page`. Submit filters deliberately, reset page when filters change, and preserve them while paging. Use existing five-item admin pagination.
 - UI dates represent inclusive local calendar days. Convert the start day to its local midnight UTC instant and the end day to the next local midnight UTC instant; backend receives inclusive `from` and exclusive `to`. Reject reversed dates visibly. Display timestamps in the browser's local timezone and make the timezone clear.
@@ -52,7 +52,7 @@ Show who changed what and when, using the [backend activity contract](../../../b
 - Book history fixes `targetType: BOOK` and `targetId` from the route. Show newest events first, reuse pagination, and offer Back to books with a validated internal return location preserving list filters.
 - The backend query can return history without a surviving target. Label it from recorded snapshots; an authorized unknown ID shows an empty history. Do not require a current-book lookup that could hide retained history.
 - Expand changes as labeled previous/new values. Render descriptions as escaped text with wrapping and optional disclosure. Never render stored values as HTML.
-- Format PRICE_CENTS with the existing money utility after validating its integer representation; render stock delta with its sign. Show role names and archive state as readable labels. Creation uses **Not previously set** for null before values.
+- Format PRICE_CENTS with the existing money utility after validating its integer representation; render stock delta with its sign. Show role names, archive state, and order status as readable labels. Creation uses **Not previously set** for null before values.
 - Password-reset events show only actor, target, action, and time; no password fields. Operator events do not imply that a specific named human ran the command.
 - A combined metadata/price edit appears once with all changed fields. Links to targets are offered only for supported valid IDs; historical names stay visible even if the target no longer exists.
 
@@ -84,7 +84,7 @@ Show who changed what and when, using the [backend activity contract](../../../b
 **Automated tests**
 
 - Unit/component tests cover labels, formatting, local-date conversion, filtering/pagination, return-location validation, and escaped content.
-- Playwright covers Admin/Customer/Staff route privacy, a Staff edit visible once globally and in book history, price filtering, mobile navigation, and active-session revocation. The full 22-journey Chromium suite passed against the isolated in-memory API.
+- Playwright covers Admin/Customer/Staff route privacy, a Staff edit visible once globally and in book history, an Admin order-status record with its request link, price filtering, mobile navigation, and active-session revocation. The full 32-journey Chromium suite passed against the isolated in-memory API.
 - Backend tests cover CLI events, transaction rollback, and role/reset events; the frontend does not fabricate production history.
 
 **Rollback / mitigation**
