@@ -8,7 +8,7 @@ import { ViewerDocument } from '../../generated/graphql'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { AdminAccessProvider } from './AdminAccessProvider'
 import { AccessContext, useAdminAccess } from './admin-access'
-import { RequireAdmin } from './RequireAdmin'
+import { RequireWorkspaceAccess } from './RequireWorkspaceAccess'
 import userEvent from '@testing-library/user-event'
 import { gql, InMemoryCache } from '@apollo/client'
 
@@ -27,7 +27,7 @@ it('lets staff enter the workspace but rejects user-management routes', async ()
       <AccessContext.Provider value={access}>
         <MemoryRouter>
           <Routes>
-            <Route element={<RequireAdmin adminOnly={adminOnly} />}>
+            <Route element={<RequireWorkspaceAccess adminOnly={adminOnly} />}>
               <Route path="/" element={<p>Permitted workspace</p>} />
             </Route>
           </Routes>
@@ -138,7 +138,7 @@ it('offers a retry when role revalidation fails after a forbidden action', async
       <MemoryRouter>
         <AdminAccessProvider>
           <Routes>
-            <Route element={<RequireAdmin />}>
+            <Route element={<RequireWorkspaceAccess />}>
               <Route path="/" element={<PermissionProbe />} />
             </Route>
           </Routes>
@@ -281,7 +281,7 @@ it('preserves unsaved input during same-account access revalidation and hides it
       <AccessContext.Provider value={access}>
         <MemoryRouter initialEntries={['/admin']}>
           <Routes>
-            <Route element={<RequireAdmin />}>
+            <Route element={<RequireWorkspaceAccess />}>
               <Route
                 path="/admin"
                 element={<input aria-label="Draft book title" defaultValue="Draft" />}
