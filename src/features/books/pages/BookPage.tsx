@@ -112,8 +112,8 @@ export function BookPage() {
               enduring favorites.
             </span>
             <span>
-              <strong className="mb-1 block text-foreground">Demo checkout</strong> No payment is
-              collected.
+              <strong className="mb-1 block text-foreground">Demo checkout</strong> Stripe hosted
+              test payments.
             </span>
           </div>
         </div>

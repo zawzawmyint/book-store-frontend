@@ -1,8 +1,10 @@
+import { hostedPayment } from './hosted-payment'
 import { expect, test } from '@playwright/test'
 
 test('cart survives sign-in redirect; account checkout appears in order history', async ({
   page,
 }) => {
+  await hostedPayment(page)
   await page.goto('/books/1')
   await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
   await page.getByRole('link', { name: /View bag/ }).click()
@@ -18,8 +20,8 @@ test('cart survives sign-in redirect; account checkout appears in order history'
   await expect(page.getByText('ada@example.com')).toBeVisible()
   const title = page.getByText('The Great Gatsby', { exact: true })
   expect(await title.evaluate((el) => getComputedStyle(el).fontFamily)).toContain('Lora')
-  await page.getByRole('button', { name: 'Submit order request' }).click()
-  await expect(page.getByRole('heading', { name: 'Thank you, Ada.' })).toBeVisible()
+  await page.getByRole('button', { name: 'Continue to payment' }).click()
+  await expect(page.getByRole('heading', { name: 'Payment confirmed' })).toBeVisible()
   expect(await title.evaluate((el) => getComputedStyle(el).fontFamily)).toContain('Lora')
   await page.goto('/account/orders')
   await expect(page.getByRole('heading', { name: 'Your orders' })).toBeVisible()
@@ -60,13 +62,15 @@ test('stock failure keeps the cart and protected API rejects guests', async ({ p
       credentials: 'include',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        query: 'mutation { placeOrder(input: { items: [{ bookId: "10", quantity: 6 }] }) { id } }',
+        query:
+          'mutation ($key: String!) { createCheckout(input: { requestKey: $key, items: [{ bookId: "10", quantity: 6 }] }) { order { id } } }',
+        variables: { key: crypto.randomUUID() },
       }),
     })
     return response.json()
   })
   expect(consume.errors).toBeUndefined()
-  await page.getByRole('button', { name: 'Submit order request' }).click()
+  await page.getByRole('button', { name: 'Continue to payment' }).click()
   await expect(page.getByRole('alert')).toContainText(/stock/i)
   await page.goto('/cart')
   await expect(page.getByRole('link', { name: 'Dracula', exact: true })).toBeVisible()
@@ -74,4 +78,40 @@ test('stock failure keeps the cart and protected API rejects guests', async ({ p
   await page.getByRole('menuitem', { name: 'Sign out' }).click()
   await page.reload()
   await expect(page.getByRole('link', { name: 'Dracula', exact: true })).toBeVisible()
+})
+
+test('interrupted hosted payment preserves the bag and changed bag survives confirmed payment', async ({
+  page,
+}) => {
+  await hostedPayment(page, false)
+  await page.goto('/sign-up?returnTo=%2F')
+  await page.getByLabel('Full name').fill('Interrupted Reader')
+  await page.getByLabel('Email address').fill('interrupted@example.com')
+  await page.getByLabel('Password').fill('bookstore-password-123')
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL('http://localhost:4173/')
+  await page.goto('/books/1')
+  await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await page.goto('/checkout')
+  await expect(page.getByRole('button', { name: 'Continue to payment' })).toBeVisible()
+  await page.clock.install()
+  await page.getByRole('button', { name: 'Continue to payment' }).click()
+  await expect(page).toHaveURL(/checkout\/return\/\d+/)
+  await expect(page.getByText('Payment pending · USD')).toBeVisible()
+  await page.clock.fastForward(31_000)
+  await expect(
+    page.getByText('Payment has not been confirmed. Check payment status when you are ready.'),
+  ).toBeVisible()
+  await expect(page.getByText('Payment pending · USD')).toBeVisible()
+  const id = new URL(page.url()).pathname.split('/').at(-1)!
+  await page.goto('/cart')
+  await expect(page.getByRole('link', { name: 'The Great Gatsby', exact: true })).toBeVisible()
+  await page.goto('/books/2')
+  await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await page.request.post(`http://localhost:4100/__test__/pay/${id}`)
+  await page.goto(`/checkout/return/${id}?outcome=back`)
+  await expect(page.getByRole('heading', { name: 'Payment confirmed' })).toBeVisible()
+  await page.goto('/cart')
+  await expect(page.getByRole('link', { name: 'The Great Gatsby', exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Pride and Prejudice', exact: true })).toBeVisible()
 })

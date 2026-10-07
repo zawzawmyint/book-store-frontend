@@ -26,19 +26,6 @@ query Book($id: ID!) {
   }
 }
 
-mutation PlaceOrder($input: PlaceOrderInput!) {
-  placeOrder(input: $input) {
-    id
-    totalCents
-    status
-    items {
-      title
-      quantity
-      unitPriceCents
-    }
-  }
-}
-
 query MyOrders($limit: Int, $offset: Int) {
   myOrders(limit: $limit, offset: $offset) {
     total
@@ -46,6 +33,14 @@ query MyOrders($limit: Int, $offset: Int) {
       id
       createdAt
       status
+      payment {
+        required
+        status
+        currency
+        expiresAt
+        paidAt
+        refundedAt
+      }
       totalCents
       items {
         title
@@ -124,6 +119,14 @@ fragment AdminOrderFields on AdminOrder {
   customerName
   email
   createdAt
+  payment {
+    required
+    status
+    currency
+    expiresAt
+    paidAt
+    refundedAt
+  }
   totalCents
   items {
     title
@@ -148,6 +151,7 @@ fragment AdminOrderDetail on AdminOrder {
     createdAt
     cancellationReason
     actorName
+    actorType
     actorRole
   }
 }
@@ -165,6 +169,14 @@ query MyOrder($id: ID!) {
   myOrder(id: $id) {
     id
     createdAt
+    payment {
+      required
+      status
+      currency
+      expiresAt
+      paidAt
+      refundedAt
+    }
     totalCents
     status
     items {
@@ -215,6 +227,7 @@ mutation ResetUserPassword($userId: ID!, $newPassword: String!) {
 fragment ActivityEventFields on ActivityEvent {
   id
   actorUserId
+  actorType
   actorName
   actorRole
   source
@@ -256,5 +269,58 @@ query AdminActivity(
     items {
       ...ActivityEventFields
     }
+  }
+}
+
+fragment CustomerOrderFields on MyOrder {
+  id
+  createdAt
+  totalCents
+  status
+  payment {
+    required
+    status
+    currency
+    expiresAt
+    paidAt
+    refundedAt
+  }
+  items {
+    title
+    quantity
+    unitPriceCents
+  }
+  history {
+    id
+    fromStatus
+    toStatus
+    createdAt
+    cancellationReason
+  }
+}
+mutation CreateCheckout($input: CreateCheckoutInput!) {
+  createCheckout(input: $input) {
+    order {
+      ...CustomerOrderFields
+    }
+    checkoutUrl
+  }
+}
+mutation ResumeCheckout($orderId: ID!) {
+  resumeCheckout(orderId: $orderId) {
+    order {
+      ...CustomerOrderFields
+    }
+    checkoutUrl
+  }
+}
+mutation RefreshOrderPayment($orderId: ID!) {
+  refreshOrderPayment(orderId: $orderId) {
+    ...CustomerOrderFields
+  }
+}
+mutation RetryOrderRefund($orderId: ID!) {
+  retryOrderRefund(orderId: $orderId) {
+    ...AdminOrderDetail
   }
 }

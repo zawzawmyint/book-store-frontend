@@ -38,6 +38,14 @@ it('shows customer-safe progress and renders cancellation reason as text', async
     status: 'CANCELLED',
     createdAt: '2026-10-07T00:00:00Z',
     totalCents: 1200,
+    payment: {
+      required: false,
+      status: 'LEGACY_UNPAID',
+      currency: 'usd',
+      expiresAt: null,
+      paidAt: null,
+      refundedAt: null,
+    },
     items: [{ title: 'Saved title', quantity: 1, unitPriceCents: 1200 }],
     history: [
       {
@@ -81,6 +89,14 @@ it('interprets persisted SQLite submission dates as UTC like timeline events', a
     status: 'SUBMITTED',
     createdAt: '2026-10-07 06:20:00',
     totalCents: 0,
+    payment: {
+      required: false,
+      status: 'LEGACY_UNPAID',
+      currency: 'usd',
+      expiresAt: null,
+      paidAt: null,
+      refundedAt: null,
+    },
     items: [],
     history: [],
   })

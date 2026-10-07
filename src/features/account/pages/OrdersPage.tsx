@@ -1,3 +1,4 @@
+import { PaymentStatus } from '../../orders/PaymentStatus'
 import { OrderStatusBadge } from '../../orders/OrderStatusBadge'
 import { useEffect, useState } from 'react'
 import { useApolloClient, useQuery } from '@apollo/client/react'
@@ -49,7 +50,7 @@ export function OrdersPage() {
       <p className="eyebrow mb-3">Your account</p>
       <h1 className="font-serif text-5xl">Your orders</h1>
       <p className="mt-4 text-sm text-muted-foreground">
-        Your saved order requests. No payment was collected.
+        Your saved orders, payment state, and request progress.
       </p>
       {loading && (
         <div role="status" aria-label="Loading your orders" className="mt-10 space-y-6">
@@ -87,6 +88,7 @@ export function OrdersPage() {
                     </p>
                   </div>
                   <OrderStatusBadge status={order.status} />
+                  <PaymentStatus payment={order.payment} />
                   <strong>{money(order.totalCents)}</strong>
                 </CardHeader>
                 <CardContent>

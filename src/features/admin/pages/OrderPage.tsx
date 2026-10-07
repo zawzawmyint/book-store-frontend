@@ -1,3 +1,5 @@
+import { RefundRetryDialog } from '../components/RefundRetryDialog'
+import { PaymentStatus } from '../../orders/PaymentStatus'
 import { useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { useApolloClient, useQuery } from '@apollo/client/react'
@@ -33,6 +35,7 @@ function OrderDetailPage({ id }: { id: string }) {
   const [target, setTarget] = useState<OrderStatus>()
   const [draft, setDraft] = useState('')
   const [notice, setNotice] = useState('')
+  const [refundOpen, setRefundOpen] = useState(false)
   const valid = /^[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id))
   const { data, loading, error, refetch } = useQuery(AdminOrderDocument, {
     variables: { id },
@@ -53,7 +56,11 @@ function OrderDetailPage({ id }: { id: string }) {
     setCurrent(updated)
     setTarget(undefined)
     setDraft('')
-    setNotice('Request confirmed as ' + orderStatusLabels[updated.status] + '.')
+    setNotice(
+      updated.status === 'CANCELLED' && updated.payment.status === 'REFUND_PENDING'
+        ? 'Order cancelled; refund pending'
+        : 'Request confirmed as ' + orderStatusLabels[updated.status] + '.',
+    )
     for (const fieldName of [
       'adminOrders',
       'myOrders',
@@ -90,6 +97,7 @@ function OrderDetailPage({ id }: { id: string }) {
               {order.customerName} · {order.email}
             </p>
             <OrderStatusBadge status={order.status} />
+            <PaymentStatus payment={order.payment} />
           </CardHeader>
           <CardContent>
             <ul className="space-y-4">
@@ -109,33 +117,43 @@ function OrderDetailPage({ id }: { id: string }) {
               <span>{money(order.totalCents)}</span>
             </p>
             <p className="mt-4 text-sm">
-              This is an order request. No payment or shipping is recorded.
+              Completed means handling finished. Delivery is not integrated.
             </p>
             <OrderTimeline history={order.history} attributed />
+            {order.payment.status === 'REFUND_FAILED' &&
+              hasCapability(access.role, 'PROCESS_ORDERS') &&
+              !access.loading &&
+              !access.expired && (
+                <Button className="mt-4" onClick={() => setRefundOpen(true)}>
+                  Retry refund
+                </Button>
+              )}
             {hasCapability(access.role, 'PROCESS_ORDERS') && !access.loading && !access.expired && (
               <div className="mt-6 flex flex-wrap gap-3">
-                {order.status === 'SUBMITTED' && (
-                  <Button
-                    disabled={!!target}
-                    onClick={() => {
-                      setNotice('')
-                      setTarget('ACCEPTED')
-                    }}
-                  >
-                    Accept request
-                  </Button>
-                )}
-                {order.status === 'ACCEPTED' && (
-                  <Button
-                    disabled={!!target}
-                    onClick={() => {
-                      setNotice('')
-                      setTarget('COMPLETED')
-                    }}
-                  >
-                    Complete request
-                  </Button>
-                )}
+                {order.status === 'SUBMITTED' &&
+                  (!order.payment.required || order.payment.status === 'PAID') && (
+                    <Button
+                      disabled={!!target}
+                      onClick={() => {
+                        setNotice('')
+                        setTarget('ACCEPTED')
+                      }}
+                    >
+                      Accept request
+                    </Button>
+                  )}
+                {order.status === 'ACCEPTED' &&
+                  (!order.payment.required || order.payment.status === 'PAID') && (
+                    <Button
+                      disabled={!!target}
+                      onClick={() => {
+                        setNotice('')
+                        setTarget('COMPLETED')
+                      }}
+                    >
+                      Complete request
+                    </Button>
+                  )}
                 {(order.status === 'SUBMITTED' || order.status === 'ACCEPTED') && (
                   <Button
                     disabled={!!target}
@@ -153,6 +171,18 @@ function OrderDetailPage({ id }: { id: string }) {
           </CardContent>
         </Card>
       )}
+      {order &&
+        refundOpen &&
+        hasCapability(access.role, 'PROCESS_ORDERS') &&
+        !access.expired &&
+        !access.loading && (
+          <RefundRetryDialog
+            order={order}
+            close={() => setRefundOpen(false)}
+            saved={saved}
+            refresh={refreshOrder}
+          />
+        )}
       {order &&
         target &&
         hasCapability(access.role, 'PROCESS_ORDERS') &&

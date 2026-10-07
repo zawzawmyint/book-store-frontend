@@ -133,7 +133,7 @@ export function Layout() {
         </PageContainer>
         <PageContainer className="flex flex-wrap justify-between gap-3 border-t border-border py-5 text-xs text-muted-foreground">
           <span>© 2026 The Quiet Shelf</span>
-          <span>Order requests only • No payment collected</span>
+          <span>Stripe test payments • Delivery not integrated</span>
         </PageContainer>
       </footer>
     </div>

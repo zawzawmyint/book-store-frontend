@@ -9,8 +9,8 @@ Use Better Auth's React client to let customers create an account, sign in, and 
 ## Current system
 
 - This repository is a React, React Router, Apollo Client, Vite, shadcn/ui, React Hook Form, Zod, and Zustand storefront. Bun manages dependencies; Node.js runs tooling.
-- Checkout uses the signed-in customer's account details and calls `placeOrder` with cart lines. Zustand owns the cart, persisted as a validated raw JSON array under `book-store-cart`. The API owns final prices, stock, and order totals.
-- No payment or shipping is collected; checkout submits an **order request**.
+- Checkout uses the signed-in customer's account details and calls `createCheckout` with cart lines and a request key. Zustand owns the cart, persisted as a validated raw JSON array under `book-store-cart`. The API owns final prices, stock, order totals, and payment state.
+- Checkout redirects to Stripe hosted Checkout for test payment; no shipping is collected and delivery is not integrated.
 
 ## Scope and routes
 
@@ -22,9 +22,9 @@ Use Better Auth's React client to let customers create an account, sign in, and 
 ## Customer experience
 
 - The header shows **Sign in** when signed out and an **Account** menu with **Profile**, **Orders**, and **Sign out** when signed in. Profile opens `/account/profile`, specified in [the profile spec](../profile/SPEC.md). During session loading, do not show protected content or account-specific navigation.
-- Use existing shadcn/ui primitives and React Hook Form with local Zod schemas for auth forms. Provide accessible labels, field errors, server errors, and submission state. Keep the wording clear that accounts are required to submit requests and that the bookstore does not take payment.
-- The cart survives redirect to sign-in, page reload, and sign-out. Checkout shows the session name and email as read-only order contact details and submits only cart lines.
-- On order success, show the existing receipt and clear the cart. On authentication, validation, stock, or network failure, keep the cart and show the error. If the session expires during checkout, route to sign-in and preserve the cart.
+- Use existing shadcn/ui primitives and React Hook Form with local Zod schemas for auth forms. Provide accessible labels, field errors, server errors, and submission state. Keep the wording clear that accounts are required for Stripe test payment and delivery is not integrated.
+- The cart survives redirect to sign-in, page reload, and sign-out. Checkout shows the session name and email as read-only order contact details and sends cart lines with its generated request key.
+- On confirmed payment, show the receipt and clear only the unchanged submitted cart. On authentication, validation, stock, provider, or network failure, keep the cart and show the error. If the session expires during checkout, route to sign-in and preserve the cart.
 - `/account/orders` lists only the current customer's requests newest first, with ID, date, status, total, line items, and detail links. `/account/orders/:id` renders saved request details and a customer-safe timeline; missing/non-owned IDs share a not-found state. Provide loading, empty, error, retry, and pagination states.
 - Signing out clears account-specific Apollo cache data and redirects to `/`; it does not erase the public cart.
 

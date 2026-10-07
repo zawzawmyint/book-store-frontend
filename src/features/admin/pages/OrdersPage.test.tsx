@@ -38,6 +38,14 @@ it('uses a URL-backed status filter and preserves it in detail return navigation
       email: 'r@example.com',
       createdAt: '2026-10-07',
       totalCents: 100,
+      payment: {
+        required: false,
+        status: 'LEGACY_UNPAID',
+        currency: 'usd',
+        expiresAt: null,
+        paidAt: null,
+        refundedAt: null,
+      },
       items: [],
     },
   ])

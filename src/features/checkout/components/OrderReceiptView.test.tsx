@@ -9,7 +9,20 @@ it('links the submitted receipt to owner-scoped details', () => {
     <MemoryRouter>
       <OrderReceiptView
         name="Reader"
-        receipt={{ id: '1', status: 'SUBMITTED', totalCents: 1200, items: [] }}
+        receipt={{
+          id: '1',
+          status: 'SUBMITTED',
+          payment: {
+            required: false,
+            status: 'LEGACY_UNPAID',
+            currency: 'usd',
+            expiresAt: null,
+            paidAt: null,
+            refundedAt: null,
+          },
+          totalCents: 1200,
+          items: [],
+        }}
       />
     </MemoryRouter>,
   )

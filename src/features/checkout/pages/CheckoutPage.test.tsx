@@ -1,25 +1,26 @@
+import { checkoutAttempt } from '../checkout-attempt'
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, expect, it, vi } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MockedProvider } from '@apollo/client/testing/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { useCartStore } from '../../cart/cart-store'
-import { PlaceOrderDocument } from '../../../generated/graphql'
+import { CreateCheckoutDocument } from '../../../generated/graphql'
 import { CheckoutPage } from './CheckoutPage'
-
 vi.mock('../../../lib/auth-client', () => ({
   authClient: {
-    useSession: () => ({ data: { user: { name: 'Ada Reader', email: 'ada@example.com' } } }),
+    useSession: () => ({
+      data: { user: { id: 'ada', name: 'Ada Reader', email: 'ada@example.com' } },
+    }),
   },
 }))
-
 afterEach(() => {
   cleanup()
   useCartStore.getState().clear()
   localStorage.clear()
+  sessionStorage.clear()
 })
-
 const item = {
   id: '1',
   title: 'A book',
@@ -29,46 +30,83 @@ const item = {
   stock: 3,
   quantity: 1,
 }
-const request = {
-  query: PlaceOrderDocument,
-  variables: { input: { items: [{ bookId: '1', quantity: 1 }] } },
-}
-const result = {
-  data: {
-    placeOrder: {
-      id: '1',
-      status: 'SUBMITTED',
-      totalCents: 1200,
-      items: [{ title: 'A book', quantity: 1, unitPriceCents: 1200 }],
-    },
-  },
-}
-
-function checkout(mocks: React.ComponentProps<typeof MockedProvider>['mocks'] = []) {
+function mount(error?: Error, status = 'PENDING') {
   useCartStore.setState({ items: [item] })
+  const variables = vi.fn(
+    (value) =>
+      value.input.items[0].bookId === '1' && /^[\da-f-]{36}$/i.test(value.input.requestKey),
+  )
   render(
-    <MockedProvider mocks={mocks}>
+    <MockedProvider
+      mocks={[
+        {
+          request: { query: CreateCheckoutDocument, variables },
+          ...(error
+            ? { error }
+            : {
+                result: {
+                  data: {
+                    createCheckout: {
+                      order: {
+                        __typename: 'MyOrder',
+                        id: '1',
+                        status: status === 'EXPIRED' ? 'CANCELLED' : 'SUBMITTED',
+                        createdAt: '2026-10-07T00:00:00Z',
+                        totalCents: 1200,
+                        payment: {
+                          required: true,
+                          status,
+                          currency: 'usd',
+                          expiresAt: null,
+                          paidAt: null,
+                          refundedAt: null,
+                        },
+                        items: [{ title: 'A book', quantity: 1, unitPriceCents: 1200 }],
+                        history: [],
+                      },
+                      checkoutUrl: null,
+                    },
+                  },
+                },
+              }),
+        },
+      ]}
+    >
       <MemoryRouter>
-        <CheckoutPage />
+        <Routes>
+          <Route path="/" element={<CheckoutPage />} />
+          <Route path="/checkout/return/1" element={<p>Confirming payment</p>} />
+        </Routes>
       </MemoryRouter>
     </MockedProvider>,
   )
-  return userEvent.setup()
+  return { user: userEvent.setup(), variables }
 }
-
-describe('authenticated checkout', () => {
-  it('sends only cart lines, then clears the cart and shows the receipt', async () => {
-    const user = checkout([{ request, result }])
-    expect(screen.getByText('ada@example.com')).toBeTruthy()
-    await user.click(screen.getByRole('button', { name: 'Submit order request' }))
-    await screen.findByText('Thank you, Ada.')
-    await waitFor(() => expect(useCartStore.getState().items).toEqual([]))
+it('sends only lines and a UUID and preserves the bag when opening a pending order', async () => {
+  const { user, variables } = mount()
+  await user.click(screen.getByRole('button', { name: 'Continue to payment' }))
+  await screen.findByText('Confirming payment')
+  expect(variables.mock.calls[0][0].input).toEqual({
+    items: [{ bookId: '1', quantity: 1 }],
+    requestKey: expect.any(String),
   })
+  expect(useCartStore.getState().items).toEqual([item])
+})
+it('preserves the bag and retry attempt on unavailable payment', async () => {
+  const { user } = mount(new Error('Payment unavailable'))
+  await user.click(screen.getByRole('button', { name: 'Continue to payment' }))
+  await screen.findByText('Payment unavailable')
+  expect(useCartStore.getState().items).toEqual([item])
+  expect(JSON.parse(sessionStorage.getItem('book-store-checkout:ada')!).requestKey).toMatch(
+    /^[\da-f-]{36}$/i,
+  )
+})
 
-  it('keeps the cart when the server rejects the request', async () => {
-    const user = checkout([{ request, error: new Error('Stock changed. Please try again.') }])
-    await user.click(screen.getByRole('button', { name: 'Submit order request' }))
-    await screen.findByText('Stock changed. Please try again.')
-    expect(useCartStore.getState().items).toEqual([item])
-  })
+it('retires a server-confirmed cancelled expired checkout without clearing its bag', async () => {
+  const previous = checkoutAttempt('ada', [item]).requestKey
+  const { user } = mount(undefined, 'EXPIRED')
+  await user.click(screen.getByRole('button', { name: 'Continue to payment' }))
+  await screen.findByText('Confirming payment')
+  expect(useCartStore.getState().items).toEqual([item])
+  expect(checkoutAttempt('ada', [item]).requestKey).not.toBe(previous)
 })

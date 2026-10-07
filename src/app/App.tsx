@@ -1,3 +1,4 @@
+import { CheckoutReturnPage } from '../features/checkout/pages/CheckoutReturnPage'
 import { OrderPage as CustomerOrderPage } from '../features/account/pages/OrderPage'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './Layout'
@@ -41,6 +42,7 @@ export default function App() {
                 <Route path="/sign-up" element={<AuthPage mode="sign-up" />} />
                 <Route element={<RequireSession />}>
                   <Route path="/checkout" element={<CheckoutPage />} />
+                  <Route path="/checkout/return/:orderId" element={<CheckoutReturnPage />} />
                   <Route path="/account/orders" element={<OrdersPage />} />
                   <Route path="/account/orders/:id" element={<CustomerOrderPage />} />
                   <Route path="/account/profile" element={<ProfilePage />} />

@@ -1,3 +1,4 @@
+import { PaymentStatus } from '../../orders/PaymentStatus'
 import { useEffect } from 'react'
 import { OrderStatusBadge } from '../../orders/OrderStatusBadge'
 import { orderStatusLabels } from '../../orders/order-status'
@@ -52,7 +53,7 @@ export function OrdersPage() {
     <section>
       <AdminPageHeader
         title="All order requests"
-        description="Saved requests only. No payment or shipping is recorded."
+        description="Saved orders with payment state. Delivery is not integrated."
       />
       <div className="admin-toolbar">
         <div className="admin-toolbar-field">
@@ -105,6 +106,7 @@ export function OrdersPage() {
               <TableCell>{serverDate(order.createdAt).toLocaleString()}</TableCell>
               <TableCell>
                 <OrderStatusBadge status={order.status} />
+                <PaymentStatus payment={order.payment} />
               </TableCell>
               <TableCell>
                 {order.customerName}

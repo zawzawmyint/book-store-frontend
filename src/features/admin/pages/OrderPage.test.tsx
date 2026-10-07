@@ -16,6 +16,14 @@ export const order = {
   email: 'reader@example.com',
   createdAt: '2026-10-07T00:00:00.000Z',
   totalCents: 1200,
+  payment: {
+    required: false,
+    status: 'LEGACY_UNPAID',
+    currency: 'usd',
+    expiresAt: null,
+    paidAt: null,
+    refundedAt: null,
+  },
   status: 'SUBMITTED',
   items: [{ title: 'Book', quantity: 1, unitPriceCents: 1200 }],
   history: [
@@ -26,6 +34,7 @@ export const order = {
       createdAt: '2026-10-07T00:00:00.000Z',
       cancellationReason: null,
       actorName: 'Reader',
+      actorType: 'USER',
       actorRole: 'CUSTOMER',
     },
   ],
@@ -145,4 +154,43 @@ it('keeps uncertain failures deliberate without automatic replay', async () => {
     'disabled',
     false,
   )
+})
+
+it('blocks acceptance of pending new orders and permits paid orders', async () => {
+  mount([
+    {
+      ...detail,
+      result: {
+        data: {
+          adminOrder: {
+            ...order,
+            payment: { ...order.payment, required: true, status: 'PENDING' },
+          },
+        },
+      },
+    },
+  ])
+  await screen.findByText('Payment pending · USD')
+  expect(screen.queryByRole('button', { name: 'Accept request' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Cancel request' })).toBeTruthy()
+})
+it('offers a confirmed refund retry only to processing staff', async () => {
+  const user = userEvent.setup()
+  mount([
+    {
+      ...detail,
+      result: {
+        data: {
+          adminOrder: {
+            ...order,
+            status: 'CANCELLED',
+            payment: { ...order.payment, required: true, status: 'REFUND_FAILED' },
+          },
+        },
+      },
+    },
+  ])
+  await user.click(await screen.findByRole('button', { name: 'Retry refund' }))
+  expect(screen.getByRole('dialog').textContent).toContain('full refund')
+  expect(screen.getByRole('button', { name: 'Confirm refund retry' })).toBeTruthy()
 })

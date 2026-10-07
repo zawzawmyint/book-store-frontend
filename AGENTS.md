@@ -1,6 +1,6 @@
 # Repository guidance
 
-This repository owns the React, TypeScript, Tailwind, and Apollo Client storefront. Read `README.md` for setup and `SPEC.md` when changing user-facing behavior. For sign-in, checkout access, or account pages, also read `specs/authentication/SPEC.md`.
+This repository owns the React, TypeScript, Tailwind, and Apollo Client storefront. Read `README.md` for setup and `SPEC.md` when changing user-facing behavior. For sign-in, checkout access, or account pages, also read `specs/authentication/SPEC.md`; for payment behavior, read `specs/stripe-checkout/SPEC.md`.
 
 ## Spec-driven and test-driven workflow
 
@@ -30,7 +30,7 @@ Use this order for future implementation work. Existing specs describe the curre
 - Playwright uses the in-memory API in `e2e/server.ts`; preserve isolation from development and production data.
 - Use Zustand for shared cart state, with selectors for items and actions. Derive count and estimated total from items. Preserve the `book-store-cart` storage key and raw JSON array compatibility, validate saved items, and keep cart actions usable when storage is unavailable.
 - Use Apollo Client for server data and Better Auth's React client for session state. The backend owns final prices, stock checks, and order totals.
-- Keep the checkout wording accurate: it submits an order request and does not collect payment or shipping details.
+- Keep checkout wording accurate: it opens Stripe hosted Checkout for test payment, does not collect shipping details, and does not imply delivery.
 
 ## Cross-repository workflow
 

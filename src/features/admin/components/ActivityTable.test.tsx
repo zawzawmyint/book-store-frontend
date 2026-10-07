@@ -9,6 +9,7 @@ afterEach(cleanup)
 const event: ActivityEventFieldsFragment = {
   id: '1',
   actorUserId: 'ada',
+  actorType: 'USER',
   actorName: 'Ada at time of change',
   actorRole: 'STAFF',
   source: 'GRAPHQL',
@@ -48,6 +49,7 @@ it('attributes operator actions without implying a named human and shows signed 
           {
             ...event,
             source: 'OPERATOR',
+            actorType: 'USER',
             actorName: 'Do not imply human',
             actorRole: null,
             stockDelta: 3,
@@ -117,4 +119,11 @@ it('links audited workflow targets to order details and labels status changes', 
   expect(screen.getByRole('link', { name: 'View order request' }).getAttribute('href')).toBe(
     '/admin/orders/17',
   )
+})
+
+it('renders system payment activity without a fabricated recorded role', () => {
+  renderWithTooltip(<MemoryRouter><ActivityTable items={[{ ...event, actorUserId: null, actorType: 'SYSTEM', actorRole: null, source: 'SYSTEM', action: 'ORDER_PAYMENT_CHANGED', changes: [{ field: 'ORDER_PAYMENT_STATUS', before: 'PENDING', after: 'PAID' }] }]} total={1} page={1} onPageChange={() => {}} /></MemoryRouter>)
+  expect(screen.getByText('System')).toBeTruthy()
+  expect(screen.getByText('Payment status changed')).toBeTruthy()
+  expect(screen.queryByText(/Recorded role/)).toBeNull()
 })

@@ -1,3 +1,4 @@
+import { BrowserPaymentProvider } from './payment-provider.js'
 import { createApp } from '../../backend/src/app.js'
 import { createDatabase } from '../../backend/src/database/connection.js'
 import { seedBooks } from '../../backend/src/database/seed.js'
@@ -60,7 +61,11 @@ db.prepare('UPDATE books SET title = ?, price_cents = ? WHERE id = 12').run(
   snapshotBook.title,
   snapshotBook.price_cents,
 )
-const app = await createApp(db, options)
+const provider = new BrowserPaymentProvider()
+const app = await createApp(db, options, { provider })
+app.post('/__test__/pay/:id', (req, res) => {
+  res.json({ returnUrl: provider.pay(String(req.params.id)) })
+})
 app.post('/__test__/seed-demo', async (_req, res) => {
   await seedDemoAccounts(db, options, 'test')
   res.json({ ok: true })
