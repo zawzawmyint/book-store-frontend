@@ -4,6 +4,7 @@ import { seedBooks } from '../../backend/src/database/seed.js'
 import { createAuth } from '../../backend/src/auth.js'
 import { createAdminRepository } from '../../backend/src/modules/admin/admin.repository.js'
 import { operatorActor } from '../../backend/src/modules/activity/activity.types.js'
+import { seedDemoAccounts } from '../../backend/src/database/demo-seed.js'
 
 // Browser tests get a fresh catalog without writing a development database file.
 const db = createDatabase(':memory:')
@@ -54,6 +55,10 @@ db.prepare(
   "INSERT INTO order_items (order_id, book_id, title, quantity, unit_price_cents) VALUES (?, 1, 'Legacy saved title', 1, 1234)",
 ).run(legacyOrder.lastInsertRowid)
 const app = await createApp(db, options)
+app.post('/__test__/seed-demo', async (_req, res) => {
+  await seedDemoAccounts(db, options, 'test')
+  res.json({ ok: true })
+})
 // Isolated browser harness only; no permission endpoint exists in the product API.
 app.post('/__test__/revoke-admin', (_req, res) => {
   membership.setAdminAccess(revocableId, false, operatorActor)
@@ -64,7 +69,7 @@ app.post('/__test__/restore-admin', (_req, res) => {
   membership.setAdminAccess(adminId, true, operatorActor)
   res.json({ ok: true })
 })
-const server = app.listen(4100)
+const server = app.listen(4100, '127.0.0.1')
 const shutdown = () => server.close(() => db.close())
 process.once('SIGINT', shutdown)
 process.once('SIGTERM', shutdown)
