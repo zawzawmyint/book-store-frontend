@@ -6,6 +6,9 @@
 
 ## Purpose and current scope
 
+Proposed next feature: [order workflow](specs/order-workflow/SPEC.md). It is not
+implemented and does not change current order-request screens or permissions.
+
 The implemented [icons and typography specification](specs/icons-typography/SPEC.md) defines compact, accessible icon actions and self-hosted Lora/Source Sans 3 fonts across the storefront and workspace.
 
 The implemented [appearance specification](specs/appearance/SPEC.md) defines the shared Light/Dark switch for the storefront and workspace. Dark is the default; the browser-level choice is stored independently of accounts and applies before React renders.
