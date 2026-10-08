@@ -1,3 +1,4 @@
+import { testOrderDelivery, testReviewedCheckout } from '../delivery-test-fixtures'
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
@@ -30,9 +31,11 @@ function mount(status = 'PAID', path = '/checkout/return/7?outcome=success') {
     id: '7',
     createdAt: '2026-10-07T00:00:00Z',
     status: status === 'EXPIRED' ? 'CANCELLED' : 'SUBMITTED',
-    totalCents: 1200,
+    ...testOrderDelivery,
+    totalCents: 1700,
     payment: {
       required: true,
+      cancellationPending: false,
       status,
       currency: 'usd',
       paidAt: null,
@@ -61,13 +64,13 @@ function mount(status = 'PAID', path = '/checkout/return/7?outcome=success') {
 }
 it('clears an unchanged bag only after server confirmed Paid', async () => {
   useCartStore.setState({ items: [item] })
-  checkoutAttempt('return-reader', [item], '7')
+  checkoutAttempt('return-reader', [item], testReviewedCheckout, '7')
   mount()
   await screen.findByRole('heading', { name: 'Payment confirmed' })
   expect(useCartStore.getState().items).toEqual([])
 })
 it('preserves books added while payment was open', async () => {
-  checkoutAttempt('return-reader', [item], '7')
+  checkoutAttempt('return-reader', [item], testReviewedCheckout, '7')
   useCartStore.setState({ items: [{ ...item, quantity: 2 }] })
   mount()
   await screen.findByRole('heading', { name: 'Payment confirmed' })
@@ -90,17 +93,19 @@ it('does not clear another customer or device bag with no saved snapshot', async
 
 it('retires only the matching server-confirmed expired attempt and preserves the bag', async () => {
   useCartStore.setState({ items: [item] })
-  const previous = checkoutAttempt('return-reader', [item], '7').requestKey
-  const other = checkoutAttempt('other-reader', [item], '7').requestKey
+  const previous = checkoutAttempt('return-reader', [item], testReviewedCheckout, '7').requestKey
+  const other = checkoutAttempt('other-reader', [item], testReviewedCheckout, '7').requestKey
   mount('EXPIRED')
   await screen.findByText('Payment expired · USD')
   expect(useCartStore.getState().items).toEqual([item])
-  expect(checkoutAttempt('return-reader', [item]).requestKey).not.toBe(previous)
-  expect(checkoutAttempt('other-reader', [item]).requestKey).toBe(other)
+  expect(checkoutAttempt('return-reader', [item], testReviewedCheckout).requestKey).not.toBe(
+    previous,
+  )
+  expect(checkoutAttempt('other-reader', [item], testReviewedCheckout).requestKey).toBe(other)
 })
 it('does not retire a saved attempt for a different order on expiry', async () => {
-  const previous = checkoutAttempt('return-reader', [item], '8').requestKey
+  const previous = checkoutAttempt('return-reader', [item], testReviewedCheckout, '8').requestKey
   mount('EXPIRED')
   await screen.findByText('Payment expired · USD')
-  expect(checkoutAttempt('return-reader', [item]).requestKey).toBe(previous)
+  expect(checkoutAttempt('return-reader', [item], testReviewedCheckout).requestKey).toBe(previous)
 })

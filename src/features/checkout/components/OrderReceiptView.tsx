@@ -1,3 +1,4 @@
+import { DeliveryDetails } from '../../orders/DeliveryDetails'
 import { PaymentStatus } from '../../orders/PaymentStatus'
 import { OrderStatusBadge } from '../../orders/OrderStatusBadge'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
@@ -13,7 +14,17 @@ export function OrderReceiptView({
   receipt,
   name,
 }: {
-  receipt: Pick<CustomerOrderFieldsFragment, 'id' | 'status' | 'items' | 'totalCents' | 'payment'>
+  receipt: Pick<
+    CustomerOrderFieldsFragment,
+    | 'id'
+    | 'status'
+    | 'items'
+    | 'totalCents'
+    | 'payment'
+    | 'subtotalCents'
+    | 'deliveryFeeCents'
+    | 'delivery'
+  >
   name: string
 }) {
   return (
@@ -27,7 +38,7 @@ export function OrderReceiptView({
         Your order is saved. Payment status is confirmed by the server.
       </p>
       <div className="mt-5">
-        <OrderStatusBadge status={receipt.status} />
+        <OrderStatusBadge status={receipt.status} paymentStatus={receipt.payment.status} />
         <PaymentStatus payment={receipt.payment} />
       </div>
       <Button asChild className="mt-5">
@@ -48,11 +59,7 @@ export function OrderReceiptView({
               <span>{money(item.quantity * item.unitPriceCents)}</span>
             </div>
           ))}
-          <Separator className="mt-5 bg-border" />
-          <div className="flex justify-between pt-4 font-semibold">
-            <span>Total</span>
-            <span>{money(receipt.totalCents)}</span>
-          </div>
+          <DeliveryDetails {...receipt} />
         </CardContent>
       </Card>
       <Button

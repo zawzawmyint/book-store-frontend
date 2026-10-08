@@ -4,18 +4,35 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { ApolloClient, ApolloLink, InMemoryCache, gql } from '@apollo/client'
 import { ApolloProvider, useApolloClient } from '@apollo/client/react'
 import { SessionBoundary } from './SessionBoundary'
+import { checkoutAttempt } from '../features/checkout/checkout-attempt'
+import { testReviewedCheckout } from '../features/checkout/delivery-test-fixtures'
 
 const session = vi.hoisted(() => ({ userId: 'A' as string | null, pending: false }))
 vi.mock('../lib/auth-client', () => ({
-  authClient: { useSession: () => ({ data: session.userId ? { user: { id: session.userId } } : null, isPending: session.pending }) },
+  authClient: {
+    useSession: () => ({
+      data: session.userId ? { user: { id: session.userId } } : null,
+      isPending: session.pending,
+    }),
+  },
 }))
 
-const accountQuery = gql`query AccountOrders { accountOrders { title } }`
+const accountQuery = gql`
+  query AccountOrders {
+    accountOrders {
+      title
+    }
+  }
+`
 
 function ProtectedOrders() {
   const client = useApolloClient()
-  const data = client.cache.readQuery<{ accountOrders: { title: string }[] }>({ query: accountQuery })
-  return <div>{data?.accountOrders.map((order) => order.title).join(', ') || 'No cached orders'}</div>
+  const data = client.cache.readQuery<{ accountOrders: { title: string }[] }>({
+    query: accountQuery,
+  })
+  return (
+    <div>{data?.accountOrders.map((order) => order.title).join(', ') || 'No cached orders'}</div>
+  )
 }
 
 afterEach(() => {
@@ -27,10 +44,20 @@ afterEach(() => {
 describe('session data boundary', () => {
   it('unmounts protected content and clears cached orders when the session changes A → B → signed out', async () => {
     const client = new ApolloClient({ cache: new InMemoryCache(), link: ApolloLink.empty() })
-    const view = () => <ApolloProvider client={client}><SessionBoundary><ProtectedOrders /></SessionBoundary></ApolloProvider>
+    const view = () => (
+      <ApolloProvider client={client}>
+        <SessionBoundary>
+          <ProtectedOrders />
+        </SessionBoundary>
+      </ApolloProvider>
+    )
     const { rerender } = render(view())
     await screen.findByText('No cached orders')
-    client.cache.writeQuery({ query: accountQuery, data: { accountOrders: [{ title: 'A private order' }] } })
+    checkoutAttempt('A', [{ id: '1', quantity: 1 }], testReviewedCheckout)
+    client.cache.writeQuery({
+      query: accountQuery,
+      data: { accountOrders: [{ title: 'A private order' }] },
+    })
     rerender(view())
     expect(screen.getByText('A private order')).toBeTruthy()
 
@@ -42,8 +69,12 @@ describe('session data boundary', () => {
     rerender(view())
     expect(screen.queryByText('A private order')).toBeNull()
     await waitFor(() => expect(client.cache.readQuery({ query: accountQuery })).toBeNull())
+    expect(sessionStorage.getItem('book-store-checkout:A')).toBeNull()
     await screen.findByText('No cached orders')
-    client.cache.writeQuery({ query: accountQuery, data: { accountOrders: [{ title: 'B private order' }] } })
+    client.cache.writeQuery({
+      query: accountQuery,
+      data: { accountOrders: [{ title: 'B private order' }] },
+    })
     rerender(view())
     expect(screen.getByText('B private order')).toBeTruthy()
 

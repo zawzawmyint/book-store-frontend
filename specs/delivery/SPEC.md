@@ -1,6 +1,6 @@
 # The Quiet Shelf storefront — delivery
 
-> **Status:** Proposed. **Date:** 2026-10-08. This file specifies future behavior; it does not implement delivery.
+> **Status:** Implemented. **Date:** 2026-10-08.
 
 ## Goal and scope
 
@@ -10,9 +10,11 @@ and delivery. Staff confirms shipment and actual delivery in the existing worksp
 Follow [the backend specification](../../../backend/specs/delivery/SPEC.md) for
 the authoritative contract, configuration, validation, pricing and transition rules.
 
-The separate [database-support specification](../../../backend/specs/database-support/SPEC.md)
-defines SQLite development and PostgreSQL production. The storefront uses the same
-GraphQL contract for both; verify its core journeys against both backend providers.
+The [implemented database-support specification](../../../backend/specs/database-support/SPEC.md)
+provides SQLite development/test and PostgreSQL production support. The storefront
+uses the same GraphQL contract, generated types and build for both; do not introduce
+database-specific UI or client configuration. Verify delivery journeys against both
+backend providers using the existing isolated test runners.
 
 Include address entry, a flat delivery fee, reviewed server quote, immutable order
 details, optional carrier/tracking display, order history, order filters and
@@ -43,7 +45,7 @@ will not carry forward. Reset/reseed occurs during implementation, not spec draf
   configured USD fee. Display country names with their codes as values; only
   configured whole countries are supported in the initial slice. Do not infer
   coverage or fee from browser location or hardcode a default country.
-- Proposed local demo configuration uses a **$5 USD flat fee per order**, not per
+- The local demo configuration uses a **$5 USD flat fee per order**, not per
   book. Display the backend value rather than hardcoding $5 in components. For
   example, review shows $20 Books subtotal + $5 Delivery = $25 Total. The fee is
   adjustable configuration and is not a quote from a courier.
@@ -143,7 +145,7 @@ will not carry forward. Reset/reseed occurs during implementation, not spec draf
   Restrict access using existing VIEW_ORDERS; actions require PROCESS_ORDERS.
 - **Accept and prepare** changes Paid SUBMITTED to PREPARING. Replace old Complete
   controls with **Mark shipped**, then **Confirm delivery**; no Accepted/Completed labels.
-- Mark shipped is enabled only for Paid + PREPARING with no cancellation intent.
+- Mark shipped is enabled only for Paid + PREPARING with no cancellation intent. The safe `payment.cancellationPending` boolean disables processing actions while cancellation is queued.
   Its confirmation dialog optionally collects carrier/tracking as one shipment
   object; when provided carrier is required and a URL requires a tracking number.
   Explain that the books have left the store and cancellation will be unavailable.
@@ -165,6 +167,10 @@ will not carry forward. Reset/reseed occurs during implementation, not spec draf
 
 ## API integration and affected files
 
+Select the safe `payment.cancellationPending` Boolean and disable preparation
+and shipment while it is true. The backend derives it from the saved cancellation
+intent and remains authoritative when state changes after a page is loaded.
+
 Use the backend's exact field names and enum values. Add DeliveryOptions,
 QuoteCheckout operations to `src/operations.graphql`; update the existing
 SetOrderStatus input/operation and OrderStatus/OrderStatusFilter values. Extend
@@ -180,28 +186,29 @@ shared order UI under `src/features/orders/`, and cart subtotal wording.
 New address validation/forms or delivery status components belong in their
 owning feature; share them only where there is actual customer/workspace reuse.
 
-Do not hand-edit generated types. During delivery implementation synchronize
+Do not hand-edit generated types. Delivery implementation synchronized
 root SPEC.md, README, AGENTS checkout wording and related workflow/Stripe/auth/
-Activity specs only after acceptance checks pass. Existing implemented specs
-continue to describe current behavior while this proposal is reviewed.
+Activity specs after acceptance checks passed. Historical specs retain their former
+terminology only as explicit historical context.
 
 ## Acceptance criteria
 
-- [ ] Address form is accessible and validates exactly the supported backend inputs.
-- [ ] Only configured countries/fee are shown; zero fee and disabled delivery are clear.
-- [ ] Customers review address, subtotal, delivery fee and final total before payment.
-- [ ] Edits and stale quote responses cannot submit an unreviewed destination/amount.
-- [ ] Changed pricing requires explicit renewed review; failures preserve cart and input.
-- [ ] Exact retries preserve request keys; address/amount changes cannot reuse them.
-- [ ] Fresh-data cutover clears stale carts/attempts/cache once; ordinary reload preserves new data.
-- [ ] Storage failure, sign-out and account switching remain safe.
-- [ ] Paid return displays saved totals/address and clears only the matching cart.
-- [ ] Customer detail/history hides other accounts and staff attribution.
-- [ ] Single order status/actions/filter follow server permissions and allowed transitions.
-- [ ] Delivery confirmation sets Delivered; no Completed or separate delivery status remains.
-- [ ] Shipped orders cannot cancel; pre-shipment cancellation explains a full fee-inclusive refund.
-- [ ] Tracking is optional, rendered safely and described as manually entered.
-- [ ] Unit/component tests, lint/build and coordinated Playwright journeys pass.
+- [x] Address form is accessible and validates exactly the supported backend inputs.
+- [x] Only configured countries/fee are shown; zero fee and disabled delivery are clear.
+- [x] Customers review address, subtotal, delivery fee and final total before payment.
+- [x] Edits and stale quote responses cannot submit an unreviewed destination/amount.
+- [x] Changed pricing requires explicit renewed review; failures preserve cart and input.
+- [x] Exact retries preserve request keys; address/amount changes cannot reuse them.
+- [x] Fresh-data cutover clears stale carts/attempts/cache once; ordinary reload preserves new data.
+- [x] Storage failure, sign-out and account switching remain safe.
+- [x] Paid return displays saved totals/address and clears only the matching cart.
+- [x] Customer detail/history hides other accounts and staff attribution.
+- [x] Single order status/actions/filter follow server permissions and allowed transitions.
+- [x] Delivery confirmation sets Delivered; no Completed or separate delivery status remains.
+- [x] Shipped orders cannot cancel; pre-shipment cancellation explains a full fee-inclusive refund.
+- [x] Tracking is optional, rendered safely and described as manually entered.
+- [x] Unit/component tests, lint/build and coordinated Playwright journeys pass.
+- [x] The same delivery browser journeys pass with SQLite and disposable PostgreSQL, without provider-specific frontend behavior.
 
 ## Validation and rollout
 
@@ -209,6 +216,9 @@ Extend checkout/attempt/return/account/workspace component tests for address,
 quote drift, retries, zero fee, browser-data cutover, state actions and privacy.
 Extend `e2e/server.ts` and payment provider fixtures for explicit test-only delivery
 configuration and fee-inclusive charge/refund assertions; preserve in-memory isolation.
+Retain SQLite in-memory isolation for default browser runs and the existing
+UUID-owned loopback database guard for PostgreSQL runs. Do not replace these with
+the developer's configured database URL or run the delivery reset from the harness.
 Use an explicit 500-cent demo fee and explicitly selected test countries in fixtures;
 also test zero fee and a changed fee to catch hardcoded pricing.
 Extend `e2e/checkout.spec.ts` and `e2e/order-workflow.spec.ts` to cover address →
@@ -217,13 +227,25 @@ Cover shipped-cancel rejection, invalid/old enum inputs, role loss and cross-acc
 
 Manually verify mobile forms, field errors/focus, keyboard confirmation dialogs,
 review/edit flow and text-safe tracking display. Run `bun run test`, `bun run lint`,
-`bun run build` and `bun run test:e2e` during implementation; this documentation-only
-change does not claim any delivery acceptance criterion has passed.
+`bun run build` and `bun run test:e2e`; also run backend
+`bun run test:postgres` and `bun run test:postgres:browser` with both repositories
+installed; the latter runs the same browser journeys against real disposable
+PostgreSQL. All listed checks passed for this delivery change.
 
 Deploy alongside the new backend: the order enum replacement, removal of legacy
 unpaid handling, required checkout fields and final-total meaning are coordinated
 breaking changes. Use the authorized fresh local database/reseed and one-time
 browser cleanup; old data/session/attempt preservation is out of scope. Clear/refresh
 old client bundles before enabling checkout. Coverage is still a store decision;
-the proposed local demo fee is $5 with no implicit runtime default. Courier
+the agreed local US demo fee is $5 with no implicit runtime default. Courier
 updates, notifications and returns remain later features.
+
+## Verification record — 2026-10-08
+
+- All 125 frontend tests, lint and production build passed.
+- All 34 browser journeys passed against SQLite and real disposable PostgreSQL.
+  Targeted review tests passed with zero and 700-cent delivery fees.
+- Manual desktop/mobile review verified the local US/500-cent configuration and
+  $21.99 final total. Local demo accounts were reseeded; sign in again after reset.
+  Browser payment journeys use a fake provider; this verification created no new
+  manual Stripe payment/refund.

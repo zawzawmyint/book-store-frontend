@@ -1,3 +1,4 @@
+import { DeliveryDetails } from '../../orders/DeliveryDetails'
 import { PaymentStatus } from '../../orders/PaymentStatus'
 import { authClient } from '../../../lib/auth-client'
 import { useEffect } from 'react'
@@ -73,7 +74,7 @@ export function OrderPage() {
             >
               {serverDate(order.createdAt).toLocaleString()}
             </time>
-            <OrderStatusBadge status={order.status} />
+            <OrderStatusBadge status={order.status} paymentStatus={order.payment.status} />
             <PaymentStatus payment={order.payment} />
           </CardHeader>
           <CardContent>
@@ -91,13 +92,8 @@ export function OrderPage() {
                 </li>
               ))}
             </ul>
-            <p className="mt-6 flex justify-between font-semibold">
-              <span>Total</span>
-              <span>{money(order.totalCents)}</span>
-            </p>
-            <p className="mt-4 text-sm">
-              Completed means handling finished. Delivery is not integrated.
-            </p>
+
+            <DeliveryDetails {...order} />
             {order.payment.required &&
               order.payment.status === 'PENDING' &&
               order.status === 'SUBMITTED' && (

@@ -35,6 +35,7 @@ query MyOrders($limit: Int, $offset: Int) {
       status
       payment {
         required
+        cancellationPending
         status
         currency
         expiresAt
@@ -121,6 +122,7 @@ fragment AdminOrderFields on AdminOrder {
   createdAt
   payment {
     required
+    cancellationPending
     status
     currency
     expiresAt
@@ -143,6 +145,27 @@ query AdminOrders($status: OrderStatusFilter, $limit: Int, $offset: Int) {
   }
 }
 fragment AdminOrderDetail on AdminOrder {
+  subtotalCents
+  deliveryFeeCents
+  delivery {
+    address {
+      recipientName
+      phone
+      addressLine1
+      addressLine2
+      city
+      region
+      postalCode
+      countryCode
+    }
+    shipment {
+      carrier
+      trackingNumber
+      trackingUrl
+    }
+    shippedAt
+    deliveredAt
+  }
   ...AdminOrderFields
   history {
     id
@@ -167,10 +190,32 @@ mutation SetOrderStatus($input: SetOrderStatusInput!) {
 }
 query MyOrder($id: ID!) {
   myOrder(id: $id) {
+    subtotalCents
+    deliveryFeeCents
+    delivery {
+      address {
+        recipientName
+        phone
+        addressLine1
+        addressLine2
+        city
+        region
+        postalCode
+        countryCode
+      }
+      shipment {
+        carrier
+        trackingNumber
+        trackingUrl
+      }
+      shippedAt
+      deliveredAt
+    }
     id
     createdAt
     payment {
       required
+      cancellationPending
       status
       currency
       expiresAt
@@ -273,12 +318,34 @@ query AdminActivity(
 }
 
 fragment CustomerOrderFields on MyOrder {
+  subtotalCents
+  deliveryFeeCents
+  delivery {
+    address {
+      recipientName
+      phone
+      addressLine1
+      addressLine2
+      city
+      region
+      postalCode
+      countryCode
+    }
+    shipment {
+      carrier
+      trackingNumber
+      trackingUrl
+    }
+    shippedAt
+    deliveredAt
+  }
   id
   createdAt
   totalCents
   status
   payment {
     required
+    cancellationPending
     status
     currency
     expiresAt
@@ -322,5 +389,21 @@ mutation RefreshOrderPayment($orderId: ID!) {
 mutation RetryOrderRefund($orderId: ID!) {
   retryOrderRefund(orderId: $orderId) {
     ...AdminOrderDetail
+  }
+}
+
+query DeliveryOptions {
+  deliveryOptions {
+    countryCodes
+    feeCents
+    currency
+  }
+}
+query QuoteCheckout($input: QuoteCheckoutInput!) {
+  quoteCheckout(input: $input) {
+    subtotalCents
+    deliveryFeeCents
+    totalCents
+    currency
   }
 }

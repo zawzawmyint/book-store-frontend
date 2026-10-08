@@ -53,7 +53,7 @@ export function OrdersPage() {
     <section>
       <AdminPageHeader
         title="All order requests"
-        description="Saved orders with payment state. Delivery is not integrated."
+        description="Saved delivery orders with payment and fulfillment state."
       />
       <div className="admin-toolbar">
         <div className="admin-toolbar-field">
@@ -105,7 +105,7 @@ export function OrdersPage() {
               <TableCell>#{order.id}</TableCell>
               <TableCell>{serverDate(order.createdAt).toLocaleString()}</TableCell>
               <TableCell>
-                <OrderStatusBadge status={order.status} />
+                <OrderStatusBadge status={order.status} paymentStatus={order.payment.status} />
                 <PaymentStatus payment={order.payment} />
               </TableCell>
               <TableCell>

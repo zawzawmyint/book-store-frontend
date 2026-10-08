@@ -1,5 +1,4 @@
 export const paymentLabels = {
-  LEGACY_UNPAID: 'Legacy unpaid',
   PENDING: 'Payment pending',
   PAID: 'Paid',
   EXPIRED: 'Payment expired',

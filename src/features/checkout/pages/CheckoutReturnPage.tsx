@@ -1,3 +1,4 @@
+import { DeliveryDetails } from '../../orders/DeliveryDetails'
 import { useEffect, useRef, useState } from 'react'
 import { useApolloClient, useMutation } from '@apollo/client/react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -159,7 +160,7 @@ function PaymentReturn({ orderId }: { orderId: string }) {
               </li>
             ))}
           </ul>
-          <p className="font-semibold">Total {money(order.totalCents)}</p>
+          <DeliveryDetails {...order} />
           {order.status === 'SUBMITTED' && order.payment.status === 'PENDING' && (
             <Button disabled={loading || resuming} onClick={() => void openPayment()}>
               Resume payment

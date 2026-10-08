@@ -1,5 +1,7 @@
 # The Quiet Shelf storefront — Stripe checkout
 
+> **Historical contract:** This document records the pre-delivery addressless checkout. Current checkout and fulfillment use [the delivery specification](../delivery/SPEC.md); its no-delivery, legacy, Accepted, and Completed statements are historical.
+
 > **Status:** Implemented. **Date:** 2026-10-07. Checkout opens Stripe hosted Checkout for test payments only.
 
 ## Goal and scope

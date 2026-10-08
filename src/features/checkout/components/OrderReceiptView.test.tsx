@@ -1,3 +1,4 @@
+import { testOrderDelivery } from '../delivery-test-fixtures'
 // @vitest-environment jsdom
 import { afterEach, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
@@ -13,14 +14,16 @@ it('links the submitted receipt to owner-scoped details', () => {
           id: '1',
           status: 'SUBMITTED',
           payment: {
-            required: false,
-            status: 'LEGACY_UNPAID',
+            required: true,
+            cancellationPending: false,
+            status: 'PAID',
             currency: 'usd',
             expiresAt: null,
             paidAt: null,
             refundedAt: null,
           },
-          totalCents: 1200,
+          ...testOrderDelivery,
+          totalCents: 1700,
           items: [],
         }}
       />
@@ -29,5 +32,5 @@ it('links the submitted receipt to owner-scoped details', () => {
   expect(screen.getByRole('link', { name: 'View order details' }).getAttribute('href')).toBe(
     '/account/orders/1',
   )
-  expect(screen.getByText('Submitted')).toBeTruthy()
+  expect(screen.getByText('Awaiting acceptance')).toBeTruthy()
 })

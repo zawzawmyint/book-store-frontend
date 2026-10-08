@@ -29,18 +29,19 @@ function mount(url: string, variables: Record<string, unknown>, items: unknown[]
   )
 }
 it('uses a URL-backed status filter and preserves it in detail return navigation', async () => {
-  mount('/admin/orders?status=ACCEPTED', { status: 'ACCEPTED', limit: 5, offset: 0 }, [
+  mount('/admin/orders?status=PREPARING', { status: 'PREPARING', limit: 5, offset: 0 }, [
     {
       id: '1',
       userId: 'reader',
-      status: 'ACCEPTED',
+      status: 'PREPARING',
       customerName: 'Reader',
       email: 'r@example.com',
       createdAt: '2026-10-07',
       totalCents: 100,
       payment: {
-        required: false,
-        status: 'LEGACY_UNPAID',
+        required: true,
+        cancellationPending: false,
+        status: 'PAID',
         currency: 'usd',
         expiresAt: null,
         paidAt: null,
@@ -53,7 +54,7 @@ it('uses a URL-backed status filter and preserves it in detail return navigation
     'pathname',
     '/admin/orders/1',
   )
-  expect(screen.getByLabelText('Status').textContent).toBe('Accepted')
+  expect(screen.getByLabelText('Status').textContent).toBe('Preparing')
 })
 it('falls back to All for an unknown status', async () => {
   mount('/admin/orders?status=UNKNOWN', { status: 'ALL', limit: 5, offset: 0 })

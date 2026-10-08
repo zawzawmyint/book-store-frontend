@@ -1,3 +1,4 @@
+import { reviewDelivery, checkoutInput } from './delivery'
 import { hostedPayment } from './hosted-payment'
 import { expect, test, type Page } from '@playwright/test'
 
@@ -24,7 +25,7 @@ async function gql(page: Page, query: string, variables: Record<string, unknown>
   return response.json()
 }
 
-test('customer submits, staff accepts and completes, and admin reviews the history', async ({
+test('customer pays, staff prepares ships and confirms delivery, and admin reviews history', async ({
   page,
   browser,
 }) => {
@@ -33,12 +34,13 @@ test('customer submits, staff accepts and completes, and admin reviews the histo
   await page.goto('/books/1')
   await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
   await page.goto('/checkout')
+  await reviewDelivery(page)
   await page.getByRole('button', { name: 'Continue to payment' }).click()
   await page.getByRole('link', { name: 'View order details', exact: true }).click()
   await expect(page).toHaveURL(/\/account\/orders\/\d+$/)
   const id = page.url().split('/').at(-1)!
   await expect(page.getByText('Submitted', { exact: true }).first()).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Accept request' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Accept and prepare' })).toHaveCount(0)
   const denied = await gql(
     page,
     'query ($id: ID!) { myOrder(id: $id) { id history { actorName } } }',
@@ -51,23 +53,64 @@ test('customer submits, staff accepts and completes, and admin reviews the histo
   try {
     const staffPage = await staff.newPage()
     await signIn(staffPage, 'Staff', `/admin/orders/${id}`)
-    await staffPage.getByRole('button', { name: 'Accept request', exact: true }).click()
+    await staffPage.getByRole('button', { name: 'Accept and prepare', exact: true }).click()
     await staffPage
       .getByRole('dialog')
       .getByRole('button', { name: /Confirm/ })
       .click()
-    await expect(staffPage.getByText('Accepted', { exact: true }).first()).toBeVisible()
-    await staffPage.getByRole('button', { name: 'Complete request', exact: true }).click()
+    await expect(staffPage.getByText('Preparing', { exact: true }).first()).toBeVisible()
+    await staffPage.getByRole('button', { name: 'Mark shipped', exact: true }).click()
+    await staffPage
+      .getByRole('dialog')
+      .getByLabel('Carrier (optional)', { exact: true })
+      .fill('Example Courier')
+    await staffPage
+      .getByRole('dialog')
+      .getByLabel('Tracking number (optional)', { exact: true })
+      .fill('TRACK-123')
+    await staffPage
+      .getByRole('dialog')
+      .getByLabel('Tracking URL (optional)', { exact: true })
+      .fill('https://example.com/tracking/TRACK-123')
     await staffPage
       .getByRole('dialog')
       .getByRole('button', { name: /Confirm/ })
       .click()
-    await expect(staffPage.getByText('Completed', { exact: true }).first()).toBeVisible()
+    await expect(staffPage.getByText('Shipped', { exact: true }).first()).toBeVisible()
+    const shippedCancel = await gql(
+      staffPage,
+      'mutation ($input: SetOrderStatusInput!) { setOrderStatus(input: $input) { id } }',
+      {
+        input: {
+          id,
+          expectedStatus: 'SHIPPED',
+          status: 'CANCELLED',
+          cancellationReason: 'Too late',
+        },
+      },
+    )
+    expect(shippedCancel.errors?.[0]?.extensions?.code).toBe('BAD_USER_INPUT')
+    const oldEnum = await gql(
+      staffPage,
+      'mutation ($input: SetOrderStatusInput!) { setOrderStatus(input: $input) { id } }',
+      { input: { id, expectedStatus: 'ACCEPTED', status: 'COMPLETED' } },
+    )
+    expect(oldEnum.errors).toBeDefined()
+    await staffPage.getByRole('button', { name: 'Confirm delivery', exact: true }).click()
+    await staffPage
+      .getByRole('dialog')
+      .getByRole('button', { name: /Confirm/ })
+      .click()
+    await expect(staffPage.getByText('Delivered', { exact: true }).first()).toBeVisible()
     await expect(
       staffPage.getByRole('button', { name: 'Cancel request', exact: true }),
     ).toHaveCount(0)
     await page.reload()
-    await expect(page.getByText('Completed', { exact: true }).first()).toBeVisible()
+    await expect(page.getByText('Delivered', { exact: true }).first()).toBeVisible()
+    const tracking = page.getByRole('link', { name: /Track with carrier/i })
+    await expect(tracking).toHaveAttribute('href', 'https://example.com/tracking/TRACK-123')
+    await expect(tracking).toHaveAttribute('rel', /noopener/)
+    await expect(page.getByText('123 Reading Lane', { exact: true }).first()).toBeVisible()
     await expect(page.getByText(/Demo Staff/)).toHaveCount(0)
 
     const adminPage = await admin.newPage()
@@ -90,7 +133,7 @@ test('customer submits, staff accepts and completes, and admin reviews the histo
   }
 })
 
-test('admin cancels submitted and staff cancels accepted with archived restoration once', async ({
+test('admin cancels submitted and staff cancels preparing with archived restoration once', async ({
   page,
   browser,
 }) => {
@@ -109,12 +152,12 @@ test('admin cancels submitted and staff cancels accepted with archived restorati
     const submitted = await gql(
       customerPage,
       'mutation ($input: CreateCheckoutInput!) { createCheckout(input: $input) { order { id status } } }',
-      { input: { requestKey: crypto.randomUUID(), items: [{ bookId, quantity: 1 }] } },
+      { input: await checkoutInput(customerPage, [{ bookId, quantity: 1 }]) },
     )
     expect(submitted.errors).toBeUndefined()
     const submittedId = submitted.data.createCheckout.order.id
     await page.goto(`/admin/orders/${submittedId}`)
-    await expect(page.getByRole('button', { name: 'Complete request', exact: true })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Mark shipped', exact: true })).toHaveCount(0)
     await page.getByRole('button', { name: 'Cancel request', exact: true }).click()
     const submittedDialog = page.getByRole('dialog')
     await submittedDialog.getByLabel('Reason shown to customer').fill('   ')
@@ -123,7 +166,9 @@ test('admin cancels submitted and staff cancels accepted with archived restorati
     await submittedDialog.getByLabel('Reason shown to customer').fill('Cannot fulfil the request.')
     await submittedDialog.getByRole('button', { name: /Confirm/ }).click()
     await expect(page.getByText('Cancelled', { exact: true }).first()).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Accept request', exact: true })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Accept and prepare', exact: true })).toHaveCount(
+      0,
+    )
     const submittedHistory = await gql(
       customerPage,
       'query ($id: ID!) { myOrder(id: $id) { status history { toStatus cancellationReason } } }',
@@ -145,11 +190,11 @@ test('admin cancels submitted and staff cancels accepted with archived restorati
     const placed = await gql(
       customerPage,
       'mutation ($input: CreateCheckoutInput!) { createCheckout(input: $input) { order { id status totalCents } } }',
-      { input: { requestKey: crypto.randomUUID(), items: [{ bookId, quantity: 2 }] } },
+      { input: await checkoutInput(customerPage, [{ bookId, quantity: 2 }]) },
     )
     expect(placed.errors).toBeUndefined()
     const id = placed.data.createCheckout.order.id
-    expect(placed.data.createCheckout.order.totalCents).toBe(2468)
+    expect(placed.data.createCheckout.order.totalCents).toBe(2968)
     await customerPage.request.post(`http://localhost:4100/__test__/pay/${id}`)
     await gql(customerPage, 'mutation ($id: ID!) { refreshOrderPayment(orderId: $id) { id } }', {
       id,
@@ -163,12 +208,12 @@ test('admin cancels submitted and staff cancels accepted with archived restorati
     ).toBeUndefined()
     const staffPage = await staff.newPage()
     await signIn(staffPage, 'Staff', `/admin/orders/${id}`)
-    await staffPage.getByRole('button', { name: 'Accept request', exact: true }).click()
+    await staffPage.getByRole('button', { name: 'Accept and prepare', exact: true }).click()
     await staffPage
       .getByRole('dialog')
       .getByRole('button', { name: /Confirm/ })
       .click()
-    await expect(staffPage.getByText('Accepted', { exact: true }).first()).toBeVisible()
+    await expect(staffPage.getByText('Preparing', { exact: true }).first()).toBeVisible()
     const cancelRequest = staffPage.getByRole('button', { name: 'Cancel request', exact: true })
     await cancelRequest.click()
     await staffPage.keyboard.press('Escape')
@@ -190,7 +235,7 @@ test('admin cancels submitted and staff cancels accepted with archived restorati
       {
         input: {
           id,
-          expectedStatus: 'ACCEPTED',
+          expectedStatus: 'PREPARING',
           status: 'CANCELLED',
           cancellationReason: 'Repeat attempt',
         },

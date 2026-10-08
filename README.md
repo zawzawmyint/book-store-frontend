@@ -40,8 +40,9 @@ React page ← Apollo Client ← GraphQL response ← Express resolver
 The catalog and detail screens run GraphQL queries. Zustand manages the cart and
 persists its items in browser storage. Better Auth's React client manages account
 forms and session state. Checkout requires sign-in and sends cart lines plus a
-request key in `createCheckout`; the backend derives the customer, reserves stock,
-and returns a Stripe hosted Checkout URL for test payment. Delivery is not integrated.
+request key, normalized delivery address, and reviewed expected amounts in
+`createCheckout`; the backend derives the customer, validates the quote, reserves stock,
+and returns a Stripe hosted Checkout URL for test payment.
 
 ## Structure
 
@@ -88,8 +89,8 @@ Admin screens have a dedicated workspace outside the storefront header/footer: a
 - `/admin/books/new` creates books with initial stock; `/admin/books/:id/edit` edits metadata without replacing inventory.
 - `/admin/orders` and `/admin/orders/:id` display saved orders using captured contact,
   price, and payment snapshots to Staff and Admin. The list filters by status in its
-  URL; detail shows the attributed timeline. Payment-required orders can be accepted
-  or completed only after verified payment. Cancellation requires a customer-visible
+  URL; detail shows the attributed timeline. Paid orders can be prepared, shipped, and
+  delivered only after verified payment. Cancellation requires a customer-visible
   reason, restores saved stock once, and queues a full refund for paid orders.
 - `/admin/users` is Admin-only and lists registered accounts with search, an All/Customers/Staff/Admin filter, copyable user IDs, and confirmed role changes. `/admin/users/:id` lets an admin set another person's password; their own row links to `/admin/profile`. Legacy `/admin/customers` list and detail URLs redirect with history replacement while preserving their destination, query string, and hash; recognized internal list return state is normalized to the Users route.
 - `/admin/activity` is Admin-only and shows recorded store, account, and order-status changes with URL-backed actor, action, local-date, and price-only filters. Book-row History links open `/admin/books/:id/history`, including archived books and cancellation stock restoration. Staff sees neither navigation item and denied direct URLs do not load history. The server owns attribution and history begins only after the migrated backend is running.

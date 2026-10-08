@@ -48,16 +48,17 @@ export function CartPage() {
           <SummaryPanel title="Order summary">
             <div className="mt-7 flex justify-between border-b border-border pb-5 text-sm">
               <span className="text-muted-foreground">
-                Subtotal · {count} {count === 1 ? 'book' : 'books'}
+                Books subtotal · {count} {count === 1 ? 'book' : 'books'}
               </span>
               <strong>{money(total)}</strong>
             </div>
             <div className="mt-5 flex justify-between text-base font-semibold">
-              <span>Total</span>
+              <span>Books subtotal</span>
               <span>{money(total)}</span>
             </div>
             <p className="mt-3 text-xs leading-5 text-muted-foreground">
-              Submitting an order request does not collect payment or shipping details.
+              Delivery is added at checkout. Book prices and availability are confirmed by the
+              server.
             </p>
             <Button asChild className="mt-7 flex w-full">
               <Link to="/checkout">

@@ -44,7 +44,7 @@ Give store administrators an `/admin` area in the existing React application for
 - React Router owns routes, Better Auth owns sessions, Apollo owns server data, React Hook Form and Zod own forms, and Zustand owns the persisted customer cart.
 - Add an admin layout and feature folder to this application. This reuses its login, API connection, UI primitives, and deployment. A separate frontend would add deployment and session integration work; a generic admin framework would add a dependency and contract adaptation work. Neither is needed for this scope.
 - Admin routes use a separate workspace shell with neutral surfaces, sans-serif typography, compact controls, a sticky header, and a full-height sidebar. The storefront keeps its cream-and-green visual language. Admins retain normal shopping access through Back to store.
-- Exclude customer account management, role management UI, image uploads, analytics dashboards, bulk import/export, book deletion, order status changes, payment, shipping, and email notifications.
+- Exclude customer account management, role management UI, image uploads, analytics dashboards, bulk import/export, book deletion, order status changes, payment, shipping, and email notifications. The delivered delivery feature later adds scoped order-processing controls; see [the delivery specification](../delivery/SPEC.md).
 
 ## Phase 1 — access and navigation
 

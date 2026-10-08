@@ -26,9 +26,7 @@ export function OrderTimeline({
             >
               {serverDate(event.createdAt).toLocaleString()}
             </time>
-            {event.toStatus === 'COMPLETED' && (
-              <p className="text-sm">Request handling finished. Delivery is not integrated.</p>
-            )}
+            {event.toStatus === 'DELIVERED' && <p className="text-sm">Staff confirmed delivery.</p>}
             {event.cancellationReason && (
               <p className="mt-2 whitespace-pre-wrap break-words">
                 Reason: {event.cancellationReason}

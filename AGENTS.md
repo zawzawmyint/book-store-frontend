@@ -30,7 +30,7 @@ Use this order for future implementation work. Existing specs describe the curre
 - Playwright uses the in-memory API in `e2e/server.ts`; preserve isolation from development and production data.
 - Use Zustand for shared cart state, with selectors for items and actions. Derive count and estimated total from items. Preserve the `book-store-cart` storage key and raw JSON array compatibility, validate saved items, and keep cart actions usable when storage is unavailable.
 - Use Apollo Client for server data and Better Auth's React client for session state. The backend owns final prices, stock checks, and order totals.
-- Keep checkout wording accurate: it opens Stripe hosted Checkout for test payment, does not collect shipping details, and does not imply delivery.
+- Keep checkout wording accurate: it collects a delivery address, obtains a server quote, and opens Stripe hosted Checkout for test payment. Delivery tracking is optional staff-entered information; do not imply a carrier guarantee.
 
 ## Cross-repository workflow
 

@@ -1,5 +1,7 @@
 # The Quiet Shelf storefront — order workflow
 
+> **Historical contract:** This document records the pre-delivery Accepted/Completed workflow. The current customer and workspace journey is defined by [the delivery specification](../delivery/SPEC.md).
+
 > **Status:** Implemented. **Date:** 2026-10-07. The paired backend schema and workflow UI are delivered.
 
 ## Goal and scope

@@ -1,6 +1,7 @@
 export const orderStatusLabels = {
   SUBMITTED: 'Submitted',
-  ACCEPTED: 'Accepted',
-  COMPLETED: 'Completed',
+  PREPARING: 'Preparing',
+  SHIPPED: 'Shipped',
+  DELIVERED: 'Delivered',
   CANCELLED: 'Cancelled',
 } as const

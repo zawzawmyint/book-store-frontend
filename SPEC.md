@@ -1,6 +1,6 @@
 # The Quiet Shelf storefront specification
 
-> **Proposed next feature:** [Delivery](specs/delivery/SPEC.md) specifies delivery-only checkout and staff fulfillment. It is not implemented; current behavior below remains unchanged.
+> **Implemented delivery:** [Delivery](specs/delivery/SPEC.md) is the current checkout and fulfillment contract.
 
 > The [implemented Stripe checkout specification](specs/stripe-checkout/SPEC.md) covers
 > hosted test payment, payment-aware order processing, expiry, and refund feedback.
@@ -22,7 +22,7 @@ The implemented [activity history specification](specs/activity/SPEC.md) defines
 
 Provide a browser storefront for finding books, maintaining a cart, and beginning an
 authenticated Stripe hosted Checkout payment through the separate GraphQL API. Checkout
-does not collect shipping details, and delivery is not integrated.
+collects a delivery address, requires a reviewed server quote, and displays delivery status.
 
 ## Routes and behavior
 
@@ -33,8 +33,9 @@ does not collect shipping details, and delivery is not integrated.
 - `/cart` shows cart lines, quantity controls, removal, and a client-side estimated total. Zustand manages shared cart state and persists items in browser local storage using the existing `book-store-cart` key and raw JSON array format. Count and estimated total are derived from items. Previously saved carts remain readable, invalid entries are filtered out, and storage failures leave in-memory cart interactions usable.
 - `/sign-up` and `/sign-in` create or access a Better Auth account. Authentication is required for `/checkout`, `/account/orders`, `/account/orders/:id`, and `/account/profile`; a guarded route sends guests to sign-in with an internal return path.
 - When Vite is in development, `VITE_DEMO_LOGIN=true`, and the browser uses a loopback host, `/sign-in` also offers the three local demo accounts seeded by the backend. Their normal Better Auth sign-in destinations are `/` for Customer and `/admin/books` for Staff or Admin; production, non-loopback, sign-up, and signed-in states show no demo controls.
-- `/checkout` displays account contact details and sends only book IDs, quantities, and
-  a generated request key through `createCheckout`. It redirects only to the returned
+- `/checkout` validates a delivery address, obtains a server quote, and sends book IDs,
+  quantities, a generated request key, the normalized address, and reviewed expected
+  fee/total through `createCheckout`. It redirects only to the returned
   Stripe hosted test URL. A confirmed paid return clears only an unchanged submitted
   cart; unavailable or failed attempts retain it. `/checkout/return/:orderId` refreshes
   backend payment state and offers bounded confirmation polling/resume where allowed.
@@ -52,9 +53,10 @@ does not collect shipping details, and delivery is not integrated.
 - Admin list pages share `AdminPageTable` for table structure, empty states, visible item ranges, totals, and pagination, with a shared page size of five used for API limits, offsets, and page counts. `AdminPageHeader` provides reusable titles, descriptions, and actions on list and book-form pages.
 - `/admin/orders` and `/admin/orders/:id` show saved orders, captured contact/price
   snapshots, and payment state to Staff and Admin. The list has URL-backed status
-  filtering and five-item pagination. Payment-required orders can be accepted/completed
-  only after verified payment; paid cancellation restores stock once and queues a full
-  refund. Workspace detail shows attributed status history; owner detail does not.
+  filtering and five-item pagination. Paid orders can move from Submitted to Preparing,
+  Shipped, and Delivered; cancellation is available only before shipment, restores stock
+  once, and queues a full fee-inclusive refund. Workspace detail shows attributed status
+  history; owner detail does not.
 - `/admin/users` is Admin-only and lists registered accounts in pages of five, with search, an All/Customers/Staff/Admin filter, copyable user IDs, and confirmed role changes. Each row opens `/admin/users/:id`. See [the staff roles specification](specs/staff/SPEC.md).
 - `/admin/users/:id` is Admin-only, shows one account, and lets an admin set another person's password. The signed-in admin's own page links to `/admin/profile`. `/admin/customers` and `/admin/customers/:id` replace browser history while redirecting to the equivalent user route, preserving the ID, query string, and hash. A recognized internal legacy list return location is normalized to `/admin/users`; other return state is not used.
 - `/admin/activity` is Admin-only and lists recorded catalog, account, and order-status changes newest first. It has URL-backed actor, action, local-date, and price-change filters, with five-item pagination. `/admin/books/:id/history` is Admin-only and presents that book's retained history, including cancellation stock-restoration events and archived or deleted-target snapshots. Only Admin sees Activity navigation and book-row History links; denied direct routes do not mount activity queries. History begins after the migrated backend is running and never backfills earlier changes.
