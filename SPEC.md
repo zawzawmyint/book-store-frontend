@@ -1,5 +1,7 @@
 # The Quiet Shelf storefront specification
 
+> **Proposed next feature:** [Delivery](specs/delivery/SPEC.md) specifies delivery-only checkout and staff fulfillment. It is not implemented; current behavior below remains unchanged.
+
 > The [implemented Stripe checkout specification](specs/stripe-checkout/SPEC.md) covers
 > hosted test payment, payment-aware order processing, expiry, and refund feedback.
 
@@ -83,5 +85,5 @@ does not collect shipping details, and delivery is not integrated.
 ## Acceptance checks
 
 - Run `bun run test`, `bun run lint`, and `bun run build`.
-- Playwright Chromium tests cover account creation, checkout access, owner-safe order history/detail, Customer→Staff→Admin workflow completion/cancellation, archived-stock restoration, direct API rejection, session/role loss, mobile/keyboard behavior, appearance, and Activity permissions/history. Run `bun run test:e2e:install` once, then `bun run test:e2e` with both repositories installed. The suite starts an in-memory API on 4100 and frontend on 4173, keeping persisted databases untouched.
+- Playwright Chromium tests cover account creation, checkout access, owner-safe order history/detail, Customer→Staff→Admin workflow completion/cancellation, archived-stock restoration, direct API rejection, session/role loss, mobile/keyboard behavior, appearance, and Activity permissions/history. Run `bun run test:e2e:install` once, then `bun run test:e2e` with both repositories installed. The default suite starts an in-memory SQLite API on 4100 and frontend on 4173, keeping persisted databases untouched. Run `bun run test:postgres:browser` from the backend for the same suite against an isolated disposable PostgreSQL database.
 - Catalog loading, empty and error states, search, pagination, book detail, cart updates, and order-request success and failure remain usable.
