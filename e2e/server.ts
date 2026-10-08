@@ -1,22 +1,52 @@
 import { BrowserPaymentProvider } from './payment-provider.js'
 import { createApp } from '../../backend/src/app.js'
-import { createDatabase } from '../../backend/src/database/connection.js'
-import { seedBooks } from '../../backend/src/database/seed.js'
+import { openDatabase } from '../../backend/src/database/runtime.js'
+import { seedRuntimeBooks } from '../../backend/src/database/runtime-seed.js'
+import { normalizeStore } from '../../backend/src/database/persistence.js'
+import { loadConfig } from '../../backend/src/config/env.js'
 import { createAuth } from '../../backend/src/auth.js'
 import { createAdminRepository } from '../../backend/src/modules/admin/admin.repository.js'
 import { operatorActor } from '../../backend/src/modules/activity/activity.types.js'
 import { seedDemoAccounts } from '../../backend/src/database/demo-seed.js'
 import { createOrderRepository } from '../../backend/src/modules/orders/order.repository.js'
 
-// Browser tests get a fresh catalog without writing a development database file.
-const db = createDatabase(':memory:')
-seedBooks(db)
 const options = {
   frontendOrigin: 'http://localhost:4173',
   authBaseURL: 'http://localhost:4173',
   authSecret: 'playwright-isolated-auth-secret-32-chars',
   trustedProxyIp: '127.0.0.1',
 }
+// Test provider is explicit; never inherit a development/production database URL.
+const providerName = process.env.E2E_DB_PROVIDER ?? 'sqlite'
+if (!['sqlite', 'postgresql'].includes(providerName)) throw new Error('Invalid E2E_DB_PROVIDER')
+const testUrl = process.env.E2E_DATABASE_URL
+if (providerName === 'postgresql') {
+  const id = process.env.E2E_DATABASE_RUN_ID ?? ''
+  const url = new URL(testUrl ?? 'http://invalid')
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id) ||
+    url.hostname !== '127.0.0.1' ||
+    url.pathname !== `/book_store_e2e_${id.replaceAll('-', '')}`
+  )
+    throw new Error(
+      'PostgreSQL browser tests require the disposable local database owned by test:postgres:browser',
+    )
+}
+const database = await openDatabase(
+  loadConfig({
+    NODE_ENV: 'test',
+    DB_PROVIDER: providerName,
+    DATABASE_PATH: ':memory:',
+    DATABASE_URL: providerName === 'postgresql' ? testUrl : undefined,
+    PG_TLS_MODE: 'disable',
+    BETTER_AUTH_SECRET: options.authSecret,
+    FRONTEND_ORIGIN: options.frontendOrigin,
+    BETTER_AUTH_URL: options.authBaseURL,
+  }),
+)
+const db = database.handle
+await seedRuntimeBooks(db)
+const store = normalizeStore(db)
 const auth = createAuth(db, options)
 const membership = createAdminRepository(db)
 let revocableId = ''
@@ -29,7 +59,8 @@ for (const email of [
   const result = await auth.api.signUpEmail({
     body: { name: 'Test Reader', email, password: 'bookstore-admin-test-123' },
   })
-  if (!email.startsWith('customer')) membership.setAdminAccess(result.user.id, true, operatorActor)
+  if (!email.startsWith('customer'))
+    await membership.setAdminAccess(result.user.id, true, operatorActor)
   if (email.startsWith('revocable')) revocableId = result.user.id
   if (email.startsWith('admin')) adminId = result.user.id
 }
@@ -45,22 +76,13 @@ for (let index = 1; index <= 3; index += 1) {
 const orderRepository = createOrderRepository(db)
 const fixtureCustomer = { id: adminId, name: 'Test Reader', email: 'admin-e2e@example.com' }
 for (let index = 1; index <= 6; index++) {
-  orderRepository.saveOrder(fixtureCustomer, [{ bookId: '2', quantity: 1 }])
+  await orderRepository.saveOrder(fixtureCustomer, [{ bookId: '2', quantity: 1 }])
 }
 // Save a genuine snapshot, then change the catalog metadata without rewriting it.
-const snapshotBook = db.prepare('SELECT title, price_cents FROM books WHERE id = 12').get() as {
-  title: string
-  price_cents: number
-}
-db.prepare('UPDATE books SET title = ?, price_cents = ? WHERE id = 12').run(
-  'Saved request title',
-  1234,
-)
-orderRepository.saveOrder(fixtureCustomer, [{ bookId: '12', quantity: 1 }])
-db.prepare('UPDATE books SET title = ?, price_cents = ? WHERE id = 12').run(
-  snapshotBook.title,
-  snapshotBook.price_cents,
-)
+const snapshotBook = (await store.book(12))!
+await store.updateBook(12, { title: 'Saved request title', priceCents: 1234 })
+await orderRepository.saveOrder(fixtureCustomer, [{ bookId: '12', quantity: 1 }])
+await store.updateBook(12, { title: snapshotBook.title, priceCents: snapshotBook.priceCents })
 const provider = new BrowserPaymentProvider()
 const app = await createApp(db, options, { provider })
 app.post('/__test__/pay/:id', (req, res) => {
@@ -71,16 +93,25 @@ app.post('/__test__/seed-demo', async (_req, res) => {
   res.json({ ok: true })
 })
 // Isolated browser harness only; no permission endpoint exists in the product API.
-app.post('/__test__/revoke-admin', (_req, res) => {
-  membership.setAdminAccess(revocableId, false, operatorActor)
+app.post('/__test__/revoke-admin', async (_req, res) => {
+  await membership.setAdminAccess(revocableId, false, operatorActor)
   res.json({ ok: true })
 })
 // Appearance checks must not inherit the preceding self-demotion journey's role.
-app.post('/__test__/restore-admin', (_req, res) => {
-  membership.setAdminAccess(adminId, true, operatorActor)
+app.post('/__test__/restore-admin', async (_req, res) => {
+  await membership.setAdminAccess(adminId, true, operatorActor)
   res.json({ ok: true })
 })
 const server = app.listen(4100, '127.0.0.1')
-const shutdown = () => server.close(() => db.close())
+const shutdown = () =>
+  server.close(() => {
+    void (async () => {
+      try {
+        await app.locals.close()
+      } finally {
+        await database.close()
+      }
+    })()
+  })
 process.once('SIGINT', shutdown)
 process.once('SIGTERM', shutdown)

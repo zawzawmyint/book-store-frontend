@@ -33,7 +33,7 @@ See [the frontend demo-login specification](specs/demo-login/SPEC.md) and
 ## How it connects
 
 ```text
-React page → Apollo Client → POST /graphql → Express resolver → SQLite
+React page → Apollo Client → POST /graphql → Express resolver → selected database
 React page ← Apollo Client ← GraphQL response ← Express resolver
 ```
 
@@ -75,7 +75,7 @@ bun run codegen
 
 Zustand owns the shared cart items and add, update, and clear actions. Components subscribe through selectors; cart count and estimated total are derived from items. Persistence keeps the existing `book-store-cart` key and raw JSON array format so previously saved carts remain readable. Invalid saved items are filtered out; unavailable browser storage leaves the cart usable in memory. Appearance uses the separate `book-store-theme` key, defaults to Dark, and retains an in-memory choice if browser storage is unavailable.
 
-Apollo Client owns catalog and order history queries and mutation state. React Hook Form owns account form values and validation; Better Auth owns the session. A session boundary hides routed content while the session changes and clears Apollo data before a different account is shown. The backend keeps books, stock, and orders in SQLite through Drizzle, with transactions enforcing consistency.
+Apollo Client owns catalog and order history queries and mutation state. React Hook Form owns account form values and validation; Better Auth owns the session. A session boundary hides routed content while the session changes and clears Apollo data before a different account is shown. The backend keeps books, stock, and orders through Drizzle using SQLite in development/test and PostgreSQL in production, with transactions enforcing consistency.
 
 ## Admin panel
 
@@ -97,7 +97,7 @@ Admin screens have a dedicated workspace outside the storefront header/footer: a
 
 Admin data is never persisted in browser storage. Session changes clear Apollo data; access loss hides private views. Archived books in existing carts fail checkout with an actionable message and retain the cart. If a stock mutation loses its response, check inventory before deciding whether to submit another adjustment.
 
-See [the admin spec](specs/admin/SPEC.md) and the backend README for provisioning and migrations. The browser fixture uses only an in-memory database and test accounts.
+See [the admin spec](specs/admin/SPEC.md) and the backend README for provisioning and migrations. The default browser fixture uses an in-memory SQLite database and test accounts; the PostgreSQL browser command uses a disposable local database.
 
 ## Customer account flow
 
@@ -131,6 +131,17 @@ order detail, payment-aware workflow transitions/refunds, session and role loss,
 responsive keyboard behavior, appearance, and Admin/Staff activity history. They do not
 write a development or production database. Browser installation is needed once per
 machine; repeat when Playwright requires a new browser version.
+
+To run the same browser journeys against PostgreSQL, run this command from the backend
+after both repositories are installed:
+
+```powershell
+bun run test:postgres:browser
+```
+
+It creates a disposable local PostgreSQL 17.10 database, starts the same frontend test
+harness, and rejects arbitrary database URLs. It never uses a development or production
+database.
 
 The design uses locally rendered book covers, so browsing does not depend on a remote image service.
 
