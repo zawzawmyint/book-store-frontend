@@ -102,7 +102,7 @@ it('links audited workflow targets to order details and labels status changes', 
             targetType: 'ORDER',
             targetId: '17',
             targetName: 'Order request #17',
-            changes: [{ field: 'ORDER_STATUS', before: 'SUBMITTED', after: 'ACCEPTED' }],
+            changes: [{ field: 'ORDER_STATUS', before: 'SUBMITTED', after: 'PREPARING' }],
             stockDelta: null,
           },
         ]}
@@ -115,14 +115,33 @@ it('links audited workflow targets to order details and labels status changes', 
   expect(screen.getByText('Order status changed')).toBeTruthy()
   expect(screen.getByText('Order status')).toBeTruthy()
   expect(screen.getByText('Previous: Submitted')).toBeTruthy()
-  expect(screen.getByText('New: Accepted')).toBeTruthy()
+  expect(screen.getByText('New: Preparing')).toBeTruthy()
   expect(screen.getByRole('link', { name: 'View order request' }).getAttribute('href')).toBe(
     '/admin/orders/17',
   )
 })
 
 it('renders system payment activity without a fabricated recorded role', () => {
-  renderWithTooltip(<MemoryRouter><ActivityTable items={[{ ...event, actorUserId: null, actorType: 'SYSTEM', actorRole: null, source: 'SYSTEM', action: 'ORDER_PAYMENT_CHANGED', changes: [{ field: 'ORDER_PAYMENT_STATUS', before: 'PENDING', after: 'PAID' }] }]} total={1} page={1} onPageChange={() => {}} /></MemoryRouter>)
+  renderWithTooltip(
+    <MemoryRouter>
+      <ActivityTable
+        items={[
+          {
+            ...event,
+            actorUserId: null,
+            actorType: 'SYSTEM',
+            actorRole: null,
+            source: 'SYSTEM',
+            action: 'ORDER_PAYMENT_CHANGED',
+            changes: [{ field: 'ORDER_PAYMENT_STATUS', before: 'PENDING', after: 'PAID' }],
+          },
+        ]}
+        total={1}
+        page={1}
+        onPageChange={() => {}}
+      />
+    </MemoryRouter>,
+  )
   expect(screen.getByText('System')).toBeTruthy()
   expect(screen.getByText('Payment status changed')).toBeTruthy()
   expect(screen.queryByText(/Recorded role/)).toBeNull()

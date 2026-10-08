@@ -1,3 +1,4 @@
+import { testOrderDelivery } from '../../checkout/delivery-test-fixtures'
 import { GraphQLError } from 'graphql'
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from 'vitest'
@@ -37,10 +38,12 @@ it('shows customer-safe progress and renders cancellation reason as text', async
     id: '1',
     status: 'CANCELLED',
     createdAt: '2026-10-07T00:00:00Z',
-    totalCents: 1200,
+    ...testOrderDelivery,
+    totalCents: 1700,
     payment: {
-      required: false,
-      status: 'LEGACY_UNPAID',
+      required: true,
+      cancellationPending: false,
+      status: 'PAID',
       currency: 'usd',
       expiresAt: null,
       paidAt: null,
@@ -88,10 +91,12 @@ it('interprets persisted SQLite submission dates as UTC like timeline events', a
     id: '1',
     status: 'SUBMITTED',
     createdAt: '2026-10-07 06:20:00',
-    totalCents: 0,
+    ...testOrderDelivery,
+    totalCents: 1700,
     payment: {
-      required: false,
-      status: 'LEGACY_UNPAID',
+      required: true,
+      cancellationPending: false,
+      status: 'PAID',
       currency: 'usd',
       expiresAt: null,
       paidAt: null,

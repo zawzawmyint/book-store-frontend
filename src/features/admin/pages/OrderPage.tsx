@@ -1,3 +1,4 @@
+import { DeliveryDetails } from '../../orders/DeliveryDetails'
 import { RefundRetryDialog } from '../components/RefundRetryDialog'
 import { PaymentStatus } from '../../orders/PaymentStatus'
 import { useState } from 'react'
@@ -96,7 +97,7 @@ function OrderDetailPage({ id }: { id: string }) {
             <p>
               {order.customerName} · {order.email}
             </p>
-            <OrderStatusBadge status={order.status} />
+            <OrderStatusBadge status={order.status} paymentStatus={order.payment.status} />
             <PaymentStatus payment={order.payment} />
           </CardHeader>
           <CardContent>
@@ -112,13 +113,8 @@ function OrderDetailPage({ id }: { id: string }) {
                 </li>
               ))}
             </ul>
-            <p className="mt-6 flex justify-between text-lg font-semibold">
-              <span>Total</span>
-              <span>{money(order.totalCents)}</span>
-            </p>
-            <p className="mt-4 text-sm">
-              Completed means handling finished. Delivery is not integrated.
-            </p>
+
+            <DeliveryDetails {...order} />
             <OrderTimeline history={order.history} attributed />
             {order.payment.status === 'REFUND_FAILED' &&
               hasCapability(access.role, 'PROCESS_ORDERS') &&
@@ -131,30 +127,45 @@ function OrderDetailPage({ id }: { id: string }) {
             {hasCapability(access.role, 'PROCESS_ORDERS') && !access.loading && !access.expired && (
               <div className="mt-6 flex flex-wrap gap-3">
                 {order.status === 'SUBMITTED' &&
-                  (!order.payment.required || order.payment.status === 'PAID') && (
+                  order.payment.status === 'PAID' &&
+                  !order.payment.cancellationPending && (
                     <Button
                       disabled={!!target}
                       onClick={() => {
                         setNotice('')
-                        setTarget('ACCEPTED')
+                        setTarget('PREPARING')
                       }}
                     >
-                      Accept request
+                      Accept and prepare
                     </Button>
                   )}
-                {order.status === 'ACCEPTED' &&
-                  (!order.payment.required || order.payment.status === 'PAID') && (
+                {order.status === 'PREPARING' &&
+                  order.payment.status === 'PAID' &&
+                  !order.payment.cancellationPending && (
                     <Button
                       disabled={!!target}
                       onClick={() => {
                         setNotice('')
-                        setTarget('COMPLETED')
+                        setTarget('SHIPPED')
                       }}
                     >
-                      Complete request
+                      Mark shipped
                     </Button>
                   )}
-                {(order.status === 'SUBMITTED' || order.status === 'ACCEPTED') && (
+                {order.status === 'SHIPPED' &&
+                  order.payment.status === 'PAID' &&
+                  !order.payment.cancellationPending && (
+                    <Button
+                      disabled={!!target}
+                      onClick={() => {
+                        setNotice('')
+                        setTarget('DELIVERED')
+                      }}
+                    >
+                      Confirm delivery
+                    </Button>
+                  )}
+                {(order.status === 'SUBMITTED' || order.status === 'PREPARING') && (
                   <Button
                     disabled={!!target}
                     variant="destructive"

@@ -87,7 +87,7 @@ export function OrdersPage() {
                       {serverDate(order.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <OrderStatusBadge status={order.status} />
+                  <OrderStatusBadge status={order.status} paymentStatus={order.payment.status} />
                   <PaymentStatus payment={order.payment} />
                   <strong>{money(order.totalCents)}</strong>
                 </CardHeader>

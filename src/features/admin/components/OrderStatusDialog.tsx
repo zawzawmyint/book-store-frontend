@@ -1,3 +1,5 @@
+import { Input } from '../../../app/components/ui/input'
+import { safeTrackingUrl } from '../../orders/tracking-url'
 import { useState } from 'react'
 import { CombinedGraphQLErrors } from '@apollo/client'
 import { useMutation } from '@apollo/client/react'
@@ -39,6 +41,7 @@ export function OrderStatusDialog({
   const [uncertain, setUncertain] = useState(false)
   const [conflicted, setConflicted] = useState(false)
   const [checked, setChecked] = useState(false)
+  const [shipment, setShipment] = useState({ carrier: '', trackingNumber: '', trackingUrl: '' })
   async function check(conflict = conflicted) {
     setChecking(true)
     try {
@@ -53,6 +56,29 @@ export function OrderStatusDialog({
         return
       }
       if (current.status === target) {
+        if (target === 'SHIPPED') {
+          const expected = {
+            carrier: shipment.carrier.trim(),
+            trackingNumber: shipment.trackingNumber.trim() || null,
+            trackingUrl: shipment.trackingUrl.trim() || null,
+          }
+          const actual = current.delivery.shipment
+          if (
+            JSON.stringify(
+              actual
+                ? {
+                    carrier: actual.carrier,
+                    trackingNumber: actual.trackingNumber,
+                    trackingUrl: actual.trackingUrl,
+                  }
+                : null,
+            ) !== JSON.stringify(Object.values(expected).some(Boolean) ? expected : null)
+          ) {
+            setError('Shipment details changed. Close this dialog and inspect the saved shipment.')
+            setConflicted(true)
+            return
+          }
+        }
         saved(current)
         return
       }
@@ -75,6 +101,41 @@ export function OrderStatusDialog({
       setError('Enter a reason between 1 and 500 characters.')
       return
     }
+    if (
+      target === 'SHIPPED' &&
+      Object.values(shipment).some((value) =>
+        Array.from(value).some(
+          (c) => c.charCodeAt(0) < 32 || (c.charCodeAt(0) >= 127 && c.charCodeAt(0) <= 159),
+        ),
+      )
+    ) {
+      setError(
+        'Enter a carrier (100 characters or fewer), an optional tracking number (120 or fewer), and a valid HTTPS URL only with a tracking number.',
+      )
+      return
+    }
+    const normalizedShipment = {
+      carrier: shipment.carrier.trim(),
+      trackingNumber: shipment.trackingNumber.trim() || null,
+      trackingUrl: shipment.trackingUrl.trim() || null,
+    }
+    const hasShipment = Object.values(normalizedShipment).some(Boolean)
+    if (
+      target === 'SHIPPED' &&
+      hasShipment &&
+      (!normalizedShipment.carrier ||
+        normalizedShipment.carrier.length > 100 ||
+        (normalizedShipment.trackingNumber?.length ?? 0) > 120 ||
+        (normalizedShipment.trackingUrl &&
+          (!normalizedShipment.trackingNumber ||
+            normalizedShipment.trackingUrl.length > 2048 ||
+            !safeTrackingUrl(normalizedShipment.trackingUrl))))
+    ) {
+      setError(
+        'Enter a carrier (100 characters or fewer), an optional tracking number (120 or fewer), and a valid HTTPS URL only with a tracking number.',
+      )
+      return
+    }
     setError('')
     try {
       const response = await mutate({
@@ -84,6 +145,7 @@ export function OrderStatusDialog({
             expectedStatus: order.status,
             status: target,
             ...(target === 'CANCELLED' ? { cancellationReason: reason } : {}),
+            ...(target === 'SHIPPED' && hasShipment ? { shipment: normalizedShipment } : {}),
           },
         },
       })
@@ -118,11 +180,13 @@ export function OrderStatusDialog({
     }
   }
   const label =
-    target === 'ACCEPTED'
-      ? 'Confirm acceptance'
-      : target === 'COMPLETED'
-        ? 'Confirm completion'
-        : 'Confirm cancellation'
+    target === 'PREPARING'
+      ? 'Confirm preparation'
+      : target === 'SHIPPED'
+        ? 'Confirm shipment'
+        : target === 'DELIVERED'
+          ? 'Confirm delivery'
+          : 'Confirm cancellation'
   return (
     <AdminDialog
       title={`Change order request #${order.id}`}
@@ -148,14 +212,49 @@ export function OrderStatusDialog({
             />
             <p className="text-sm">
               {order.payment.status === 'PAID'
-                ? 'A full refund will be requested. Cancellation does not confirm the refund.'
+                ? 'A full refund including the delivery fee will be requested. Cancellation does not confirm the refund.'
                 : order.payment.required
                   ? 'The payment session must close before the reservation is released. An uncertain result needs confirmation.'
                   : 'The saved book quantities return to stock.'}
             </p>
           </>
         ) : (
-          <p className="text-sm">This does not change stock.</p>
+          <div className="space-y-4">
+            {target === 'SHIPPED' ? (
+              <>
+                <p>
+                  The books have left the store; cancellation will be unavailable. Shipment details
+                  are optional.
+                </p>
+                {(
+                  [
+                    { key: 'carrier', label: 'Carrier (optional)', max: 100 },
+                    { key: 'trackingNumber', label: 'Tracking number (optional)', max: 120 },
+                    { key: 'trackingUrl', label: 'Tracking URL (optional)', max: 2048 },
+                  ] as const
+                ).map((field) => (
+                  <div key={field.key}>
+                    <Label htmlFor={`shipment-${field.key}`}>{field.label}</Label>
+                    <Input
+                      id={`shipment-${field.key}`}
+                      maxLength={field.max}
+                      disabled={loading || checking}
+                      value={shipment[field.key]}
+                      onChange={(event) =>
+                        setShipment({ ...shipment, [field.key]: event.target.value })
+                      }
+                    />
+                  </div>
+                ))}
+              </>
+            ) : target === 'DELIVERED' ? (
+              <p>
+                Confirm only after actual delivery confirmation. This marks the order Delivered.
+              </p>
+            ) : (
+              <p>This begins preparation of the paid order.</p>
+            )}
+          </div>
         )}
         {error && (
           <Alert role="alert" variant="destructive">

@@ -1,3 +1,4 @@
+import { initializeDeliveryBrowserData } from '../checkout/browser-cutover'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { PersistStorage } from 'zustand/middleware'
@@ -29,6 +30,8 @@ const cartStorage: PersistStorage<Pick<CartState, 'items'>> = {
     }
   },
 }
+
+initializeDeliveryBrowserData()
 
 export const useCartStore = create<CartState>()(
   persist(

@@ -1,3 +1,4 @@
+import { clearCheckoutAttempts } from '../features/checkout/checkout-attempt'
 import { useEffect, useState } from 'react'
 import { useApolloClient } from '@apollo/client/react'
 import { authClient } from '../lib/auth-client'
@@ -12,14 +13,21 @@ export function SessionBoundary({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isPending || readyId === userId) return
     let active = true
+    if (readyId !== undefined && readyId !== userId) clearCheckoutAttempts()
     void client.clearStore().then(() => {
       if (active) setReadyId(userId)
     })
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [client, isPending, readyId, userId])
 
   if (isPending || readyId !== userId) {
-    return <div role="status" className="py-24 text-center">Loading your account…</div>
+    return (
+      <div role="status" className="py-24 text-center">
+        Loading your account…
+      </div>
+    )
   }
   return children
 }

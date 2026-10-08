@@ -1,3 +1,4 @@
+import { initializeDeliveryBrowserData } from './features/checkout/browser-cutover'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ApolloProvider } from '@apollo/client/react'
@@ -6,6 +7,7 @@ import App from './app/App.tsx'
 import { client } from './lib/apollo-client.ts'
 import { initializeTheme } from './lib/theme.ts'
 
+initializeDeliveryBrowserData()
 initializeTheme()
 
 createRoot(document.getElementById('root')!).render(
