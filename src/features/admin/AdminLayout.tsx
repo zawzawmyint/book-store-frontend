@@ -1,4 +1,12 @@
-import { BookOpenText, ClipboardList, Users, ArrowUpRight, X, History } from 'lucide-react'
+import {
+  BookOpenText,
+  ClipboardList,
+  Users,
+  ArrowUpRight,
+  X,
+  History,
+  LayoutDashboard,
+} from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Button } from '../../app/components/ui/button'
 import {
@@ -21,6 +29,7 @@ import { useAdminAccess } from './admin-access'
 import { ThemeSwitch } from '../../app/components/ThemeSwitch'
 
 const sections = [
+  { group: 'Overview', title: 'Dashboard', to: '/admin', icon: LayoutDashboard },
   { group: 'Catalog', title: 'Books', to: '/admin/books', icon: BookOpenText },
   { group: 'Sales', title: 'Order requests', to: '/admin/orders', icon: ClipboardList },
   { group: 'People', title: 'Users', to: '/admin/users', icon: Users },
@@ -73,10 +82,16 @@ function AdminNavigation() {
                         <SidebarMenuButton
                           asChild
                           size="lg"
-                          isActive={pathname === to || pathname.startsWith(to + '/')}
+                          isActive={
+                            pathname === to || (to !== '/admin' && pathname.startsWith(to + '/'))
+                          }
                           className="admin-nav-link gap-3 rounded-lg px-3 font-medium"
                         >
-                          <NavLink to={to} onClick={() => setOpenMobile(false)}>
+                          <NavLink
+                            to={to}
+                            end={to === '/admin'}
+                            onClick={() => setOpenMobile(false)}
+                          >
                             <Icon aria-hidden="true" />
                             <span>{title}</span>
                           </NavLink>
@@ -104,15 +119,18 @@ function AdminNavigation() {
 export function AdminLayout() {
   const { role } = useAdminAccess()
   const { pathname } = useLocation()
-  const section = pathname.startsWith('/admin/activity')
-    ? 'Store'
-    : pathname.startsWith('/admin/orders')
-      ? 'Orders'
-      : pathname.startsWith('/admin/users')
-        ? 'People'
-        : pathname.startsWith('/admin/profile')
-          ? 'Profile'
-          : 'Catalog'
+  const section =
+    pathname === '/admin'
+      ? 'Overview'
+      : pathname.startsWith('/admin/activity')
+        ? 'Store'
+        : pathname.startsWith('/admin/orders')
+          ? 'Orders'
+          : pathname.startsWith('/admin/users')
+            ? 'People'
+            : pathname.startsWith('/admin/profile')
+              ? 'Profile'
+              : 'Catalog'
   return (
     <div className="admin-workspace">
       <SidebarProvider open onOpenChange={() => {}}>

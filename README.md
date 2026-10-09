@@ -98,7 +98,7 @@ Admin screens have a dedicated workspace outside the storefront header/footer: a
 
 Admin data is never persisted in browser storage. Session changes clear Apollo data; access loss hides private views. Archived books in existing carts fail checkout with an actionable message and retain the cart. If a stock mutation loses its response, check inventory before deciding whether to submit another adjustment.
 
-See [the admin spec](specs/admin/SPEC.md) and the backend README for provisioning and migrations. The default browser fixture uses an in-memory SQLite database and test accounts; the PostgreSQL browser command uses a disposable local database.
+The workspace home at `/admin` is the implemented [Dashboard feature](specs/dashboard/SPEC.md): compact summaries and charts come before stock/refund and action alerts, with Recent orders last. Staff see current fulfillment, stock, and order work; Admin also see exact-cent recorded test-payment and refund reporting for 7/30/90 Asia/Dubai calendar days. See [the admin spec](specs/admin/SPEC.md) and the backend README for provisioning and migrations. The default browser fixture uses an in-memory SQLite database and test accounts; the PostgreSQL browser command uses a disposable local database.
 
 ## Customer account flow
 

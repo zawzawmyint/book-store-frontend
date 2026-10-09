@@ -13,7 +13,7 @@ for (const role of ['Customer', 'Staff', 'Admin']) {
   test(`demo ${role} signs in with real permissions and restores its session`, async ({ page }) => {
     await page.goto('/sign-in?returnTo=/checkout')
     await page.getByRole('button', { name: `Demo ${role}`, exact: true }).click()
-    await expect(page).toHaveURL(role === 'Customer' ? 'http://localhost:4173/' : /\/admin\/books$/)
+    await expect(page).toHaveURL(role === 'Customer' ? 'http://localhost:4173/' : /\/admin$/)
     await page.reload()
     const viewer = await page.request.post('/graphql', {
       data: { query: '{ viewer { role } }' },

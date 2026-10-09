@@ -31,7 +31,7 @@ test('admin workspace stays separate from shopping and returns to the storefront
   await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible()
   await page.getByRole('button', { name: 'Account', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Admin', exact: true }).click()
-  await expect(page).toHaveURL('/admin/books')
+  await expect(page).toHaveURL('/admin')
   await page.getByRole('button', { name: 'Account', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click()
   await expect(page).toHaveURL('/')

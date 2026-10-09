@@ -1,6 +1,7 @@
 import { CheckoutReturnPage } from '../features/checkout/pages/CheckoutReturnPage'
 import { OrderPage as CustomerOrderPage } from '../features/account/pages/OrderPage'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { Layout } from './Layout'
 import { HomePage } from '../features/books/pages/HomePage'
 import { BookPage } from '../features/books/pages/BookPage'
@@ -26,6 +27,7 @@ import { LegacyUsersRedirect } from '../features/admin/LegacyUsersRedirect'
 import { ActivityPage } from '../features/admin/pages/ActivityPage'
 import { BookHistoryPage } from '../features/admin/pages/BookHistoryPage'
 import { TooltipProvider } from './components/ui/tooltip'
+const DashboardPage = lazy(() => import('../features/admin/pages/DashboardPage'))
 
 export default function App() {
   return (
@@ -58,7 +60,14 @@ export default function App() {
               </Route>
               <Route element={<RequireWorkspaceAccess />}>
                 <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<Navigate to="books" replace />} />
+                  <Route
+                    index
+                    element={
+                      <Suspense fallback={<p role="status">Loading dashboard…</p>}>
+                        <DashboardPage />
+                      </Suspense>
+                    }
+                  />
                   <Route path="books" element={<AdminBooksPage />} />
                   <Route path="books/new" element={<BookFormPage />} />
                   <Route path="books/:id/edit" element={<BookFormPage />} />

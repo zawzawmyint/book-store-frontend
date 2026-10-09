@@ -7,10 +7,17 @@ This repository owns the React, TypeScript, Tailwind, and Apollo Client storefro
 Use this order for future implementation work. Existing specs describe the current system; do not treat their `Implemented` status as evidence that earlier work followed this process.
 
 1. Before changing behavior, create or update `specs/<feature>/SPEC.md` with **Status: Proposed**. For a small change documented only in `SPEC.md`, add a clearly labeled proposed section; preserve its description of current behavior until delivery. State the user-visible behavior, affected routes and API contracts, edge cases, and testable acceptance criteria. For a bug, specify the correct behavior and regression case. Coordinate any GraphQL contract change with the backend spec before editing either implementation.
-2. Select one acceptance criterion and add the smallest relevant automated test first. Use a focused unit or component test for local behavior and a Playwright test for a browser journey. Run it and confirm it fails for the intended missing behavior, rather than a setup error.
+2. Select one acceptance criterion and add the smallest useful behavior test first, using the testing policy below. TDD applies at any test level; unit tests are not mandatory. Run the test and confirm it fails for the intended missing behavior, rather than a setup error.
 3. Implement only enough to pass that test, then refactor with tests green. Repeat the failing-test → passing-test → refactor cycle for each remaining criterion. Generated files are updated through codegen after the source contract changes, not edited by hand.
 4. Run the affected tests, then `bun run test`, `bun run lint`, and `bun run build`. Run `bun run test:e2e` when routes, authentication, cart, checkout, account flows, or their API integration change. Check acceptance criteria manually where automation cannot verify them.
 5. Update `SPEC.md` to match the delivered behavior, resolve any proposed section, and mark the feature spec **Status: Implemented** only after its acceptance criteria pass. Include the spec, tests, and implementation in the change for review.
+
+## Testing policy
+
+- Choose coverage by observable behavior and risk. Prefer backend integration tests for database calculations and API permissions, with a small set of Playwright E2E tests for critical connected user journeys.
+- Add unit/component tests selectively for complex isolated behavior, such as request races, exact formatting or loading/error transitions, when they provide clearer, faster coverage than a browser journey.
+- Avoid duplicating the same assertions across test levels. Overlap is useful when it verifies a distinct risk, such as API authorization versus client query gating. Do not require tests for trivial wrappers, styling or internal function calls; avoid large mock setups that mirror the implementation.
+- Preserve the failing-test → passing-test → refactor cycle, required checks and browser fixture isolation. Coordinate SQLite/PostgreSQL parity checks for affected database behavior. This policy does not require deleting existing tests or reducing meaningful coverage.
 
 ## Commands
 

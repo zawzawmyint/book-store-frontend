@@ -20,9 +20,9 @@ For self-demotion show an explicit warning: becoming STAFF removes user manageme
 
 - Keep `/admin` routes and existing shared layout/components; do not create a separate staff app.
 - The storefront Account menu exposes **Admin** for ADMIN and **Staff workspace** for STAFF, each linking to `/admin`. Both continue to browse and buy as before.
-- `/admin` sends both privileged roles to `/admin/books`. Guests still use the existing internal sign-in return flow; CUSTOMER sees access denied.
-- STAFF sees Books, Order requests, Profile/account actions, and Back to store. Hide the Users link and archive/restore actions. Staff-only branding should say **Staff workspace** rather than imply ADMIN privileges.
-- STAFF may open `/admin/books`, `/admin/books/new`, `/admin/books/:id/edit`, `/admin/orders`, `/admin/orders/:id`, and `/admin/profile`.
+- `/admin` opens the implemented [Dashboard](../dashboard/SPEC.md) for both privileged roles. Guests still use the existing internal sign-in return flow; CUSTOMER sees access denied.
+- STAFF sees Dashboard, Books, Order requests, Profile/account actions, and Back to store. Hide the Users link and archive/restore actions. Staff-only branding should say **Staff workspace** rather than imply ADMIN privileges.
+- STAFF may open `/admin`, `/admin/books`, `/admin/books/new`, `/admin/books/:id/edit`, `/admin/orders`, `/admin/orders/:id`, and `/admin/profile`.
 - Staff can search/filter/paginate books, see archived items, add active books, edit metadata including price, and adjust stock. Keep current forms, bounds, confirmations, and mutation-error behavior. They cannot archive/restore, including on archived rows.
 - ADMIN retains all current workspace routes plus role assignment. Users role labels and filters add Staff; replace Grant/Revoke controls with Change role. The frontend no longer calls Boolean access mutations.
 - `/admin/users`, `/admin/users/:id`, and their legacy customer-route equivalents remain ADMIN-only. A STAFF direct URL shows access denied without mounting directory/detail queries or password-reset controls. It must not remove their access to Books and Orders.

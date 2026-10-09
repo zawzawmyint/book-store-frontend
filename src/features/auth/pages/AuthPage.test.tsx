@@ -27,7 +27,7 @@ function show(mode: 'sign-in' | 'sign-up' = 'sign-in') {
       <Routes>
         <Route path="/sign-in" element={<AuthPage mode={mode} />} />
         <Route path="/" element={<p>Storefront destination</p>} />
-        <Route path="/admin/books" element={<p>Workspace destination</p>} />
+        <Route path="/admin" element={<p>Workspace destination</p>} />
       </Routes>
     </MemoryRouter>,
   )

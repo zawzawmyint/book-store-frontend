@@ -9,6 +9,8 @@
 
 > The implemented Staff permission model is defined in [the staff roles specification](specs/staff/SPEC.md), with user-directory compatibility details in [the user directory specification](specs/users/SPEC.md). Customer-named admin URLs remain redirects for existing bookmarks.
 
+> The implemented [dashboard specification](specs/dashboard/SPEC.md) defines the `/admin` workspace home, including Staff operations and Admin-only payment reporting.
+
 ## Purpose and current scope
 
 The implemented [order workflow](specs/order-workflow/SPEC.md) adds customer
@@ -19,6 +21,13 @@ The implemented [icons and typography specification](specs/icons-typography/SPEC
 The implemented [appearance specification](specs/appearance/SPEC.md) defines the shared Light/Dark switch for the storefront and workspace. Dark is the default; the browser-level choice is stored independently of accounts and applies before React renders.
 
 The implemented [activity history specification](specs/activity/SPEC.md) defines an Admin-only Activity page and book history. It requires the coordinated backend migration and deployment.
+
+The implemented [dashboard specification](specs/dashboard/SPEC.md) defines the
+read-only operations overview and Admin-only 7/30/90-day recorded-payment reporting.
+It presents compact summary cards, then the dashboard graphics, then stock/refund
+and action alerts, with Recent orders last.
+Operational and inventory cards use icons with explicit text status cues so urgency
+does not depend on color alone.
 
 Provide a browser storefront for finding books, maintaining a cart, and beginning an
 authenticated Stripe hosted Checkout payment through the separate GraphQL API. Checkout
@@ -32,7 +41,7 @@ collects a delivery address, requires a reviewed server quote, and displays deli
 - `/books/:id` requests one book and shows its details, price, stock, and add-to-cart action.
 - `/cart` shows cart lines, quantity controls, removal, and a client-side estimated total. Zustand manages shared cart state and persists items in browser local storage using the existing `book-store-cart` key and raw JSON array format. Count and estimated total are derived from items. Previously saved carts remain readable, invalid entries are filtered out, and storage failures leave in-memory cart interactions usable.
 - `/sign-up` and `/sign-in` create or access a Better Auth account. Authentication is required for `/checkout`, `/account/orders`, `/account/orders/:id`, and `/account/profile`; a guarded route sends guests to sign-in with an internal return path.
-- When Vite is in development, `VITE_DEMO_LOGIN=true`, and the browser uses a loopback host, `/sign-in` also offers the three local demo accounts seeded by the backend. Their normal Better Auth sign-in destinations are `/` for Customer and `/admin/books` for Staff or Admin; production, non-loopback, sign-up, and signed-in states show no demo controls.
+- When Vite is in development, `VITE_DEMO_LOGIN=true`, and the browser uses a loopback host, `/sign-in` also offers the three local demo accounts seeded by the backend. Their normal Better Auth sign-in destinations are `/` for Customer and `/admin` for Staff or Admin; production, non-loopback, sign-up, and signed-in states show no demo controls.
 - `/checkout` validates a delivery address, obtains a server quote, and sends book IDs,
   quantities, a generated request key, the normalized address, and reviewed expected
   fee/total through `createCheckout`. It redirects only to the returned
@@ -47,7 +56,7 @@ collects a delivery address, requires a reviewed server quote, and displays deli
 
 ## Admin routes
 
-- `/admin` redirects Staff and Admin to `/admin/books`; guests redirect to sign-in with an internal return path, and Customers see access denied. The Account menu exposes Admin for Admin and Staff workspace for Staff after server authorization.
+- `/admin` opens the implemented [Dashboard](specs/dashboard/SPEC.md) for Staff and Admin; guests redirect to sign-in with an internal return path, and Customers see access denied. The Account menu exposes Admin for Admin and Staff workspace for Staff after server authorization.
 - Admin routes render outside the storefront shell, with neutral surfaces, compact tables/forms, and sans-serif headings. A full-height dark forest-green grouped sidebar stays visible at desktop widths (1024px and above); smaller screens use the same navigation in an accessible Admin menu Sheet. Its brighter brand icon, muted group labels, and rounded active link with a mint accent maintain visible navigation states. The menu closes after navigation or Escape and restores focus, and nested routes retain active navigation. Back to store is in the sidebar footer. A compact sticky header provides account/sign-out access; access-denied and retry screens retain an account menu.
 - `/admin/books`, `/admin/books/new`, and `/admin/books/:id/edit` support catalog search/filter/pagination, creation, metadata editing, and atomic stock adjustments for Staff and Admin. Only Admin sees or can use archive/restore confirmations. `AdminFilterToolbar` trims submitted searches, accepts page-specific filters, and leaves Books responsible for URL filters and pagination reset. `BookRowActions` owns row links, role-specific History and More-actions controls, and archive-menu focus handling; `ArchiveBookDialog` owns archive confirmation, busy/error feedback, refresh, and focus return. `StockDialog` remains the stock interaction boundary. Catalog rows use compact storefront-palette thumbnails; Edit and Adjust stock stay direct actions, while Archive/Restore is in a per-row More actions menu for Admin.
 - Admin list pages share `AdminPageTable` for table structure, empty states, visible item ranges, totals, and pagination, with a shared page size of five used for API limits, offsets, and page counts. `AdminPageHeader` provides reusable titles, descriptions, and actions on list and book-form pages.
@@ -89,3 +98,19 @@ collects a delivery address, requires a reviewed server quote, and displays deli
 - Run `bun run test`, `bun run lint`, and `bun run build`.
 - Playwright Chromium tests cover account creation, checkout access, owner-safe order history/detail, Customer→Staff→Admin workflow completion/cancellation, archived-stock restoration, direct API rejection, session/role loss, mobile/keyboard behavior, appearance, and Activity permissions/history. Run `bun run test:e2e:install` once, then `bun run test:e2e` with both repositories installed. The default suite starts an in-memory SQLite API on 4100 and frontend on 4173, keeping persisted databases untouched. Run `bun run test:postgres:browser` from the backend for the same suite against an isolated disposable PostgreSQL database.
 - Catalog loading, empty and error states, search, pagination, book detail, cart updates, and order-request success and failure remain usable.
+
+## Implemented: stable dashboard navigation during refresh
+
+On `/admin`, background focus refreshes keep existing links and controls fixed so
+the first click reaches its intended target. Refresh progress is announced by an
+sr-only status and represented by a motion-safe spinner in the reserved inline
+update area; initial loading and error feedback are unchanged.
+
+The regression holds a workspace-dashboard response after focus, clicks the
+original position of the first status link once, and reaches
+`/admin/orders?status=SUBMITTED`. It failed before the fix because the visible
+refresh paragraph shifted that link by 32px, then passed in the 39-journey isolated
+SQLite browser suite. Frontend tests (132 across 32 files), lint, and build also
+passed; the pre-existing 922 kB main-bundle warning remains. No API, schema, route,
+or backend change was made. The earlier 38-journey PostgreSQL browser result remains
+historical dashboard-delivery evidence and was not rerun for this frontend-only fix.

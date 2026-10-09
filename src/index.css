@@ -590,6 +590,40 @@ button:disabled {
   outline: 2px solid var(--ring);
   outline-offset: 3px;
 }
+
+.admin-workspace {
+  --dashboard-warning: #92400e;
+  --dashboard-info: #1d4ed8;
+  --dashboard-success: #0f766e;
+}
+.dark .admin-workspace {
+  --dashboard-warning: #fbbf24;
+  --dashboard-info: #93c5fd;
+  --dashboard-success: #5eead4;
+}
+.dashboard-cue { --cue-color: var(--muted-foreground); }
+.dashboard-cue[data-tone='warning'] { --cue-color: var(--dashboard-warning); }
+.dashboard-cue[data-tone='danger'] { --cue-color: var(--destructive); }
+.dashboard-cue[data-tone='info'] { --cue-color: var(--dashboard-info); }
+.dashboard-cue[data-tone='success'] { --cue-color: var(--dashboard-success); }
+.admin-workspace [data-slot='card'].dashboard-metric:not([data-tone='neutral']) {
+  border-color: color-mix(in srgb, var(--cue-color) 45%, var(--border));
+  border-top-color: var(--cue-color);
+}
+.dashboard-icon, .dashboard-status {
+  color: var(--cue-color);
+  background: color-mix(in srgb, var(--cue-color) 12%, var(--surface));
+  border-radius: 0.375rem;
+}
+.dashboard-icon { display: inline-flex; padding: 0.25rem; }
+.dashboard-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+}
 select, textarea, input {
   color-scheme: inherit;
 }
