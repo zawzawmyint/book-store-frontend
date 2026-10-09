@@ -13,6 +13,7 @@ import {
 } from '../../../app/components/ui/select'
 import { AdminPageTable } from '../components/AdminPageTable'
 import { AdminPageHeader } from '../components/AdminPageHeader'
+import { AdminFilterToolbar } from '../components/AdminFilterToolbar'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@apollo/client/react'
 import { AdminOrdersDocument } from '../../../generated/graphql'
@@ -27,6 +28,7 @@ import { AdminFeedback } from '../components/AdminFeedback'
 export function OrdersPage() {
   const [params, setParams] = useSearchParams()
   const page = readPage(params.get('page'))
+  const search = (params.get('search') ?? '').slice(0, 100).trim()
   const value = params.get('status') ?? 'ALL'
   const status: OrderStatusFilter = Object.hasOwn(orderStatusLabels, value)
     ? (value as OrderStatusFilter)
@@ -37,7 +39,12 @@ export function OrdersPage() {
     setParams(next)
   }
   const { data, loading, error, refetch } = useQuery(AdminOrdersDocument, {
-    variables: { status, limit: ADMIN_PAGE_SIZE, offset: (page - 1) * ADMIN_PAGE_SIZE },
+    variables: {
+      ...(search ? { search } : {}),
+      status,
+      limit: ADMIN_PAGE_SIZE,
+      offset: (page - 1) * ADMIN_PAGE_SIZE,
+    },
     fetchPolicy: 'no-cache',
   })
   useAdminQueryError(error)
@@ -55,7 +62,18 @@ export function OrdersPage() {
         title="All order requests"
         description="Saved delivery orders with payment and fulfillment state."
       />
-      <div className="admin-toolbar">
+      <AdminFilterToolbar
+        search={search}
+        searchLabel="Search orders"
+        searchPlaceholder="Order number, customer name or email"
+        onSearch={(value) => {
+          const next = new URLSearchParams(params)
+          if (value) next.set('search', value)
+          else next.delete('search')
+          next.delete('page')
+          setParams(next)
+        }}
+      >
         <div className="admin-toolbar-field">
           <Label htmlFor="order-status-filter">Status</Label>
           <Select
@@ -80,7 +98,7 @@ export function OrdersPage() {
             </SelectContent>
           </Select>
         </div>
-      </div>
+      </AdminFilterToolbar>
       <AdminFeedback loading={loading} error={error} retry={refetch} />
       {!loading && !error && orders && (
         <AdminPageTable

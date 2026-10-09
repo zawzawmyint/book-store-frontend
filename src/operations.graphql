@@ -204,11 +204,34 @@ fragment AdminOrderFields on AdminOrder {
     unitPriceCents
   }
 }
-query AdminOrders($status: OrderStatusFilter, $limit: Int, $offset: Int) {
-  adminOrders(status: $status, limit: $limit, offset: $offset) {
+query AdminOrders($status: OrderStatusFilter, $limit: Int, $offset: Int, $search: String) {
+  adminOrders(status: $status, limit: $limit, offset: $offset, search: $search) {
     total
     items {
       ...AdminOrderFields
+    }
+  }
+}
+query WorkspaceSearchBooks($search: String!) {
+  adminBooks(search: $search, filter: ACTIVE, lowStockOnly: false, limit: 5, offset: 0) {
+    total
+    items {
+      id
+      title
+      author
+      stock
+    }
+  }
+}
+query WorkspaceSearchOrders($search: String!) {
+  adminOrders(search: $search, status: ALL, limit: 5, offset: 0) {
+    total
+    items {
+      id
+      customerName
+      email
+      status
+      createdAt
     }
   }
 }

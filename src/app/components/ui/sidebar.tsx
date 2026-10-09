@@ -73,7 +73,17 @@ function SidebarProvider({
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = React.useState(defaultOpen)
+  const [_open, _setOpen] = React.useState(() => {
+    try {
+      const saved = document.cookie
+        .split('; ')
+        .find((cookie) => cookie.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
+        ?.split('=')[1]
+      return saved === 'false' ? false : saved === 'true' ? true : defaultOpen
+    } catch {
+      return defaultOpen
+    }
+  })
   const open = openProp ?? _open
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
@@ -85,7 +95,11 @@ function SidebarProvider({
       }
 
       // This sets the cookie to keep the sidebar state.
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+      try {
+        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}; SameSite=Lax`
+      } catch {
+        // Navigation still works when browser storage is unavailable.
+      }
     },
     [setOpenProp, open],
   )
@@ -98,6 +112,19 @@ function SidebarProvider({
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.repeat || event.altKey || event.shiftKey) return
+      const target = event.target
+      if (
+        target instanceof HTMLElement &&
+        target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')
+      )
+        return
+      if (
+        document.querySelector(
+          '[role="dialog"][data-state="open"], [role="alertdialog"], dialog[open]',
+        )
+      )
+        return
       if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
         event.preventDefault()
         toggleSidebar()
@@ -479,8 +506,7 @@ const sidebarMenuButtonVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+        default: 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
         outline:
           'bg-background shadow-[0_0_0_1px_var(--sidebar-border)] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_var(--sidebar-accent)]',
       },
@@ -524,7 +550,7 @@ function SidebarMenuButton({
     />
   )
 
-  if (!tooltip) {
+  if (!tooltip || isMobile || state !== 'collapsed') {
     return button
   }
 
