@@ -71,7 +71,7 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
 
   async function signInDemo(role: 'Customer' | 'Staff' | 'Admin') {
     if (demoPending || isSubmitting) return
-    const target = role === 'Customer' ? '/' : '/admin/books'
+    const target = role === 'Customer' ? '/' : '/admin'
     setDemoPending(true)
     setDemoTarget(target)
     setServerError('')

@@ -18,7 +18,8 @@ on `/sign-up` or after a user is signed in.
 
 Each control submits the matching seeded email and shared local password through
 the ordinary Better Auth email/password client. Customer navigates to `/`; Staff
-and Admin navigate to `/admin/books`. This demo destination overrides `returnTo`;
+and Admin navigate to `/admin`, the implemented [Dashboard](../dashboard/SPEC.md)
+home. This demo destination overrides `returnTo`;
 ordinary sign-in retains its existing `returnTo` behavior. Roles and access are
 still decided by the backend.
 

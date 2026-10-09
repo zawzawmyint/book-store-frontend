@@ -1,3 +1,71 @@
+fragment DashboardOrderFields on DashboardOrderSummary {
+  id
+  customerName
+  createdAt
+  totalCents
+  status
+  payment {
+    required
+    cancellationPending
+    status
+    currency
+    expiresAt
+    paidAt
+    refundedAt
+  }
+}
+
+query WorkspaceDashboard {
+  workspaceDashboard {
+    generatedAt
+    fulfillment {
+      status
+      count
+    }
+    lowStockCount
+    outOfStockCount
+    stockAlerts {
+      id
+      title
+      stock
+    }
+    awaitingPreparation {
+      ...DashboardOrderFields
+    }
+    readyToShip {
+      ...DashboardOrderFields
+    }
+    recentOrders {
+      ...DashboardOrderFields
+    }
+  }
+}
+
+query DashboardFinance($period: DashboardPeriod!) {
+  adminDashboardFinance(period: $period) {
+    generatedAt
+    period
+    timeZone
+    startDate
+    endDate
+    currency
+    capturedCents
+    refundedCents
+    netCents
+    paidOrderCount
+    days {
+      date
+      capturedCents
+      refundedCents
+      paidOrderCount
+    }
+    failedRefundCount
+    failedRefundOrders {
+      ...DashboardOrderFields
+    }
+  }
+}
+
 query Books($search: String, $limit: Int, $offset: Int) {
   books(search: $search, limit: $limit, offset: $offset) {
     total

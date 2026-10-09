@@ -23,6 +23,7 @@ import { hasCapability, useAdminAccess } from '../admin-access'
 import { Separator } from '../../../app/components/ui/separator'
 import { useAdminQueryError } from '../admin-access'
 import { AdminFeedback } from '../components/AdminFeedback'
+import { dashboardReturnTo } from '../dashboard/dashboard-format'
 
 export function OrderPage() {
   const { id = '' } = useParams()
@@ -46,7 +47,10 @@ function OrderDetailPage({ id }: { id: string }) {
   useAdminQueryError(error)
   const location = useLocation()
   const requestedReturn = (location.state as { returnTo?: string } | null)?.returnTo
-  const returnTo = requestedReturn?.startsWith('/admin/orders?') ? requestedReturn : '/admin/orders'
+  const dashboardReturn = dashboardReturnTo(requestedReturn)
+  const returnTo =
+    dashboardReturn ??
+    (requestedReturn?.startsWith('/admin/orders?') ? requestedReturn : '/admin/orders')
   const order = current?.id === id ? current : data?.adminOrder
   async function refreshOrder() {
     const result = await refetch()
@@ -78,7 +82,7 @@ function OrderDetailPage({ id }: { id: string }) {
   return (
     <section>
       <Link className="admin-back-link" to={returnTo}>
-        Back to order requests
+        {dashboardReturn ? 'Back to dashboard' : 'Back to order requests'}
       </Link>
       {notice && (
         <p role="status" className="mt-4">
