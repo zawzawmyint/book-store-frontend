@@ -124,7 +124,7 @@ test('sidebar navigation adapts to mobile and closes after navigation or Escape'
   const menu = page.getByRole('button', { name: 'Admin menu', exact: true, includeHidden: true })
   const content = page.getByRole('heading', { name: 'Manage books' })
   await expect(navigation).toBeVisible()
-  await expect(menu).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Collapse sidebar', exact: true })).toBeVisible()
   const navBounds = await navigation.boundingBox()
   const contentBounds = await content.boundingBox()
   expect(navBounds!.x + navBounds!.width).toBeLessThan(contentBounds!.x)

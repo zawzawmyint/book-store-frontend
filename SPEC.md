@@ -11,7 +11,33 @@
 
 > The implemented [dashboard specification](specs/dashboard/SPEC.md) defines the `/admin` workspace home, including Staff operations and Admin-only payment reporting.
 
+> **Implemented workspace search:** [Workspace search](specs/workspace-search/SPEC.md) adds the Staff/Admin Books and Orders dialog without changing storefront search, with verified SQLite/PostgreSQL browser coverage, code generation, lint, and build.
+
 ## Purpose and current scope
+
+### Implemented: collapsible workspace sidebar
+
+Desktop workspace navigation starts expanded and can collapse through its labeled
+header toggle to a 64px icon rail. Collapsed links retain accessible names and active
+state, with tooltips shown only on collapsed desktop. The seven-day sidebar preference
+cookie is restored on reload; missing, invalid, or blocked storage falls back to the
+expanded state. The mobile workspace remains a full labeled Sheet independent of the
+desktop preference, closes after navigation or Escape, and restores focus. Opening
+workspace search preserves sidebar state.
+
+Ctrl+B on Windows/Linux and Cmd+B on macOS toggle the desktop sidebar. The shortcut
+ignores editable fields, open modals, repeats, and modified key combinations. No route,
+API, GraphQL, code-generation, dependency, or backend change was made.
+
+The sidebar browser journey verifies persisted/invalid-cookie state, collapsed
+navigation and desktop tooltips, workspace-search state, mobile behavior, and keyboard
+guards. The existing mobile Escape/focus regression also passed. The blocked-cookie
+fallback is covered by the implementation guard but has no dedicated browser audit.
+Verification completed with 136 frontend tests across 33 files, lint, build, and the
+full 44-journey isolated SQLite browser suite. A live Admin dark collapsed-dashboard
+screenshot was inspected. The existing main-bundle warning is 932.90 kB and the lazy
+dashboard chunk is 385.87 kB. The earlier 43-journey PostgreSQL workspace-search run
+is historical evidence and was not rerun for this frontend-only task.
 
 The implemented [order workflow](specs/order-workflow/SPEC.md) adds customer
 status details and Staff/Admin processing while preserving order-request wording.
@@ -57,7 +83,7 @@ collects a delivery address, requires a reviewed server quote, and displays deli
 ## Admin routes
 
 - `/admin` opens the implemented [Dashboard](specs/dashboard/SPEC.md) for Staff and Admin; guests redirect to sign-in with an internal return path, and Customers see access denied. The Account menu exposes Admin for Admin and Staff workspace for Staff after server authorization.
-- Admin routes render outside the storefront shell, with neutral surfaces, compact tables/forms, and sans-serif headings. A full-height dark forest-green grouped sidebar stays visible at desktop widths (1024px and above); smaller screens use the same navigation in an accessible Admin menu Sheet. Its brighter brand icon, muted group labels, and rounded active link with a mint accent maintain visible navigation states. The menu closes after navigation or Escape and restores focus, and nested routes retain active navigation. Back to store is in the sidebar footer. A compact sticky header provides account/sign-out access; access-denied and retry screens retain an account menu.
+- Admin routes render outside the storefront shell, with neutral surfaces, compact tables/forms, and sans-serif headings. At desktop widths (1024px and above), the full-height dark forest-green grouped sidebar starts expanded and can become a 64px icon rail through its header toggle. The compact rail retains accessible link names, active treatment, and collapsed-only tooltips. Smaller screens use the full labeled navigation in an accessible Admin menu Sheet. The menu closes after navigation or Escape and restores focus, and nested routes retain active navigation. Back to store is in the sidebar footer. A compact sticky header provides the sidebar toggle, workspace search, account/sign-out access; access-denied and retry screens retain an account menu.
 - `/admin/books`, `/admin/books/new`, and `/admin/books/:id/edit` support catalog search/filter/pagination, creation, metadata editing, and atomic stock adjustments for Staff and Admin. Only Admin sees or can use archive/restore confirmations. `AdminFilterToolbar` trims submitted searches, accepts page-specific filters, and leaves Books responsible for URL filters and pagination reset. `BookRowActions` owns row links, role-specific History and More-actions controls, and archive-menu focus handling; `ArchiveBookDialog` owns archive confirmation, busy/error feedback, refresh, and focus return. `StockDialog` remains the stock interaction boundary. Catalog rows use compact storefront-palette thumbnails; Edit and Adjust stock stay direct actions, while Archive/Restore is in a per-row More actions menu for Admin.
 - Admin list pages share `AdminPageTable` for table structure, empty states, visible item ranges, totals, and pagination, with a shared page size of five used for API limits, offsets, and page counts. `AdminPageHeader` provides reusable titles, descriptions, and actions on list and book-form pages.
 - `/admin/orders` and `/admin/orders/:id` show saved orders, captured contact/price
