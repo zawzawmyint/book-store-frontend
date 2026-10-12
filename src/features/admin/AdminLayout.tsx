@@ -1,12 +1,4 @@
-import {
-  BookOpenText,
-  ClipboardList,
-  Users,
-  ArrowUpRight,
-  X,
-  History,
-  LayoutDashboard,
-} from 'lucide-react'
+import { BookOpenText, ArrowUpRight, X } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Button } from '../../app/components/ui/button'
 import {
@@ -28,14 +20,11 @@ import { AdminAccountMenu } from './components/AdminAccountMenu'
 import { useAdminAccess } from './admin-access'
 import { ThemeSwitch } from '../../app/components/ThemeSwitch'
 import { WorkspaceSearch } from './components/WorkspaceSearchDialog'
-
-const sections = [
-  { group: 'Overview', title: 'Dashboard', to: '/admin', icon: LayoutDashboard },
-  { group: 'Catalog', title: 'Books', to: '/admin/books', icon: BookOpenText },
-  { group: 'Sales', title: 'Order requests', to: '/admin/orders', icon: ClipboardList },
-  { group: 'People', title: 'Users', to: '/admin/users', icon: Users },
-  { group: 'Store', title: 'Activity', to: '/admin/activity', icon: History },
-]
+import {
+  getAdminNavigation,
+  getAdminSectionLabel,
+  isAdminNavigationActive,
+} from './admin-navigation'
 
 function AdminNavigation() {
   const { role } = useAdminAccess()
@@ -67,43 +56,36 @@ function AdminNavigation() {
         </SidebarHeader>
         <SidebarContent className="px-2 py-4">
           <nav id="admin-navigation" aria-label="Admin navigation">
-            {sections
-              .filter(
-                (section) =>
-                  !['/admin/users', '/admin/activity'].includes(section.to) || role === 'ADMIN',
-              )
-              .map(({ group, title, to, icon: Icon }) => (
-                <SidebarGroup key={to}>
-                  <SidebarGroupLabel className="admin-nav-muted mb-1 text-[10px] font-semibold uppercase tracking-[.16em] group-data-[collapsible=icon]:hidden">
-                    {group}
-                  </SidebarGroupLabel>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      <SidebarMenuItem>
-                        <SidebarMenuButton
-                          asChild
-                          tooltip={title}
-                          size="lg"
-                          isActive={
-                            pathname === to || (to !== '/admin' && pathname.startsWith(to + '/'))
-                          }
-                          className="admin-nav-link gap-3 rounded-lg px-3 font-medium group-data-[collapsible=icon]:justify-center"
+            {getAdminNavigation(role).map(({ group, title, to, icon: Icon }) => (
+              <SidebarGroup key={to}>
+                <SidebarGroupLabel className="admin-nav-muted mb-1 text-[10px] font-semibold uppercase tracking-[.16em] group-data-[collapsible=icon]:hidden">
+                  {group}
+                </SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        asChild
+                        tooltip={title}
+                        size="lg"
+                        isActive={isAdminNavigationActive(pathname, to)}
+                        className="admin-nav-link gap-3 rounded-lg px-3 font-medium group-data-[collapsible=icon]:justify-center"
+                      >
+                        <NavLink
+                          aria-label={title}
+                          to={to}
+                          end={to === '/admin'}
+                          onClick={() => setOpenMobile(false)}
                         >
-                          <NavLink
-                            aria-label={title}
-                            to={to}
-                            end={to === '/admin'}
-                            onClick={() => setOpenMobile(false)}
-                          >
-                            <Icon aria-hidden="true" />
-                            <span className="group-data-[collapsible=icon]:hidden">{title}</span>
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </SidebarGroup>
-              ))}
+                          <Icon aria-hidden="true" />
+                          <span className="group-data-[collapsible=icon]:hidden">{title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
           </nav>
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border p-4 group-data-[collapsible=icon]:p-2">
@@ -142,18 +124,7 @@ function AdminSidebarToggle() {
 export function AdminLayout() {
   const { role } = useAdminAccess()
   const { pathname, key } = useLocation()
-  const section =
-    pathname === '/admin'
-      ? 'Overview'
-      : pathname.startsWith('/admin/activity')
-        ? 'Store'
-        : pathname.startsWith('/admin/orders')
-          ? 'Orders'
-          : pathname.startsWith('/admin/users')
-            ? 'People'
-            : pathname.startsWith('/admin/profile')
-              ? 'Profile'
-              : 'Catalog'
+  const section = getAdminSectionLabel(pathname)
   return (
     <div className="admin-workspace">
       <SidebarProvider style={{ '--sidebar-width-icon': '4rem' } as React.CSSProperties}>

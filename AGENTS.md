@@ -15,6 +15,7 @@ Use this order for future implementation work. Existing specs describe the curre
 ## Testing policy
 
 - Choose coverage by observable behavior and risk. Prefer backend integration tests for database calculations and API permissions, with a small set of Playwright E2E tests for critical connected user journeys.
+- For a behavior-preserving refactor, first run the relevant existing coverage, add a focused characterization test only when a material invariant lacks coverage, refactor, then rerun that coverage. A manufactured failing test is not required for a rename, signature-only change, or extraction that has no behavior gap; feature and bug work retain the failing-test → passing-test workflow above.
 - Add unit/component tests selectively for complex isolated behavior, such as request races, exact formatting or loading/error transitions, when they provide clearer, faster coverage than a browser journey.
 - Avoid duplicating the same assertions across test levels. Overlap is useful when it verifies a distinct risk, such as API authorization versus client query gating. Do not require tests for trivial wrappers, styling or internal function calls; avoid large mock setups that mirror the implementation.
 - Preserve the failing-test → passing-test → refactor cycle, required checks and browser fixture isolation. Coordinate SQLite/PostgreSQL parity checks for affected database behavior. This policy does not require deleting existing tests or reducing meaningful coverage.

@@ -2,6 +2,15 @@ import type { ApolloClient } from '@apollo/client'
 
 export const ADMIN_PAGE_SIZE = 5
 
+export function patchAdminParams(params: URLSearchParams, values: Record<string, string>) {
+  const next = new URLSearchParams(params)
+  for (const [key, value] of Object.entries(values)) {
+    if (value) next.set(key, value)
+    else next.delete(key)
+  }
+  return next
+}
+
 export async function refreshCatalog(client: ApolloClient) {
   client.cache.evict({ fieldName: 'books' })
   client.cache.evict({ fieldName: 'book' })

@@ -1,12 +1,8 @@
-import { useState } from 'react'
-import type { FormEvent } from 'react'
-import { useQuery } from '@apollo/client/react'
 import { Search } from 'lucide-react'
 import { IconAction } from '../../../app/components/IconAction'
-import { useSearchParams } from 'react-router-dom'
 import { BookCard } from './BookCard'
-import { BooksDocument } from '../../../generated/graphql'
 import { PAGE_SIZE } from '../catalog'
+import { useCatalog } from '../use-catalog'
 import { Button } from '../../../app/components/ui/button'
 import { Input } from '../../../app/components/ui/input'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
@@ -14,27 +10,21 @@ import { Card, CardContent } from '../../../app/components/ui/card'
 import { Skeleton } from '../../../app/components/ui/skeleton'
 
 export function CatalogSection() {
-  const [params, setParams] = useSearchParams()
-  const search = params.get('search') || ''
-  const page = Math.max(0, Number(params.get('page') || 0) || 0)
-  const [draft, setDraft] = useState(search)
-  const { data, loading, error, refetch } = useQuery(BooksDocument, {
-    variables: { search, limit: PAGE_SIZE, offset: page * PAGE_SIZE },
-  })
-  const books = data?.books.items || []
-  const categories = ['All books', ...(data?.genres || [])]
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const value = draft.trim()
-    setParams(value ? { search: value } : {})
-  }
-
-  function chooseCategory(category: string) {
-    const value = category === 'All books' ? '' : category
-    setDraft(value)
-    setParams(value ? { search: value } : {})
-  }
+  const {
+    search,
+    page,
+    draft,
+    setDraft,
+    books,
+    categories,
+    total,
+    loading,
+    error,
+    refetch,
+    submitSearch,
+    chooseCategory,
+    changePage,
+  } = useCatalog()
 
   return (
     <section id="collection" className="page-shell pt-16 sm:pt-24">
@@ -70,7 +60,7 @@ export function CatalogSection() {
         </div>
         {/* Search form */}
         <form
-          onSubmit={submit}
+          onSubmit={submitSearch}
           role="search"
           className="flex min-w-0 items-center gap-2 border-b border-control pb-2 lg:w-[250px]"
         >
@@ -88,9 +78,7 @@ export function CatalogSection() {
       </div>
       <div className="mb-8 mt-6 flex items-center justify-between text-xs text-muted-foreground">
         <span>
-          {loading
-            ? 'Finding stories…'
-            : `${data?.books.total ?? 0} ${data?.books.total === 1 ? 'book' : 'books'} found`}
+          {loading ? 'Finding stories…' : `${total ?? 0} ${total === 1 ? 'book' : 'books'} found`}
         </span>
         {search && (
           <Button
@@ -146,15 +134,13 @@ export function CatalogSection() {
         </div>
       )}
       {/* Pagination */}
-      {!loading && !error && (data?.books.total || 0) > PAGE_SIZE && (
+      {!loading && !error && (total || 0) > PAGE_SIZE && (
         <div className="mt-14 flex items-center justify-center gap-5">
           <Button
             type="button"
             variant="ghost"
             disabled={page === 0}
-            onClick={() =>
-              setParams(search ? { search, page: String(page - 1) } : { page: String(page - 1) })
-            }
+            onClick={() => changePage(page - 1)}
             className="h-auto p-0 text-sm font-semibold disabled:opacity-30"
           >
             Previous
@@ -163,10 +149,8 @@ export function CatalogSection() {
           <Button
             type="button"
             variant="ghost"
-            disabled={(page + 1) * PAGE_SIZE >= (data?.books.total || 0)}
-            onClick={() =>
-              setParams(search ? { search, page: String(page + 1) } : { page: String(page + 1) })
-            }
+            disabled={(page + 1) * PAGE_SIZE >= (total || 0)}
+            onClick={() => changePage(page + 1)}
             className="h-auto p-0 text-sm font-semibold disabled:opacity-30"
           >
             Next

@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@apollo/client/react'
-import { useSearchParams } from 'react-router-dom'
 import { AdminActivityDocument } from '../../../generated/graphql'
 import { Button } from '../../../app/components/ui/button'
 import { Input } from '../../../app/components/ui/input'
@@ -10,38 +9,26 @@ import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { AdminPageHeader } from '../components/AdminPageHeader'
 import { AdminFeedback } from '../components/AdminFeedback'
 import { ActivityTable } from '../components/ActivityTable'
-import { ADMIN_PAGE_SIZE, readPage } from '../admin-data'
+import { useAdminPagination, useAdminPageCorrection } from '../use-admin-pagination'
 import { activityActions, readActivityFilters } from '../activity-data'
 import { useAdminQueryError } from '../admin-access'
 
 export function ActivityPage() {
-  const [params, setParams] = useSearchParams()
+  const { params, setParams, page, limit, offset, changePage } = useAdminPagination()
   const filters = readActivityFilters(params)
-  const page = readPage(params.get('page'))
   const [validation, setValidation] = useState('')
   const { data, loading, error, refetch } = useQuery(AdminActivityDocument, {
     variables: {
       ...filters.variables,
-      limit: ADMIN_PAGE_SIZE,
-      offset: (page - 1) * ADMIN_PAGE_SIZE,
+      limit,
+      offset,
     },
     skip: !!filters.error,
     fetchPolicy: 'no-cache',
   })
   useAdminQueryError(error)
   const events = data?.adminActivity
-  useEffect(() => {
-    if (
-      !filters.error &&
-      events &&
-      !loading &&
-      page > Math.max(1, Math.ceil(events.total / ADMIN_PAGE_SIZE))
-    ) {
-      const next = new URLSearchParams(params)
-      next.set('page', String(Math.max(1, Math.ceil(events.total / ADMIN_PAGE_SIZE))))
-      setParams(next, { replace: true })
-    }
-  }, [events, loading, page, params, setParams, filters.error])
+  useAdminPageCorrection({ total: events?.total, loading, enabled: !filters.error })
   return (
     <section>
       <AdminPageHeader
@@ -122,11 +109,7 @@ export function ActivityPage() {
           items={events.items}
           total={events.total}
           page={page}
-          onPageChange={(nextPage) => {
-            const next = new URLSearchParams(params)
-            next.set('page', String(nextPage))
-            setParams(next)
-          }}
+          onPageChange={changePage}
         />
       )}
     </section>

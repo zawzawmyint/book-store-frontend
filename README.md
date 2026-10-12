@@ -6,6 +6,10 @@ See [SPEC.md](SPEC.md) for the storefront behavior, [specs/order-workflow/SPEC.m
 
 ## Development workflow
 
+Implemented engineering work: [Frontend readability and consistency](specs/readability-consistency/SPEC.md) documents focused admin pagination, navigation, and search-hook refactoring with unchanged UI and API behavior.
+
+Implemented engineering work: [Storefront readability and consistency](specs/storefront-readability/SPEC.md) documents catalog state handling and checkout naming/rendering boundaries with existing behavior preserved.
+
 Future behavior changes follow spec-driven development (SDD) and test-driven development (TDD). Write or revise the relevant spec before implementation, with a proposed contract and testable acceptance criteria. For each criterion, write a focused failing test, confirm the failure is caused by the missing behavior, make it pass, and refactor. Finish with the checks below and any affected browser tests; then update the spec to reflect the delivered behavior and mark a feature spec `Implemented`. See [AGENTS.md](AGENTS.md) for the full workflow and cross-repository rules.
 
 ## Start
