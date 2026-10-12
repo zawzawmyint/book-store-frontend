@@ -1,5 +1,9 @@
 # The Quiet Shelf storefront specification
 
+> **Implemented engineering work:** [Storefront readability and consistency](specs/storefront-readability/SPEC.md) documents catalog and checkout readability refactoring with unchanged customer behavior.
+
+> **Implemented engineering work:** [Frontend readability and consistency](specs/readability-consistency/SPEC.md) documents admin pagination, navigation, and search-hook refactoring with unchanged UI and API behavior.
+
 > **Implemented delivery:** [Delivery](specs/delivery/SPEC.md) is the current checkout and fulfillment contract.
 
 > The [implemented Stripe checkout specification](specs/stripe-checkout/SPEC.md) covers

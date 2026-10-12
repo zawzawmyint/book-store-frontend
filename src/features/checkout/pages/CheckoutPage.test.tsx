@@ -29,6 +29,9 @@ const reviewed = {
   expectedTotalCents: 1700,
 }
 const navigation = vi.hoisted(() => vi.fn())
+const sessionState = vi.hoisted(() => ({
+  user: { id: 'ada', name: 'Ada Reader', email: 'ada@example.com' },
+}))
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>()
   return {
@@ -45,7 +48,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 vi.mock('../../../lib/auth-client', () => ({
   authClient: {
     useSession: () => ({
-      data: { user: { id: 'ada', name: 'Ada Reader', email: 'ada@example.com' } },
+      data: { user: sessionState.user },
       refetch: vi.fn(),
     }),
   },
@@ -57,6 +60,7 @@ afterEach(() => {
   localStorage.clear()
   sessionStorage.clear()
   navigation.mockClear()
+  sessionState.user = { id: 'ada', name: 'Ada Reader', email: 'ada@example.com' }
 })
 const item = {
   id: '1',
@@ -77,11 +81,12 @@ function mount(
   useCartStore.setState({ items: [item] })
   const variables = vi.fn((value) => value.input.items[0].bookId === '1')
   const quoteVariables = vi.fn(() => true)
-  const view = render(
+  const checkout = () => (
     <MockedProvider
       mocks={[
         {
           request: { query: DeliveryOptionsDocument },
+          maxUsageCount: 2,
           ...(optionsError
             ? { error: optionsError }
             : {
@@ -163,9 +168,16 @@ function mount(
           <Route path="/checkout/return/1" element={<p>Confirming payment</p>} />
         </Routes>
       </MemoryRouter>
-    </MockedProvider>,
+    </MockedProvider>
   )
-  return { user: userEvent.setup(), variables, quoteVariables, unmount: view.unmount }
+  const view = render(checkout())
+  return {
+    user: userEvent.setup(),
+    variables,
+    quoteVariables,
+    unmount: view.unmount,
+    rerenderSession: () => view.rerender(checkout()),
+  }
 }
 async function fill(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByRole('option', { name: 'United States' })
@@ -270,4 +282,31 @@ it('ignores a late checkout response after the account checkout view is unmounte
   })
   expect(sessionStorage.getItem('book-store-checkout:ada')).toBeNull()
   expect(navigation).not.toHaveBeenCalled()
+})
+
+it('ignores a pending payment response after the signed-in account changes', async () => {
+  checkoutAttempt('ada', [item], reviewed)
+  const { user, rerenderSession, variables } = mount(undefined, undefined, 0, false, 300)
+  await user.click(await screen.findByRole('button', { name: 'Retry payment setup' }))
+  await screen.findByRole('button', { name: 'Opening payment…' })
+  sessionState.user = { id: 'grace', name: 'Grace Reader', email: 'grace@example.com' }
+  rerenderSession()
+  expect(screen.getByLabelText('Recipient name')).toHaveProperty('value', 'Grace Reader')
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 400))
+  })
+  expect(variables).toHaveBeenCalledTimes(1)
+  expect(navigation).not.toHaveBeenCalled()
+  expect(sessionStorage.getItem('book-store-checkout:grace')).toBeNull()
+  expect(JSON.parse(sessionStorage.getItem('book-store-checkout:ada')!).requestKey).toBeTruthy()
+  expect(useCartStore.getState().items).toEqual([item])
+})
+
+it('allows only one payment request while repeated retry clicks are pending', async () => {
+  const previous = checkoutAttempt('ada', [item], reviewed)
+  const { user, variables } = mount(undefined, undefined, 0, false, 150)
+  await user.dblClick(await screen.findByRole('button', { name: 'Retry payment setup' }))
+  await screen.findByText('Confirming payment')
+  expect(variables).toHaveBeenCalledTimes(1)
+  expect(variables.mock.calls[0][0].input.requestKey).toBe(previous.requestKey)
 })

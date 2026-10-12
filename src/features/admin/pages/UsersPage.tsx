@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Copy, Eye } from 'lucide-react'
 import { IconAction } from '../../../app/components/IconAction'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { CombinedGraphQLErrors } from '@apollo/client'
 import { useMutation, useQuery } from '@apollo/client/react'
 import {
@@ -23,7 +23,7 @@ import {
 import { TableCell } from '../../../app/components/ui/table'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { accessErrorCode, useAdminAccess, useAdminQueryError } from '../admin-access'
-import { ADMIN_PAGE_SIZE, readPage } from '../admin-data'
+import { useAdminPagination, useAdminPageCorrection } from '../use-admin-pagination'
 import { AdminDialog } from '../components/AdminDialog'
 import { AdminFeedback } from '../components/AdminFeedback'
 import { AdminFilterToolbar } from '../components/AdminFilterToolbar'
@@ -35,18 +35,17 @@ function readRole(value: string | null): AdminUserRoleFilter {
 }
 
 export function UsersPage() {
-  const [params, setParams] = useSearchParams()
+  const { params, page, limit, offset, changePage, changeParams } = useAdminPagination()
   const search = (params.get('search') ?? '').slice(0, 100)
   const role = readRole(params.get('role'))
-  const page = readPage(params.get('page'))
   const { data: session } = authClient.useSession()
   const { handleError } = useAdminAccess()
   const { data, loading, error, refetch } = useQuery(AdminUsersDocument, {
     variables: {
       search,
       role,
-      limit: ADMIN_PAGE_SIZE,
-      offset: (page - 1) * ADMIN_PAGE_SIZE,
+      limit,
+      offset,
     },
     fetchPolicy: 'no-cache',
   })
@@ -59,21 +58,7 @@ export function UsersPage() {
     opener: HTMLButtonElement | null
   }>()
   const users = data?.adminUsers
-  function change(values: Record<string, string>) {
-    const next = new URLSearchParams(params)
-    for (const [key, value] of Object.entries(values)) {
-      if (value) next.set(key, value)
-      else next.delete(key)
-    }
-    setParams(next)
-  }
-  useEffect(() => {
-    if (users && !loading && page > Math.max(1, Math.ceil(users.total / ADMIN_PAGE_SIZE))) {
-      const next = new URLSearchParams(params)
-      next.set('page', String(Math.max(1, Math.ceil(users.total / ADMIN_PAGE_SIZE))))
-      setParams(next, { replace: true })
-    }
-  }, [users, loading, page, params, setParams])
+  useAdminPageCorrection({ total: users?.total, loading })
   async function copyId(id: string) {
     setCopyError('')
     try {
@@ -102,7 +87,7 @@ export function UsersPage() {
       )}
       <AdminFilterToolbar
         search={search}
-        onSearch={(value) => change({ search: value, page: '' })}
+        onSearch={(value) => changeParams({ search: value, page: '' })}
         searchLabel="Search users"
         searchPlaceholder="Name or email"
       >
@@ -110,7 +95,9 @@ export function UsersPage() {
           <Label htmlFor="admin-user-role">Role</Label>
           <Select
             value={role}
-            onValueChange={(value) => change({ role: value === 'ALL' ? '' : value, page: '' })}
+            onValueChange={(value) =>
+              changeParams({ role: value === 'ALL' ? '' : value, page: '' })
+            }
           >
             <SelectTrigger id="admin-user-role" className="min-w-36">
               <SelectValue />
@@ -141,7 +128,7 @@ export function UsersPage() {
           emptyMessage="No accounts match."
           page={page}
           total={users.total}
-          onPageChange={(next) => change({ page: String(next) })}
+          onPageChange={changePage}
           tableClassName="min-w-[880px]"
           renderRow={(user) => (
             <>

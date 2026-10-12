@@ -3,12 +3,19 @@ import { useApolloClient } from '@apollo/client/react'
 import type { TypedDocumentNode } from '@apollo/client'
 import { accessErrorCode, useAdminAccess } from '../admin-access'
 
-export function useWorkspaceSearch<TData>(
-  query: TypedDocumentNode<TData, { search: string }>,
-  term: string,
-  onDenied: () => void,
+type WorkspaceSearchOptions<TData> = {
+  query: TypedDocumentNode<TData, { search: string }>
+  term: string
+  onDenied: () => void
+  allowSingleDigit?: boolean
+}
+
+export function useWorkspaceSearch<TData>({
+  query,
+  term,
+  onDenied,
   allowSingleDigit = false,
-) {
+}: WorkspaceSearchOptions<TData>) {
   const client = useApolloClient()
   const { handleError } = useAdminAccess()
   const generation = useRef(0)

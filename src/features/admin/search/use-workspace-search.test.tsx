@@ -42,7 +42,10 @@ const close = () => {}
 it('does not send a Books request for a one-digit order lookup', async () => {
   vi.useFakeTimers()
   const { wrapper, pending } = transport()
-  renderHook(() => useWorkspaceSearch(WorkspaceSearchBooksDocument, '2', close), { wrapper })
+  renderHook(
+    () => useWorkspaceSearch({ query: WorkspaceSearchBooksDocument, term: '2', onDenied: close }),
+    { wrapper },
+  )
   await act(async () => vi.advanceTimersByTimeAsync(300))
   expect(pending).toHaveLength(0)
 })
@@ -50,7 +53,8 @@ it('debounces qualifying input and prevents an older term response replacing the
   vi.useFakeTimers()
   const { wrapper, pending } = transport()
   const view = renderHook(
-    ({ term }) => useWorkspaceSearch(WorkspaceSearchBooksDocument, term, close),
+    ({ term }) =>
+      useWorkspaceSearch({ query: WorkspaceSearchBooksDocument, term, onDenied: close }),
     { initialProps: { term: 'a' }, wrapper },
   )
   await act(async () => vi.advanceTimersByTimeAsync(300))
@@ -67,13 +71,18 @@ it('debounces qualifying input and prevents an older term response replacing the
 it('starts a fresh request after closing and reopening for the same term', async () => {
   vi.useFakeTimers()
   const { wrapper, pending } = transport()
-  const first = renderHook(() => useWorkspaceSearch(WorkspaceSearchBooksDocument, 'same', close), {
-    wrapper,
-  })
+  const first = renderHook(
+    () =>
+      useWorkspaceSearch({ query: WorkspaceSearchBooksDocument, term: 'same', onDenied: close }),
+    {
+      wrapper,
+    },
+  )
   await act(async () => vi.advanceTimersByTimeAsync(250))
   first.unmount()
   const reopened = renderHook(
-    () => useWorkspaceSearch(WorkspaceSearchBooksDocument, 'same', close),
+    () =>
+      useWorkspaceSearch({ query: WorkspaceSearchBooksDocument, term: 'same', onDenied: close }),
     { wrapper },
   )
   await act(async () => vi.advanceTimersByTimeAsync(250))

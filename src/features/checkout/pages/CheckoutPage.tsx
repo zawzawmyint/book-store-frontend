@@ -25,26 +25,30 @@ import {
 } from '../checkout-attempt'
 import {
   deliveryAddressSchema,
-  countryName,
   type DeliveryAddress,
-  type DeliveryAddressForm,
+  type DeliveryAddressForm as AddressFormValues,
 } from '../delivery-address'
 import { BackLink } from '../../../app/components/BackLink'
 import { PageContainer } from '../../../app/components/PageContainer'
 import { SummaryPanel } from '../../../app/components/SummaryPanel'
 import { Button } from '../../../app/components/ui/button'
-import { Input } from '../../../app/components/ui/input'
-import { Label } from '../../../app/components/ui/label'
 import { DeliveryDetails } from '../../orders/DeliveryDetails'
-const fields = [
-  { name: 'recipientName', label: 'Recipient name', max: 120 },
-  { name: 'phone', label: 'Phone number', max: 32 },
-  { name: 'addressLine1', label: 'Address line 1', max: 200 },
-  { name: 'addressLine2', label: 'Address line 2 (optional)', max: 200 },
-  { name: 'city', label: 'City', max: 100 },
-  { name: 'region', label: 'Region (optional)', max: 100 },
-  { name: 'postalCode', label: 'Postal code (optional)', max: 32 },
-] as const
+import { DeliveryAddressForm } from '../components/DeliveryAddressForm'
+import { CheckoutReview } from '../components/CheckoutReview'
+
+type CheckoutSessionProps = {
+  userId?: string
+  name: string
+  email: string
+  refreshSession: ReturnType<typeof authClient.useSession>['refetch']
+}
+
+type ReviewedQuote = {
+  value: QuoteCheckoutQuery['quoteCheckout']
+  address: DeliveryAddress
+  snapshot: string
+}
+
 export function CheckoutPage() {
   const { data: session, refetch: refreshSession } = authClient.useSession()
   return (
@@ -57,45 +61,33 @@ export function CheckoutPage() {
     />
   )
 }
-function DeliveryCheckout({
-  userId,
-  name,
-  email,
-  refreshSession,
-}: {
-  userId?: string
-  name: string
-  email: string
-  refreshSession: ReturnType<typeof authClient.useSession>['refetch']
-}) {
-  const items = useCartStore((s) => s.items)
-  const navigate = useNavigate(),
-    client = useApolloClient()
+function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessionProps) {
+  const items = useCartStore((state) => state.items)
+  const navigate = useNavigate()
+  const client = useApolloClient()
   const [attempt, setAttempt] = useState<Attempt | undefined>(() =>
     userId ? savedCheckoutAttempt(userId) : undefined,
   )
-  const [quote, setQuote] = useState<{
-    value: QuoteCheckoutQuery['quoteCheckout']
-    address: DeliveryAddress
-    snapshot: string
-  }>()
+  const [quote, setQuote] = useState<ReviewedQuote>()
   const [message, setMessage] = useState('')
   const [reviewing, setReviewing] = useState(false)
-  const busy = useRef(false),
-    generation = useRef(0)
-  const alive = useRef(true)
+  const submissionPending = useRef(false)
+  const quoteGeneration = useRef(0)
+  const isMounted = useRef(true)
   useEffect(() => {
-    alive.current = true
+    isMounted.current = true
     return () => {
-      alive.current = false
+      isMounted.current = false
     }
   }, [userId])
-  const [create, { loading }] = useMutation(CreateCheckoutDocument, { fetchPolicy: 'no-cache' })
-  const options = useQuery(DeliveryOptionsDocument, {
+  const [createCheckout, { loading: creatingPayment }] = useMutation(CreateCheckoutDocument, {
+    fetchPolicy: 'no-cache',
+  })
+  const deliveryOptionsQuery = useQuery(DeliveryOptionsDocument, {
     fetchPolicy: 'no-cache',
     skip: !userId || !!attempt,
   })
-  const form = useForm<DeliveryAddressForm, unknown, DeliveryAddress>({
+  const form = useForm<AddressFormValues, unknown, DeliveryAddress>({
     resolver: zodResolver(deliveryAddressSchema),
     defaultValues: {
       recipientName: name,
@@ -116,24 +108,24 @@ function DeliveryCheckout({
         const snapshot = (lines: typeof state.items) =>
           JSON.stringify(lines.map(({ id, quantity }) => ({ id, quantity })))
         if (snapshot(state.items) !== snapshot(previous.items)) {
-          generation.current++
+          quoteGeneration.current++
           setQuote(undefined)
         }
       }),
     [],
   )
   const validQuote = quote && quote.snapshot === lineSnapshot
-  function invalidate() {
-    generation.current++
+  function invalidateQuote() {
+    quoteGeneration.current++
     setQuote(undefined)
   }
-  async function review(address: DeliveryAddress) {
-    if (busy.current || reviewing || !items.length) return
-    if (!options.data?.deliveryOptions.countryCodes.includes(address.countryCode)) {
+  async function reviewOrder(address: DeliveryAddress) {
+    if (submissionPending.current || reviewing || !items.length) return
+    if (!deliveryOptionsQuery.data?.deliveryOptions.countryCodes.includes(address.countryCode)) {
       form.setError('countryCode', { message: 'Choose a supported country.' })
       return
     }
-    const request = ++generation.current
+    const requestGeneration = ++quoteGeneration.current
     setMessage('')
     setReviewing(true)
     try {
@@ -143,8 +135,8 @@ function DeliveryCheckout({
         fetchPolicy: 'no-cache',
       })
       if (
-        !alive.current ||
-        request !== generation.current ||
+        !isMounted.current ||
+        requestGeneration !== quoteGeneration.current ||
         JSON.stringify(
           useCartStore.getState().items.map(({ id, quantity }) => ({ bookId: id, quantity })),
         ) !== lineSnapshot
@@ -153,15 +145,15 @@ function DeliveryCheckout({
       if (!result.data?.quoteCheckout) throw new Error('Quote unavailable. Please review again.')
       setQuote({ value: result.data.quoteCheckout, address, snapshot: lineSnapshot })
     } catch (error) {
-      if (alive.current && request === generation.current)
+      if (isMounted.current && requestGeneration === quoteGeneration.current)
         setMessage(error instanceof Error ? error.message : 'Quote unavailable. Please try again.')
     } finally {
-      if (alive.current) setReviewing(false)
+      if (isMounted.current) setReviewing(false)
     }
   }
-  async function submit() {
-    if (!userId || busy.current || loading || (!attempt && !validQuote)) return
-    busy.current = true
+  async function submitPayment() {
+    if (!userId || submissionPending.current || creatingPayment || (!attempt && !validQuote)) return
+    submissionPending.current = true
     setMessage('')
     const current =
       attempt ??
@@ -172,7 +164,7 @@ function DeliveryCheckout({
       })
     setAttempt(current)
     try {
-      const result = await create({
+      const result = await createCheckout({
         variables: {
           input: {
             items: current.lines.map(({ id, quantity }) => ({ bookId: id, quantity })),
@@ -183,7 +175,7 @@ function DeliveryCheckout({
           },
         },
       })
-      if (!alive.current) return
+      if (!isMounted.current) return
       const outcome = result.data?.createCheckout
       if (!outcome)
         throw new Error(
@@ -197,22 +189,22 @@ function DeliveryCheckout({
         window.location.assign(outcome.checkoutUrl)
       } else navigate(`/checkout/return/${outcome.order.id}`)
     } catch (error) {
-      if (!alive.current) return
+      if (!isMounted.current) return
       if (CombinedGraphQLErrors.is(error)) {
         const code = error.errors[0]?.extensions?.code
         if (code === 'UNAUTHENTICATED') {
           clearCheckoutAttempts(userId)
           await client.clearStore()
-          if (!alive.current) return
+          if (!isMounted.current) return
           await refreshSession({ query: { disableCookieCache: true } })
-          if (!alive.current) return
+          if (!isMounted.current) return
           navigate(signInPath('/checkout'), { replace: true })
           return
         }
         if (code === 'CONFLICT') {
           clearCheckoutAttempts(userId)
           setAttempt(undefined)
-          invalidate()
+          invalidateQuote()
           form.reset(current.deliveryAddress)
           setMessage(
             'Prices or delivery settings changed. Review order again and explicitly confirm the new total.',
@@ -226,7 +218,7 @@ function DeliveryCheckout({
           : 'Payment setup could not be confirmed. Retry this exact attempt or check Orders.',
       )
     } finally {
-      busy.current = false
+      submissionPending.current = false
     }
   }
   if (!items.length && !attempt)
@@ -272,19 +264,19 @@ function DeliveryCheckout({
                 totalCents={attempt.expectedTotalCents}
                 status="SUBMITTED"
               />
-              <Button disabled={loading} onClick={() => void submit()}>
-                {loading ? 'Opening payment…' : 'Retry payment setup'}
+              <Button disabled={creatingPayment} onClick={() => void submitPayment()}>
+                {creatingPayment ? 'Opening payment…' : 'Retry payment setup'}
               </Button>
               <Link className="block underline" to="/account/orders">
                 Inspect Orders
               </Link>
               <Button
                 variant="ghost"
-                disabled={loading}
+                disabled={creatingPayment}
                 onClick={() => {
                   clearCheckoutAttempts(userId)
                   setAttempt(undefined)
-                  invalidate()
+                  invalidateQuote()
                   setMessage(
                     'Review a new order only after checking Orders for your earlier attempt.',
                   )
@@ -294,119 +286,25 @@ function DeliveryCheckout({
               </Button>
             </section>
           ) : validQuote ? (
-            <section className="mt-8 space-y-5" aria-label="Reviewed order">
-              <h2 className="font-semibold">Review your order</h2>
-              <DeliveryDetails
-                delivery={{
-                  address: quote.address,
-                  shipment: null,
-                  shippedAt: null,
-                  deliveredAt: null,
-                }}
-                subtotalCents={quote.value.subtotalCents}
-                deliveryFeeCents={quote.value.deliveryFeeCents}
-                totalCents={quote.value.totalCents}
-                status="SUBMITTED"
-              />
-              <p className="text-sm">Review is not a reservation or delivery date guarantee.</p>
-              <div className="grid gap-3 sm:flex sm:flex-wrap">
-                <Button
-                  className="min-h-11 sm:min-h-9"
-                  variant="ghost"
-                  disabled={loading}
-                  onClick={invalidate}
-                >
-                  Edit address
-                </Button>
-                <Button className="min-h-11 sm:min-h-9" asChild variant="ghost">
-                  <Link to="/cart">Edit cart</Link>
-                </Button>
-                <Button
-                  className="min-h-11 sm:min-h-9"
-                  disabled={loading}
-                  onClick={() => void submit()}
-                >
-                  Continue to payment
-                </Button>
-              </div>
-            </section>
+            <CheckoutReview
+              quote={quote.value}
+              address={quote.address}
+              paymentLoading={creatingPayment}
+              onEditAddress={invalidateQuote}
+              onContinuePayment={() => void submitPayment()}
+            />
           ) : (
-            <form
-              className="mt-8 space-y-5"
-              onSubmit={(event) => void form.handleSubmit(review)(event)}
-              onChange={invalidate}
-            >
-              <h2 className="font-semibold">Delivery address</h2>
-              {options.loading && <p role="status">Loading delivery options…</p>}
-              {options.error && (
-                <p role="alert">
-                  {options.error.message}
-                  <Button type="button" variant="ghost" onClick={() => void options.refetch()}>
-                    Retry delivery options
-                  </Button>
-                </p>
-              )}
-              <fieldset disabled={loading} className="space-y-4">
-                {fields.map((field) => (
-                  <div key={field.name}>
-                    <Label htmlFor={field.name}>{field.label}</Label>
-                    <Input
-                      id={field.name}
-                      type={field.name === 'phone' ? 'tel' : 'text'}
-                      maxLength={field.max}
-                      {...form.register(field.name)}
-                      aria-invalid={!!form.formState.errors[field.name]}
-                      aria-describedby={
-                        form.formState.errors[field.name] ? `${field.name}-error` : undefined
-                      }
-                    />
-                    {form.formState.errors[field.name] && (
-                      <p role="alert" id={`${field.name}-error`}>
-                        {form.formState.errors[field.name]?.message}
-                      </p>
-                    )}
-                  </div>
-                ))}
-                <div>
-                  <Label htmlFor="countryCode">Country</Label>
-                  <select
-                    id="countryCode"
-                    className="h-10 w-full rounded-md border bg-background px-3"
-                    {...form.register('countryCode')}
-                    aria-invalid={!!form.formState.errors.countryCode}
-                    aria-describedby={
-                      form.formState.errors.countryCode ? 'country-error' : undefined
-                    }
-                  >
-                    <option value="">Choose a country</option>
-                    {options.data?.deliveryOptions.countryCodes.map((code) => (
-                      <option key={code} value={code}>
-                        {countryName(code)}
-                      </option>
-                    ))}
-                  </select>
-                  {form.formState.errors.countryCode && (
-                    <p role="alert" id="country-error">
-                      {form.formState.errors.countryCode.message}
-                    </p>
-                  )}
-                </div>
-              </fieldset>
-              {options.data && (
-                <p>
-                  Delivery per order:{' '}
-                  {options.data.deliveryOptions.feeCents === 0
-                    ? 'Free delivery'
-                    : money(options.data.deliveryOptions.feeCents)}
-                </p>
-              )}
-              <Button
-                type="submit"
-                disabled={reviewing || options.loading || !!options.error || !options.data}
-              >
-                {reviewing ? 'Reviewing…' : 'Review order'}
-              </Button>
-            </form>
+            <DeliveryAddressForm
+              form={form}
+              deliveryOptions={deliveryOptionsQuery.data?.deliveryOptions}
+              optionsLoading={deliveryOptionsQuery.loading}
+              optionsError={deliveryOptionsQuery.error}
+              paymentLoading={creatingPayment}
+              reviewing={reviewing}
+              onReview={reviewOrder}
+              onInvalidate={invalidateQuote}
+              onRetryOptions={() => void deliveryOptionsQuery.refetch()}
+            />
           )}
           <p className="mt-5 text-xs text-muted-foreground">
             Card details are handled by Stripe in test mode.

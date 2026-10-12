@@ -1,9 +1,9 @@
 import { AdminPageTable } from '../components/AdminPageTable'
 import { AdminFilterToolbar } from '../components/AdminFilterToolbar'
 import { AdminPageHeader } from '../components/AdminPageHeader'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { BookCover } from '../../books/components/BookCover'
-import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useQuery } from '@apollo/client/react'
 import { AdminBooksDocument, type AdminBookFieldsFragment } from '../../../generated/graphql'
 import { money } from '../../../lib/format'
@@ -21,14 +21,14 @@ import { TableCell } from '../../../app/components/ui/table'
 import { Badge } from '../../../app/components/ui/badge'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { useAdminAccess, useAdminQueryError } from '../admin-access'
-import { ADMIN_PAGE_SIZE, readPage } from '../admin-data'
+import { useAdminPagination, useAdminPageCorrection } from '../use-admin-pagination'
 import { AdminFeedback } from '../components/AdminFeedback'
 import { StockDialog } from '../components/StockDialog'
 import { ArchiveBookDialog } from '../components/ArchiveBookDialog'
 import { BookRowActions } from '../components/BookRowActions'
 
 export function BooksPage() {
-  const [params, setParams] = useSearchParams()
+  const { params, page, limit, offset, changePage, changeParams } = useAdminPagination()
   const search = (params.get('search') ?? '').slice(0, 100)
   const filter =
     params.get('filter') === 'ARCHIVED'
@@ -37,7 +37,6 @@ export function BooksPage() {
         ? 'ALL'
         : 'ACTIVE'
   const lowStockOnly = params.get('low') === 'true'
-  const page = readPage(params.get('page'))
   const location = useLocation()
   const { role } = useAdminAccess()
   const { data, loading, error, refetch } = useQuery(AdminBooksDocument, {
@@ -45,8 +44,8 @@ export function BooksPage() {
       search,
       filter,
       lowStockOnly,
-      limit: ADMIN_PAGE_SIZE,
-      offset: (page - 1) * ADMIN_PAGE_SIZE,
+      limit,
+      offset,
     },
     fetchPolicy: 'no-cache',
   })
@@ -58,21 +57,7 @@ export function BooksPage() {
   }>()
   const [notice, setNotice] = useState((location.state as { notice?: string } | null)?.notice ?? '')
   const books = data?.adminBooks
-  function change(values: Record<string, string>) {
-    const next = new URLSearchParams(params)
-    for (const [key, value] of Object.entries(values)) {
-      if (value) next.set(key, value)
-      else next.delete(key)
-    }
-    setParams(next)
-  }
-  useEffect(() => {
-    if (books && !loading && page > Math.max(1, Math.ceil(books.total / ADMIN_PAGE_SIZE))) {
-      const next = new URLSearchParams(params)
-      next.set('page', String(Math.max(1, Math.ceil(books.total / ADMIN_PAGE_SIZE))))
-      setParams(next, { replace: true })
-    }
-  }, [books, loading, page, params, setParams])
+  useAdminPageCorrection({ total: books?.total, loading })
   function saved(message: string) {
     setNotice(message)
     setAction(undefined)
@@ -98,13 +83,16 @@ export function BooksPage() {
       )}
       <AdminFilterToolbar
         search={search}
-        onSearch={(value) => change({ search: value, page: '' })}
+        onSearch={(value) => changeParams({ search: value, page: '' })}
         searchLabel="Search books"
         searchPlaceholder="Title, author, or genre"
       >
         <div className="admin-toolbar-field">
           <Label htmlFor="admin-catalog-state">Catalog state</Label>
-          <Select value={filter} onValueChange={(value) => change({ filter: value, page: '' })}>
+          <Select
+            value={filter}
+            onValueChange={(value) => changeParams({ filter: value, page: '' })}
+          >
             <SelectTrigger id="admin-catalog-state" className="min-w-36">
               <SelectValue />
             </SelectTrigger>
@@ -119,7 +107,9 @@ export function BooksPage() {
           <Checkbox
             id="admin-low-stock"
             checked={lowStockOnly}
-            onCheckedChange={(checked) => change({ low: checked === true ? 'true' : '', page: '' })}
+            onCheckedChange={(checked) =>
+              changeParams({ low: checked === true ? 'true' : '', page: '' })
+            }
           />
           <Label htmlFor="admin-low-stock">Low stock only (5 or fewer)</Label>
         </div>
@@ -141,7 +131,7 @@ export function BooksPage() {
           emptyMessage="No matching books."
           page={page}
           total={books.total}
-          onPageChange={(next) => change({ page: String(next) })}
+          onPageChange={changePage}
           tableClassName="min-w-[760px]"
           renderRow={(book) => (
             <>

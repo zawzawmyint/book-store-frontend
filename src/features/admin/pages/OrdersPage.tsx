@@ -1,5 +1,4 @@
 import { PaymentStatus } from '../../orders/PaymentStatus'
-import { useEffect } from 'react'
 import { OrderStatusBadge } from '../../orders/OrderStatusBadge'
 import { orderStatusLabels } from '../../orders/order-status'
 import type { OrderStatusFilter } from '../../../generated/graphql'
@@ -14,7 +13,7 @@ import {
 import { AdminPageTable } from '../components/AdminPageTable'
 import { AdminPageHeader } from '../components/AdminPageHeader'
 import { AdminFilterToolbar } from '../components/AdminFilterToolbar'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useQuery } from '@apollo/client/react'
 import { AdminOrdersDocument } from '../../../generated/graphql'
 import { money, serverDate } from '../../../lib/format'
@@ -22,40 +21,28 @@ import { IconAction } from '../../../app/components/IconAction'
 import { Eye } from 'lucide-react'
 import { TableCell } from '../../../app/components/ui/table'
 import { useAdminQueryError } from '../admin-access'
-import { ADMIN_PAGE_SIZE, readPage } from '../admin-data'
+import { useAdminPagination, useAdminPageCorrection } from '../use-admin-pagination'
 import { AdminFeedback } from '../components/AdminFeedback'
 
 export function OrdersPage() {
-  const [params, setParams] = useSearchParams()
-  const page = readPage(params.get('page'))
+  const { params, page, limit, offset, changePage, changeParams } = useAdminPagination()
   const search = (params.get('search') ?? '').slice(0, 100).trim()
   const value = params.get('status') ?? 'ALL'
   const status: OrderStatusFilter = Object.hasOwn(orderStatusLabels, value)
     ? (value as OrderStatusFilter)
     : 'ALL'
-  function changePage(nextPage: number) {
-    const next = new URLSearchParams(params)
-    next.set('page', String(nextPage))
-    setParams(next)
-  }
   const { data, loading, error, refetch } = useQuery(AdminOrdersDocument, {
     variables: {
       ...(search ? { search } : {}),
       status,
-      limit: ADMIN_PAGE_SIZE,
-      offset: (page - 1) * ADMIN_PAGE_SIZE,
+      limit,
+      offset,
     },
     fetchPolicy: 'no-cache',
   })
   useAdminQueryError(error)
   const orders = data?.adminOrders
-  useEffect(() => {
-    if (orders && !loading && page > Math.max(1, Math.ceil(orders.total / ADMIN_PAGE_SIZE))) {
-      const next = new URLSearchParams(params)
-      next.set('page', String(Math.max(1, Math.ceil(orders.total / ADMIN_PAGE_SIZE))))
-      setParams(next, { replace: true })
-    }
-  }, [orders, loading, page, params, setParams])
+  useAdminPageCorrection({ total: orders?.total, loading })
   return (
     <section>
       <AdminPageHeader
@@ -66,24 +53,13 @@ export function OrdersPage() {
         search={search}
         searchLabel="Search orders"
         searchPlaceholder="Order number, customer name or email"
-        onSearch={(value) => {
-          const next = new URLSearchParams(params)
-          if (value) next.set('search', value)
-          else next.delete('search')
-          next.delete('page')
-          setParams(next)
-        }}
+        onSearch={(value) => changeParams({ search: value, page: '' })}
       >
         <div className="admin-toolbar-field">
           <Label htmlFor="order-status-filter">Status</Label>
           <Select
             value={status}
-            onValueChange={(value) => {
-              const next = new URLSearchParams(params)
-              next.set('status', value)
-              next.delete('page')
-              setParams(next)
-            }}
+            onValueChange={(value) => changeParams({ status: value, page: '' })}
           >
             <SelectTrigger id="order-status-filter">
               <SelectValue />

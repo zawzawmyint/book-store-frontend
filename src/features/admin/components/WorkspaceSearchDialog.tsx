@@ -93,8 +93,13 @@ function WorkspaceSearchDialog({
   const prefix = useId()
   const input = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
-  const books = useWorkspaceSearch(WorkspaceSearchBooksDocument, term, close)
-  const orders = useWorkspaceSearch(WorkspaceSearchOrdersDocument, term, close, true)
+  const books = useWorkspaceSearch({ query: WorkspaceSearchBooksDocument, term, onDenied: close })
+  const orders = useWorkspaceSearch({
+    query: WorkspaceSearchOrdersDocument,
+    term,
+    onDenied: close,
+    allowSingleDigit: true,
+  })
   const eligible = books.eligible || orders.eligible
   const results = [
     ...(books.data?.adminBooks.items ?? []).map((book) => ({
