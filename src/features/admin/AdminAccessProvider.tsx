@@ -7,10 +7,11 @@ import { accessErrorCode, AccessContext } from './admin-access'
 
 export function AdminAccessProvider({ children }: { children: React.ReactNode }) {
   const { data: session, isPending, refetch: refreshSession } = authClient.useSession()
+  const verified = session?.user.emailVerified === true
   const { pathname } = useLocation()
   const client = useApolloClient()
   const { data, loading, error, refetch } = useQuery(ViewerDocument, {
-    skip: !session?.user || isPending,
+    skip: !verified || isPending,
     fetchPolicy: 'no-cache',
     notifyOnNetworkStatusChange: true,
   })
@@ -42,6 +43,7 @@ export function AdminAccessProvider({ children }: { children: React.ReactNode })
     [client, refreshSession, refetch],
   )
   const retry = useCallback(() => {
+    if (!verified) return
     if (blocked === 'UNAUTHENTICATED' || data?.viewer === null) {
       void refreshSession({ query: { disableCookieCache: true } })
       return
@@ -53,7 +55,7 @@ export function AdminAccessProvider({ children }: { children: React.ReactNode })
         if (generation === confirmationGeneration.current) setConfirmedRole(undefined)
       })
       .catch(() => {})
-  }, [refetch, refreshSession, blocked, data?.viewer])
+  }, [refetch, refreshSession, blocked, data?.viewer, verified])
   const confirmRole = useCallback(
     async (role: string) => {
       confirmationGeneration.current += 1
@@ -64,25 +66,26 @@ export function AdminAccessProvider({ children }: { children: React.ReactNode })
     [client],
   )
   useEffect(() => {
-    if (pathname !== previousPath.current && pathname.startsWith('/admin') && session?.user) retry()
+    if (pathname !== previousPath.current && pathname.startsWith('/admin') && verified) retry()
     previousPath.current = pathname
-  }, [pathname, session?.user, retry])
+  }, [pathname, verified, retry])
   useEffect(() => {
-    if (!session?.user) return
+    if (!verified) return
     window.addEventListener('focus', retry)
     return () => window.removeEventListener('focus', retry)
-  }, [session?.user, retry])
+  }, [verified, retry])
   useEffect(() => {
-    if (loading || !data) return
+    if (!verified || loading || !data) return
     if (data.viewer === null && session?.user)
       void refreshSession({ query: { disableCookieCache: true } })
     if (previousRole.current && previousRole.current !== data.viewer?.role) void client.clearStore()
     previousRole.current = data.viewer?.role
-  }, [data, loading, session?.user, client, refreshSession])
+  }, [data, loading, session?.user, verified, client, refreshSession])
   return (
     <AccessContext.Provider
       value={{
-        role: blocked === 'FORBIDDEN' ? undefined : (confirmedRole ?? data?.viewer?.role),
+        role:
+          !verified || blocked === 'FORBIDDEN' ? undefined : (confirmedRole ?? data?.viewer?.role),
         loading: isPending || loading || (blocked === 'FORBIDDEN' && !error),
         error,
         expired:

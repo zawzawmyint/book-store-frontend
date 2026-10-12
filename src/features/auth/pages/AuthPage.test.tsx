@@ -5,11 +5,16 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { AuthPage } from './AuthPage'
 
-const { login } = vi.hoisted(() => ({ login: vi.fn() }))
+const { login, signup, session } = vi.hoisted(() => ({
+  login: vi.fn(),
+  signup: vi.fn(),
+  session: { user: null as null | { id: string; emailVerified: boolean } },
+}))
 vi.mock('../../../lib/auth-client', () => ({
   authClient: {
-    useSession: () => ({ data: null, isPending: false }),
+    useSession: () => ({ data: session.user ? { user: session.user } : null, isPending: false }),
     signIn: { email: login },
+    signUp: { email: signup },
   },
 }))
 beforeEach(() => {
@@ -20,6 +25,7 @@ afterEach(() => {
   cleanup()
   vi.unstubAllEnvs()
   vi.resetAllMocks()
+  session.user = null
 })
 function show(mode: 'sign-in' | 'sign-up' = 'sign-in') {
   render(
@@ -28,6 +34,8 @@ function show(mode: 'sign-in' | 'sign-up' = 'sign-in') {
         <Route path="/sign-in" element={<AuthPage mode={mode} />} />
         <Route path="/" element={<p>Storefront destination</p>} />
         <Route path="/admin" element={<p>Workspace destination</p>} />
+        <Route path="/check-email" element={<p>Check email destination</p>} />
+        <Route path="/checkout" element={<p>Checkout destination</p>} />
       </Routes>
     </MemoryRouter>,
   )
@@ -62,6 +70,41 @@ it('hides demo login unless enabled, including signup and production', () => {
   show()
   expect(screen.queryByRole('button', { name: 'Demo Admin' })).toBeNull()
 })
+
+async function fillAccount() {
+  const user = userEvent.setup()
+  await user.type(screen.getByLabelText('Email address'), 'reader@example.com')
+  await user.type(screen.getByLabelText('Password'), 'bookstore-password')
+  return user
+}
+it('signup requires verification instead of opening checkout', async () => {
+  signup.mockResolvedValue({ error: null })
+  show('sign-up')
+  const user = await fillAccount()
+  await user.type(screen.getByLabelText('Full name'), 'Reader')
+  await user.click(screen.getByRole('button', { name: 'Create account' }))
+  expect(await screen.findByText('Check email destination')).toBeTruthy()
+  expect(screen.queryByText('Checkout destination')).toBeNull()
+})
+it('unverified session stays on signin with a verification recovery link', () => {
+  session.user = { id: 'old-user', emailVerified: false }
+  show()
+  expect(screen.getByRole('heading', { name: 'Sign in' })).toBeTruthy()
+  expect(screen.getByRole('link', { name: /verification email/i })).toBeTruthy()
+})
+it('unverified signin offers resend and network failure restores submission', async () => {
+  login.mockResolvedValueOnce({ error: { code: 'EMAIL_NOT_VERIFIED' } })
+  show()
+  const user = await fillAccount()
+  await user.click(screen.getByRole('button', { name: 'Sign in' }))
+  expect(await screen.findByRole('link', { name: /verification email/i })).toBeTruthy()
+  login.mockRejectedValueOnce(new Error('Offline'))
+  await user.click(screen.getByRole('button', { name: 'Sign in' }))
+  expect(await screen.findByText(/connection/i)).toBeTruthy()
+  expect((screen.getByRole('button', { name: 'Sign in' }) as HTMLButtonElement).disabled).toBe(
+    false,
+  )
+})
 it('disables login while pending and recovers after a network failure', async () => {
   vi.stubEnv('VITE_DEMO_LOGIN', 'true')
   let rejectLogin!: (error: Error) => void
@@ -77,6 +120,16 @@ it('disables login while pending and recovers after a network failure', async ()
   rejectLogin(new Error('Offline'))
   expect(await screen.findByText(/Unable to sign in to the demo account/)).toBeTruthy()
   expect((screen.getByRole('button', { name: 'Demo Staff' }) as HTMLButtonElement).disabled).toBe(
+    false,
+  )
+})
+it('sign-in throttling explains the wait without blaming credentials', async () => {
+  login.mockResolvedValueOnce({ error: { status: 429 } })
+  show()
+  const user = await fillAccount()
+  await user.click(screen.getByRole('button', { name: 'Sign in' }))
+  expect(await screen.findByText('Too many attempts. Wait before trying again.')).toBeTruthy()
+  expect((screen.getByRole('button', { name: 'Sign in' }) as HTMLButtonElement).disabled).toBe(
     false,
   )
 })

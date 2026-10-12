@@ -1,3 +1,4 @@
+import { verifyAndSignIn } from './auth-email-helpers'
 import { expect, test } from '@playwright/test'
 
 test('a customer updates their name from the profile page', async ({ page }) => {
@@ -8,6 +9,7 @@ test('a customer updates their name from the profile page', async ({ page }) => 
   await page.getByLabel('Email address').fill('profile@example.com')
   await page.getByLabel('Password').fill('bookstore-password-123')
   await page.getByRole('button', { name: 'Create account' }).click()
+  await verifyAndSignIn(page, 'profile@example.com', 'bookstore-password-123')
   await expect(page.getByRole('heading', { name: 'Your profile' })).toBeVisible()
   await expect(page.getByText('profile@example.com')).toBeVisible()
   await expect(page.getByLabel('Email address')).toHaveCount(0)

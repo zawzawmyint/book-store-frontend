@@ -2,6 +2,8 @@
 
 > **Status:** Implemented.
 
+> **Implemented extension:** [Auth email verification and recovery](../auth-email/SPEC.md) defines the verification and recovery journey.
+
 ## Goal
 
 Use Better Auth's React client to let customers create an account, sign in, and view their own order requests. Require sign-in before checkout while leaving browsing and the local cart public. The matching API contract is in [the backend auth spec](../../../backend/specs/authentication/SPEC.md).
@@ -16,7 +18,7 @@ Use Better Auth's React client to let customers create an account, sign in, and 
 
 - Add `/sign-up` with name, email, and password; `/sign-in` with email and password; `/account/orders`; and owner-scoped `/account/orders/:id` for the signed-in customer's order requests.
 - Use `createAuthClient` from `better-auth/react` for sign-up, sign-in, sign-out, and `useSession` for session restoration. Install `better-auth` in this repository for the client. Do not run a second Better Auth server in the frontend.
-- Successful sign-up establishes a session immediately. Do not request email verification or show a verified-email claim. Defer verification, self-service password recovery, and other email flows, social login, and guest checkout. A signed-in person can change their own password from their profile. Admin UI, originally outside this account feature, is delivered by [the admin feature](../admin/SPEC.md); its workspace home is defined by [Dashboard](../dashboard/SPEC.md).
+- Successful sign-up routes to `/check-email` without a usable session. Sign-in requires verification; `/check-email`, `/verification-result`, `/forgot-password`, and `/reset-password` provide resend and recovery with a fresh sign-in after success. Social login and guest checkout remain deferred. A signed-in person can change their own password from their profile. Admin UI, originally outside this account feature, is delivered by [the admin feature](../admin/SPEC.md); its workspace home is defined by [Dashboard](../dashboard/SPEC.md).
 - Keep `/`, `/books/:id`, and `/cart` public. Guard `/checkout`, `/account/orders`, `/account/orders/:id`, and `/account/profile`; when signed out, redirect to `/sign-in` with an internal return path. After successful authentication, navigate to that path or `/`. Accept only internal `returnTo` paths.
 
 ## Customer experience

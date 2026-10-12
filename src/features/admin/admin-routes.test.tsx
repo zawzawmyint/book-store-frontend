@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { TooltipProvider } from '../../app/components/ui/tooltip'
 import { afterEach, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import { MockedProvider } from '@apollo/client/testing/react'
 import App from '../../app/App'
 import { ViewerDocument } from '../../generated/graphql'
@@ -10,7 +10,8 @@ import { AdminAccessProvider } from './AdminAccessProvider'
 import { AccessContext, useAdminAccess } from './admin-access'
 import { RequireWorkspaceAccess } from './RequireWorkspaceAccess'
 import userEvent from '@testing-library/user-event'
-import { gql, InMemoryCache } from '@apollo/client'
+import { ApolloClient, ApolloLink, gql, InMemoryCache, Observable } from '@apollo/client'
+import { ApolloProvider } from '@apollo/client/react'
 
 it('lets staff enter the workspace but rejects user-management routes', async () => {
   const access = {
@@ -42,7 +43,11 @@ it('lets staff enter the workspace but rejects user-management routes', async ()
   expect(screen.queryByText('Permitted workspace')).toBeNull()
 })
 
-const auth = vi.hoisted(() => ({ hydrateSession: vi.fn(), refetch: vi.fn(async () => {}) }))
+const auth = vi.hoisted(() => ({
+  hydrateSession: vi.fn(),
+  refetch: vi.fn(async () => {}),
+  verified: true,
+}))
 
 function PermissionProbe() {
   const access = useAdminAccess()
@@ -159,13 +164,52 @@ vi.mock('../../lib/auth-client', () => ({
   authClient: {
     hydrateSession: auth.hydrateSession,
     useSession: () => ({
-      data: { user: { id: 'customer', name: 'Reader', email: 'reader@example.com' } },
+      data: {
+        user: {
+          id: 'customer',
+          name: 'Reader',
+          email: 'reader@example.com',
+          emailVerified: auth.verified,
+        },
+      },
       isPending: false,
       refetch: auth.refetch,
     }),
   },
 }))
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  auth.verified = true
+})
+
+it('does not request private viewer data on focus for an old unverified session', async () => {
+  auth.verified = false
+  const requests: string[] = []
+  const client = new ApolloClient({
+    cache: new InMemoryCache(),
+    link: new ApolloLink((operation) => {
+      requests.push(operation.operationName ?? 'anonymous')
+      return new Observable((observer) => {
+        observer.next({ data: { viewer: null } })
+        observer.complete()
+      })
+    }),
+  })
+  render(
+    <ApolloProvider client={client}>
+      <MemoryRouter>
+        <AdminAccessProvider>
+          <PermissionProbe />
+        </AdminAccessProvider>
+      </MemoryRouter>
+    </ApolloProvider>,
+  )
+  await act(async () => {
+    window.dispatchEvent(new Event('focus'))
+    await new Promise((resolve) => setTimeout(resolve, 20))
+  })
+  expect(requests).toEqual([])
+})
 it.each(['/admin/activity', '/admin/books/1/history'])(
   'denies staff activity route %s before mounting history',
   async (path) => {
@@ -377,3 +421,20 @@ it('clears private order data when staff access is revoked during revalidation',
   await screen.findByText('Resolved role: CUSTOMER')
   expect(cache.extract()['AdminOrder:private']).toBeUndefined()
 })
+it.each(['/account/profile', '/admin'])(
+  'unverified session at %s returns to signin without private content or loops',
+  async (path) => {
+    auth.verified = false
+    window.history.replaceState({}, '', path)
+    render(
+      <MockedProvider>
+        <App />
+      </MockedProvider>,
+    )
+    expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Request a verification email' })).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Your profile' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Account' })).toBeNull()
+    expect(window.location.pathname).toBe('/sign-in')
+  },
+)

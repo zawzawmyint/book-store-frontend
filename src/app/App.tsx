@@ -10,6 +10,12 @@ import { CheckoutPage } from '../features/checkout/pages/CheckoutPage'
 import { PageContainer } from './components/PageContainer'
 import { RequireSession } from '../features/auth/RequireSession'
 import { AuthPage } from '../features/auth/pages/AuthPage'
+import {
+  CheckEmailPage,
+  ForgotPasswordPage,
+  ResetPasswordPage,
+  VerificationResultPage,
+} from '../features/auth/pages/AuthEmailPages'
 import { OrdersPage } from '../features/account/pages/OrdersPage'
 import { ProfilePage } from '../features/account/pages/ProfilePage'
 import { SessionBoundary } from './SessionBoundary'
@@ -42,6 +48,10 @@ export default function App() {
                 <Route path="/cart" element={<CartPage />} />
                 <Route path="/sign-in" element={<AuthPage mode="sign-in" />} />
                 <Route path="/sign-up" element={<AuthPage mode="sign-up" />} />
+                <Route path="/check-email" element={<CheckEmailPage />} />
+                <Route path="/verification-result" element={<VerificationResultPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route element={<RequireSession />}>
                   <Route path="/checkout" element={<CheckoutPage />} />
                   <Route path="/checkout/return/:orderId" element={<CheckoutReturnPage />} />

@@ -7,6 +7,8 @@ import { loadConfig } from '../../backend/src/config/env.js'
 import { createAuth } from '../../backend/src/auth.js'
 import { createAdminRepository } from '../../backend/src/modules/admin/admin.repository.js'
 import { operatorActor } from '../../backend/src/modules/activity/activity.types.js'
+import { createSeedAccountStore } from '../../backend/src/database/runtime-seed.js'
+import type { EmailMessage } from '../../backend/src/modules/email/email.service.js'
 import { seedDemoAccounts } from '../../backend/src/database/demo-seed.js'
 import { createPaymentRepository } from '../../backend/src/modules/payments/payment.repository.js'
 import { createPaymentService } from '../../backend/src/modules/payments/payment.service.js'
@@ -16,7 +18,13 @@ import { randomUUID } from 'node:crypto'
 const deliveryFeeCents = Number(process.env.E2E_DELIVERY_FEE_CENTS ?? '500')
 if (!Number.isInteger(deliveryFeeCents) || deliveryFeeCents < 0 || deliveryFeeCents > 2147483647)
   throw new Error('Invalid isolated browser delivery fee')
+const inbox: EmailMessage[] = []
 const options = {
+  emailSender: {
+    async send(message: EmailMessage) {
+      inbox.push(message)
+    },
+  },
   frontendOrigin: 'http://localhost:4173',
   authBaseURL: 'http://localhost:4173',
   authSecret: 'playwright-isolated-auth-secret-32-chars',
@@ -68,19 +76,21 @@ for (const email of [
   const result = await auth.api.signUpEmail({
     body: { name: 'Test Reader', email, password: 'bookstore-admin-test-123' },
   })
+  await createSeedAccountStore(db).markVerified(result.user.id)
   if (!email.startsWith('customer'))
     await membership.setAdminAccess(result.user.id, true, operatorActor)
   if (email.startsWith('revocable')) revocableId = result.user.id
   if (email.startsWith('admin')) adminId = result.user.id
 }
 for (let index = 1; index <= 3; index += 1) {
-  await auth.api.signUpEmail({
+  const fixture = await auth.api.signUpEmail({
     body: {
       name: `Directory Reader ${index}`,
       email: `directory-${index}@example.com`,
       password: 'bookstore-admin-test-123',
     },
   })
+  await createSeedAccountStore(db).markVerified(fixture.user.id)
 }
 const provider = new BrowserPaymentProvider()
 const paymentService = createPaymentService(createPaymentRepository(db, Date.now), {
@@ -120,6 +130,14 @@ await store.updateBook(12, { title: 'Saved request title', priceCents: 1234 })
 await fixtureOrder('12')
 await store.updateBook(12, { title: snapshotBook.title, priceCents: snapshotBook.priceCents })
 const app = await createApp(db, options, { ...options, provider })
+app.get('/__test/mail', (req, res) => {
+  const message = inbox.findLast((mail) => mail.to === req.query.email)
+  if (!message) {
+    res.sendStatus(404)
+    return
+  }
+  res.json(message)
+})
 app.post('/__test__/pay/:id', (req, res) => {
   res.json({ returnUrl: provider.pay(String(req.params.id)) })
 })

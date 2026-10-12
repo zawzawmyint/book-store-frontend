@@ -57,7 +57,7 @@ export function Layout() {
               </NavLink>
             </IconAction>
             {!isPending &&
-              (session?.user ? (
+              (session?.user.emailVerified === true ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <IconAction label="Account">

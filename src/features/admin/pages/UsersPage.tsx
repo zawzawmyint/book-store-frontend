@@ -29,6 +29,7 @@ import { AdminFeedback } from '../components/AdminFeedback'
 import { AdminFilterToolbar } from '../components/AdminFilterToolbar'
 import { AdminPageHeader } from '../components/AdminPageHeader'
 import { AdminPageTable } from '../components/AdminPageTable'
+import { EmailVerificationBadge } from '../components/EmailVerificationBadge'
 
 function readRole(value: string | null): AdminUserRoleFilter {
   return value === 'CUSTOMER' || value === 'STAFF' || value === 'ADMIN' ? value : 'ALL'
@@ -133,7 +134,12 @@ export function UsersPage() {
           renderRow={(user) => (
             <>
               <TableCell>{user.name}</TableCell>
-              <TableCell>{user.email}</TableCell>
+              <TableCell>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span>{user.email}</span>
+                  <EmailVerificationBadge verified={user.emailVerified} />
+                </div>
+              </TableCell>
               <TableCell>
                 {user.role === 'ADMIN' ? 'Admin' : user.role === 'STAFF' ? 'Staff' : 'Customer'}
               </TableCell>

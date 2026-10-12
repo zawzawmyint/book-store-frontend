@@ -1,10 +1,11 @@
 import { useState } from 'react'
+import { BookOpen, ShieldCheck, Store } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { authClient } from '../../../lib/auth-client'
-import { safeReturnTo } from '../return-to'
+import { authEmailCallback, authEmailPath, safeReturnTo } from '../return-to'
 import { PageContainer } from '../../../app/components/PageContainer'
 import { FormField } from '../../../app/components/FormField'
 import { Button } from '../../../app/components/ui/button'
@@ -25,12 +26,19 @@ const schema = z.object({
 })
 type Fields = z.infer<typeof schema>
 
+const demoAccounts = [
+  { role: 'Customer', icon: BookOpen, description: 'Browse books' },
+  { role: 'Staff', icon: Store, description: 'Manage the store' },
+  { role: 'Admin', icon: ShieldCheck, description: 'Explore all tools' },
+] as const
+
 export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const returnTo = safeReturnTo(params.get('returnTo'))
   const { data: session, isPending: sessionPending } = authClient.useSession()
   const [serverError, setServerError] = useState('')
+  const [needsVerification, setNeedsVerification] = useState(false)
   const [demoPending, setDemoPending] = useState(false)
   const [demoTarget, setDemoTarget] = useState<string | null>(null)
   const demoEnabled =
@@ -51,22 +59,37 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
       return
     }
     setServerError('')
-    const result =
-      mode === 'sign-up'
-        ? await authClient.signUp.email({
-            name: fields.name?.trim() || '',
-            email: fields.email.trim().toLowerCase(),
-            password: fields.password,
-          })
-        : await authClient.signIn.email({
-            email: fields.email.trim().toLowerCase(),
-            password: fields.password,
-          })
-    if (result.error) {
-      setServerError(result.error.message || 'Unable to continue. Please try again.')
-      return
+    try {
+      const result =
+        mode === 'sign-up'
+          ? await authClient.signUp.email({
+              name: fields.name?.trim() || '',
+              email: fields.email.trim().toLowerCase(),
+              password: fields.password,
+              callbackURL: authEmailCallback('/verification-result', returnTo),
+            })
+          : await authClient.signIn.email({
+              email: fields.email.trim().toLowerCase(),
+              password: fields.password,
+            })
+      if (result.error) {
+        const unverified = result.error.code === 'EMAIL_NOT_VERIFIED'
+        setNeedsVerification(unverified)
+        setServerError(
+          result.error.status === 429
+            ? 'Too many attempts. Wait before trying again.'
+            : unverified
+              ? 'Verify your email before signing in.'
+              : 'Unable to continue. Check your details and try again.',
+        )
+        return
+      }
+      navigate(mode === 'sign-up' ? authEmailPath('/check-email', returnTo) : returnTo, {
+        replace: true,
+      })
+    } catch {
+      setServerError('Unable to connect. Check your connection and try again.')
     }
-    navigate(returnTo, { replace: true })
   }
 
   async function signInDemo(role: 'Customer' | 'Staff' | 'Admin') {
@@ -98,7 +121,7 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
         Loading your account…
       </div>
     )
-  if (session?.user) return <Navigate to={demoTarget ?? returnTo} replace />
+  if (session?.user.emailVerified === true) return <Navigate to={demoTarget ?? returnTo} replace />
   const isSignUp = mode === 'sign-up'
   const otherPath = `${isSignUp ? '/sign-in' : '/sign-up'}?returnTo=${encodeURIComponent(returnTo)}`
   return (
@@ -106,8 +129,18 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
       <p className="eyebrow mb-3">Your account</p>
       <h1 className="font-serif text-5xl">{isSignUp ? 'Create an account' : 'Sign in'}</h1>
       <p className="mt-4 text-sm leading-6 text-muted-foreground">
-        Sign in to continue to Stripe test payment.
+        {isSignUp
+          ? 'Verify your email, then sign in to continue.'
+          : 'Sign in to continue to your account or checkout.'}
       </p>
+      {(needsVerification || session?.user.emailVerified === false) && (
+        <p className="mt-4 text-sm">
+          Verify your email before continuing.{' '}
+          <Link className="text-primary underline" to={authEmailPath('/check-email', returnTo)}>
+            Request a verification email
+          </Link>
+        </p>
+      )}
       <form noValidate onSubmit={handleSubmit(submit)} className="mt-9 space-y-5">
         {isSignUp && (
           <FormField
@@ -151,22 +184,42 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
           {isSubmitting ? 'Please wait…' : isSignUp ? 'Create account' : 'Sign in'}
         </Button>
       </form>
+      {!isSignUp && (
+        <p className="mt-4 text-sm">
+          <Link className="text-primary underline" to={authEmailPath('/forgot-password', returnTo)}>
+            Forgot password?
+          </Link>
+        </p>
+      )}
       {!isSignUp && demoEnabled && (
-        <section aria-label="Demo accounts" className="mt-8 border-t border-border pt-6">
+        <section
+          aria-label="Demo accounts"
+          className="mt-8 rounded-xl border border-border bg-card p-5 sm:p-6"
+        >
           <h2 className="text-sm font-semibold">Try a demo account</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Choose a role to explore the local store.
           </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            {(['Customer', 'Staff', 'Admin'] as const).map((role) => (
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            {demoAccounts.map(({ role, icon: Icon, description }) => (
               <Button
                 key={role}
                 type="button"
                 variant="outline"
+                aria-label={`Demo ${role}`}
+                className="min-h-20 justify-start gap-3 rounded-lg px-4 py-3 text-left whitespace-normal hover:border-primary/60 hover:bg-primary/5"
                 disabled={isSubmitting || demoPending}
                 onClick={() => void signInDemo(role)}
               >
-                Demo {role}
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Icon aria-hidden="true" className="size-4" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold">{role}</span>
+                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                    {description}
+                  </span>
+                </span>
               </Button>
             ))}
           </div>
