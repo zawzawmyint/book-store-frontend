@@ -48,6 +48,7 @@ const ada = {
   id: 'ada',
   name: 'Ada Reader',
   email: 'ada@example.com',
+  emailVerified: true,
   role: 'CUSTOMER' as 'ADMIN' | 'STAFF' | 'CUSTOMER',
   createdAt: '2026-01-02T00:00:00.000Z',
 }
@@ -59,6 +60,17 @@ function list(variables: Record<string, unknown>, items = [ada], total = items.l
   }
 }
 const firstPage = { search: '', role: 'ALL', limit: 5, offset: 0 }
+
+it('shows verification status beside each account email', async () => {
+  renderPage('/admin/users', [
+    list(firstPage, [
+      ada,
+      { ...ada, id: 'unverified', email: 'pending@example.com', emailVerified: false },
+    ]),
+  ])
+  expect(await screen.findByText('Verified', { exact: true })).toBeTruthy()
+  expect(screen.getByText('Unverified', { exact: true })).toBeTruthy()
+})
 
 it('offers role selection instead of grant or revoke controls', async () => {
   renderPage('/admin/users', [list(firstPage)])

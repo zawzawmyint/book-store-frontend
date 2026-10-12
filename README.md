@@ -1,5 +1,7 @@
 # The Quiet Shelf storefront
 
+Implemented feature: [Auth email verification and recovery](specs/auth-email/SPEC.md) adds verification, resend, password-recovery pages, and read-only verification-status badges in the Admin user directory.
+
 A React + TypeScript + Tailwind bookstore storefront using shadcn/ui primitives, Zustand, React Hook Form, and Zod. This folder is its own Git repository. The backend lives in the sibling `backend` repository and should be started first.
 
 See [SPEC.md](SPEC.md) for the storefront behavior, [specs/order-workflow/SPEC.md](specs/order-workflow/SPEC.md) for request processing, [specs/icons-typography/SPEC.md](specs/icons-typography/SPEC.md) for icon actions and typography, [specs/appearance/SPEC.md](specs/appearance/SPEC.md) for Light/Dark appearance, [specs/authentication/SPEC.md](specs/authentication/SPEC.md) for sign-in, [specs/demo-login/SPEC.md](specs/demo-login/SPEC.md) for optional local demo controls, [specs/profile/SPEC.md](specs/profile/SPEC.md) for the account profile, [specs/staff/SPEC.md](specs/staff/SPEC.md) for workspace roles, [specs/users/SPEC.md](specs/users/SPEC.md) for user-directory compatibility, and [specs/activity/SPEC.md](specs/activity/SPEC.md) for Admin activity history.

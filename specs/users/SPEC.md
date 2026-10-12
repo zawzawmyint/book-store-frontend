@@ -6,7 +6,7 @@
 
 Rename the administrative registered-account directory consistently to **Users**, across routes, components, GraphQL operations, variables, tests, and documentation. The implemented [Staff specification](../staff/SPEC.md) extends its roles to Customer, Staff, and Admin. Use [the backend specification](../../../backend/specs/users/SPEC.md) for naming and compatibility details.
 
-Preserve directory functionality: list/search/filter/paginate users, view details, copy IDs, role changes, and another user's password reset. Staff permissions and role storage are delivered by [the Staff specification](../staff/SPEC.md).
+Preserve directory functionality: list/search/filter/paginate users, view details, copy IDs, role changes, another user's password reset, and read-only email-verification visibility. Staff permissions and role storage are delivered by [the Staff specification](../staff/SPEC.md).
 
 ## Canonical routes and components
 
@@ -15,6 +15,7 @@ Preserve directory functionality: list/search/filter/paginate users, view detail
 - Update `src/app/App.tsx` and `src/features/admin/AdminLayout.tsx`. Keep Users under People, with correct active navigation for list and detail on desktop and mobile.
 - Use **Users**, **Search users**, **View user**, and user-specific password/access wording. Role labels and filters are **Customer**, **Staff**, **Admin**, and **All**. Retain personal **Account** menu labels and `/account/*` routes.
 - Preserve the directory's page size of five, table columns, sorting, search submission, pagination correction, loading/error/empty states, copy feedback, confirmation behavior, self-demotion warning, and uncertain-mutation refresh flow.
+- Show the read-only verification state beside each email in the list and detail view. Use the shared feature-local badge: green decorative check plus **Verified**, or amber decorative clock plus **Unverified**; accessible text must communicate the state without color in both themes.
 - Preserve detail/profile behavior, password validation, own-account link to `/admin/profile`, and existing access guards. User routes are Admin-only; Customer, Staff, and Admin retain storefront access and shopping capability.
 
 ## URL compatibility
@@ -31,10 +32,13 @@ In `src/operations.graphql` use:
 - `AdminUsers` / `adminUsers` and the Staff-aware `AdminUserRoleFilter` instead of the customer-named directory contract.
 - `AdminUser` / `adminUser` for detail lookup.
 - `SetUserRole` / `setUserRole` and `ResetUserPassword` / `resetUserPassword` for management.
+- `emailVerified` in `AdminUserFields`, so list, detail, and mutation responses use the same Boolean field.
 
 Rename related variables and component props from `customer(s)` to `user(s)` where they represent registered identities. Prefer `isSelf` for the own-account comparison to avoid ambiguity with session user data. Preserve genuinely customer-related order fields and storefront wording.
 
 Regenerate `src/generated/graphql.ts` using `bun run codegen` against the matching backend. Do not hand-edit generated files or retain legacy operations in the canonical frontend. The frontend does not own the role-storage migration; it derives route/action visibility from the server-resolved role.
+
+`emailVerified` is display-only. Do not add verification controls, filters, or role-based bypasses in the frontend.
 
 ## Delivery and documentation
 
@@ -50,11 +54,12 @@ After verification, synchronize `SPEC.md`, `README.md`, and affected admin/profi
 - [x] Customer, Staff, and Admin rows remain visible according to filters, including the signed-in admin; permissions and shopping behavior are unchanged.
 - [x] Guests return through sign-in; customers are denied private views; revocation and session changes hide private data as before.
 - [x] Role changes and password reset preserve confirmations, validation, self-protection, and network-error behavior.
+- [x] Users list and detail show the stored verification state with accessible text and decorative status icons in both themes.
 - [x] Generated types match the canonical backend; storefront account routes and order customer fields are unchanged.
 - [x] Codegen, `bun run test`, `bun run lint`, `bun run build`, and `bun run test:e2e` pass.
 
 ## Validation and risks
 
-The Users and User Page component tests, `LegacyUsersRedirect.test.tsx`, route tests, and `e2e/admin.spec.ts` cover canonical navigation, legacy list/detail redirects, filter and return-path preservation, role assignment, password reset/sign-in, authorization, and mobile navigation. Staff-specific validation is recorded in [the Staff specification](../staff/SPEC.md).
+The Users and User Page component tests, `LegacyUsersRedirect.test.tsx`, route tests, and `e2e/admin.spec.ts` cover canonical navigation, legacy list/detail redirects, verification-status display, filter and return-path preservation, role assignment, password reset/sign-in, authorization, and mobile navigation. Staff-specific validation is recorded in [the Staff specification](../staff/SPEC.md).
 
 The key release risk remains deploying the frontend before the Staff-aware backend; deploy and migrate the backend first. Review remaining customer-named identifiers as intentional order terminology or compatibility URLs.

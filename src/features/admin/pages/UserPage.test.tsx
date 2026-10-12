@@ -37,6 +37,7 @@ const ada = {
   id: 'ada',
   name: 'Ada Reader',
   email: 'ada@example.com',
+  emailVerified: true,
   role: 'CUSTOMER' as const,
   createdAt: '2026-01-02T00:00:00.000Z',
 }
@@ -66,6 +67,13 @@ function userMock(
     maxUsageCount: 5,
   }
 }
+
+it.each([true, false])('shows the account email verification state %s', async (emailVerified) => {
+  renderPage('/admin/users/ada', [userMock({ ...ada, emailVerified })])
+  expect(
+    await screen.findByText(emailVerified ? 'Verified' : 'Unverified', { exact: true }),
+  ).toBeTruthy()
+})
 
 it.each([
   [

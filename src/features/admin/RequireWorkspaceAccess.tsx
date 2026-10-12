@@ -30,6 +30,8 @@ export function RequireWorkspaceAccess({ adminOnly = false }: { adminOnly?: bool
   const location = useLocation()
   const access = useAdminAccess()
   const permitted = access.role === 'ADMIN' || (!adminOnly && access.role === 'STAFF')
+  if (!isPending && session?.user.emailVerified !== true)
+    return <Navigate replace to={signInPath(`${location.pathname}${location.search}`)} />
   if (isPending || (access.loading && !permitted))
     return (
       <AdminAccessScreen>
@@ -40,7 +42,7 @@ export function RequireWorkspaceAccess({ adminOnly = false }: { adminOnly?: bool
         </div>
       </AdminAccessScreen>
     )
-  if (!session?.user)
+  if (session?.user.emailVerified !== true)
     return <Navigate replace to={signInPath(`${location.pathname}${location.search}`)} />
   if (access.expired)
     return (

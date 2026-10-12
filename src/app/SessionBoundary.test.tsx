@@ -7,11 +7,13 @@ import { SessionBoundary } from './SessionBoundary'
 import { checkoutAttempt } from '../features/checkout/checkout-attempt'
 import { testReviewedCheckout } from '../features/checkout/delivery-test-fixtures'
 
-const session = vi.hoisted(() => ({ userId: 'A' as string | null, pending: false }))
+const session = vi.hoisted(() => ({ userId: 'A' as string | null, pending: false, verified: true }))
 vi.mock('../lib/auth-client', () => ({
   authClient: {
     useSession: () => ({
-      data: session.userId ? { user: { id: session.userId } } : null,
+      data: session.userId
+        ? { user: { id: session.userId, emailVerified: session.verified } }
+        : null,
       isPending: session.pending,
     }),
   },
@@ -39,6 +41,30 @@ afterEach(() => {
   cleanup()
   session.userId = 'A'
   session.pending = false
+  session.verified = true
+})
+
+it('clears private data when the same account loses verified status', async () => {
+  const client = new ApolloClient({ cache: new InMemoryCache(), link: ApolloLink.empty() })
+  const view = () => (
+    <ApolloProvider client={client}>
+      <SessionBoundary>
+        <ProtectedOrders />
+      </SessionBoundary>
+    </ApolloProvider>
+  )
+  const { rerender } = render(view())
+  await screen.findByText('No cached orders')
+  client.cache.writeQuery({
+    query: accountQuery,
+    data: { accountOrders: [{ title: 'Private order' }] },
+  })
+  rerender(view())
+  expect(screen.getByText('Private order')).toBeTruthy()
+  session.verified = false
+  rerender(view())
+  expect(screen.queryByText('Private order')).toBeNull()
+  await waitFor(() => expect(client.cache.readQuery({ query: accountQuery })).toBeNull())
 })
 
 describe('session data boundary', () => {

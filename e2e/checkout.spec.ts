@@ -1,3 +1,4 @@
+import { signInRespectingRateLimit, verifyAndSignIn } from './auth-email-helpers'
 import { reviewDelivery, checkoutInput } from './delivery'
 import { hostedPayment } from './hosted-payment'
 import { expect, test } from '@playwright/test'
@@ -17,6 +18,7 @@ test('cart survives sign-in redirect; account checkout appears in order history'
   await page.getByLabel('Email address').fill('ada@example.com')
   await page.getByLabel('Password').fill('bookstore-password-123')
   await page.getByRole('button', { name: 'Create account' }).click()
+  await verifyAndSignIn(page, 'ada@example.com', 'bookstore-password-123')
   await expect(page).toHaveURL(/\/checkout$/)
   await expect(page.getByText('ada@example.com')).toBeVisible()
   const title = page.getByText('The Great Gatsby', { exact: true })
@@ -36,7 +38,7 @@ test('cart survives sign-in redirect; account checkout appears in order history'
   await expect(page).toHaveURL(/\/sign-in\?returnTo=/)
   await page.getByLabel('Email address').fill('ada@example.com')
   await page.getByLabel('Password').fill('bookstore-password-123')
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  expect((await signInRespectingRateLimit(page)).status()).toBe(200)
   await expect(page).toHaveURL(/\/account\/orders$/)
   await expect(page.getByText('1 × The Great Gatsby')).toBeVisible()
 })
@@ -52,6 +54,7 @@ test('stock failure keeps the cart and protected API rejects guests', async ({ p
   await page.getByLabel('Email address').fill('second@example.com')
   await page.getByLabel('Password').fill('bookstore-password-456')
   await page.getByRole('button', { name: 'Create account' }).click()
+  await verifyAndSignIn(page, 'second@example.com', 'bookstore-password-456')
   await expect(page).toHaveURL(/\/checkout$/)
   await page.goto('/books/10')
   await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
@@ -91,6 +94,7 @@ test('interrupted hosted payment preserves the bag and changed bag survives conf
   await page.getByLabel('Email address').fill('interrupted@example.com')
   await page.getByLabel('Password').fill('bookstore-password-123')
   await page.getByRole('button', { name: 'Create account' }).click()
+  await verifyAndSignIn(page, 'interrupted@example.com', 'bookstore-password-123')
   await expect(page).toHaveURL('http://localhost:4173/')
   await page.goto('/books/1')
   await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
@@ -129,6 +133,7 @@ test('address edits invalidate review and invalid phone cannot authorize payment
   await page.getByLabel('Email address').fill('address-review@example.com')
   await page.getByLabel('Password').fill('bookstore-password-123')
   await page.getByRole('button', { name: 'Create account' }).click()
+  await verifyAndSignIn(page, 'address-review@example.com', 'bookstore-password-123')
   await expect(page).toHaveURL('http://localhost:4173/')
   await page.goto('/books/1')
   await page.getByRole('button', { name: 'Add to bag', exact: true }).click()

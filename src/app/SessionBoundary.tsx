@@ -7,7 +7,7 @@ import { authClient } from '../lib/auth-client'
 export function SessionBoundary({ children }: { children: React.ReactNode }) {
   const { data, isPending } = authClient.useSession()
   const client = useApolloClient()
-  const userId = data?.user.id ?? null
+  const userId = data?.user.emailVerified === true ? data.user.id : null
   const [readyId, setReadyId] = useState<string | null | undefined>(undefined)
 
   useEffect(() => {

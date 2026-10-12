@@ -365,6 +365,40 @@ test('admin lists users and grants or revokes admin access', async ({ page, cont
   await page.screenshot({ path: 'test-results/admin-users-mobile.png', fullPage: true })
 })
 
+test('admin sees verification status in the list and details after a real verification', async ({
+  page,
+  request,
+}) => {
+  const email = 'verification-status-e2e@example.com'
+  const signup = await request.post('http://localhost:4100/api/auth/sign-up/email', {
+    headers: { Origin: 'http://localhost:4173' },
+    data: { name: 'Verification Reader', email, password: 'bookstore-status-test-123' },
+  })
+  expect(signup.status()).toBe(200)
+  await signIn(page, 'admin-e2e@example.com', '/admin/users')
+  await page.getByLabel('Search users').fill(email)
+  await page.getByRole('button', { name: 'Search', exact: true }).click()
+  const row = page.getByRole('row', { name: /verification-status-e2e@example.com/ })
+  await expect(row.getByText('Unverified', { exact: true })).toBeVisible()
+  await row.getByRole('link', { name: /^View user / }).click()
+  await expect(page.getByText('Unverified', { exact: true })).toBeVisible()
+  const inbox = await request.get(
+    `http://localhost:4100/__test/mail?email=${encodeURIComponent(email)}`,
+  )
+  expect(inbox.ok()).toBe(true)
+  const message = await inbox.json()
+  const link = message.text.match(/https?:\/\/[^\s]+/)[0]
+  expect((await request.get(link)).ok()).toBe(true)
+  await page.reload()
+  await expect(page.getByText('Verified', { exact: true })).toBeVisible()
+  await page.getByRole('link', { name: 'Back to users' }).click()
+  await expect(
+    page
+      .getByRole('row', { name: /verification-status-e2e@example.com/ })
+      .getByText('Verified', { exact: true }),
+  ).toBeVisible()
+})
+
 test('legacy user-directory bookmarks preserve filters and detail IDs', async ({ page }) => {
   await signIn(page, 'admin-e2e@example.com', '/admin/users')
   await page.goto('/admin/customers?search=directory-1%40example.com&role=CUSTOMER&page=1')

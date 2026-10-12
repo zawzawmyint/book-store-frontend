@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { accessErrorCode, useAdminAccess, useAdminQueryError } from '../admin-access'
 import { AdminFeedback } from '../components/AdminFeedback'
 import { AdminPageHeader } from '../components/AdminPageHeader'
+import { EmailVerificationBadge } from '../components/EmailVerificationBadge'
 
 const passwordSchema = z
   .object({
@@ -84,7 +85,10 @@ export function UserPage() {
               <dt className="text-xs font-bold uppercase tracking-[.14em] text-muted-foreground">
                 Email
               </dt>
-              <dd className="mt-1">{user.email}</dd>
+              <dd className="mt-1 flex flex-wrap items-center gap-2">
+                <span>{user.email}</span>
+                <EmailVerificationBadge verified={user.emailVerified} />
+              </dd>
             </div>
             <div>
               <dt className="text-xs font-bold uppercase tracking-[.14em] text-muted-foreground">

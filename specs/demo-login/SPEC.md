@@ -44,3 +44,11 @@ storage.
 Component tests cover role credentials, destinations, availability gates, pending
 state, and retry behavior. Browser tests seed the isolated API, use every control,
 and verify session restoration and the resulting permissions.
+
+## Demo control presentation
+
+**Status:** Implemented.
+
+- The three demo roles appear as padded outlined buttons in a rounded, bordered panel. They stack on small screens and use three columns from the `sm` breakpoint.
+- Customer, Staff, and Admin respectively show decorative BookOpen, Store, and ShieldCheck icons with the descriptions “Browse books,” “Manage the store,” and “Explore all tools.” Hover and focus styling, disabled state, loading feedback, accessible names (`Demo Customer`, `Demo Staff`, and `Demo Admin`), and sign-in behavior remain available.
+- Component coverage, demo-login browser coverage, lint, and production build pass. Desktop and mobile presentation, including the focus ring, was checked in light and dark themes.

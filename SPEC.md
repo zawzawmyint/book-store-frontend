@@ -1,5 +1,7 @@
 # The Quiet Shelf storefront specification
 
+> **Implemented auth email:** [Verification and recovery](specs/auth-email/SPEC.md) defines the verification and password-recovery customer journey, plus read-only verification-status visibility in the Admin user directory.
+
 > **Implemented engineering work:** [Storefront readability and consistency](specs/storefront-readability/SPEC.md) documents catalog and checkout readability refactoring with unchanged customer behavior.
 
 > **Implemented engineering work:** [Frontend readability and consistency](specs/readability-consistency/SPEC.md) documents admin pagination, navigation, and search-hook refactoring with unchanged UI and API behavior.
@@ -81,7 +83,7 @@ collects a delivery address, requires a reviewed server quote, and displays deli
 - `/account/orders` lists only the signed-in customer's order requests with pagination, status badges, and detail links. `/account/orders/:id` shows that owner's saved request and safe oldest-first status timeline; a missing or non-owned request has the same not-found state.
 - `/account/profile` shows the signed-in email and join date as read-only text. The same person can save their display name and change their password. The storefront Account menu links to Profile before Orders. See [the account profile spec](specs/profile/SPEC.md).
 - The storefront header and workspace headers, including workspace access screens, expose an icon-only, keyboard-accessible Light/Dark switch. Its sun/moon icon shows the current mode; its Dark mode switch semantics and tooltip state describe the next action. It uses the `book-store-theme` browser-storage key, accepts only `light` and `dark`, and falls back to Dark when the key is missing, invalid, removed, or unavailable. Preferences synchronize across tabs; device appearance is not used.
-- A session boundary unmounts routed content during session revalidation and clears Apollo data before rendering after any user ID change, including sign-out.
+- A session boundary treats only a session with `emailVerified: true` as usable, unmounts routed content during revalidation, and clears Apollo data before rendering after any usable verified-user identity change, including sign-out or loss of verification.
 - Unknown routes show a not-found page.
 
 ## Admin routes

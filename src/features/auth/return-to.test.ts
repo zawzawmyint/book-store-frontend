@@ -8,7 +8,17 @@ describe('authentication return path', () => {
   })
 
   it('rejects external, malformed, and auth-loop destinations', () => {
-    for (const value of ['https://example.com', '//example.com', '/\\example.com', '/sign-in', null]) {
+    for (const value of [
+      'https://example.com',
+      '//example.com',
+      '/\\example.com',
+      '/sign-in',
+      '/check-email',
+      '/verification-result?returnTo=/checkout',
+      '/reset-password?token=secret',
+      '/forgot-password',
+      null,
+    ]) {
       expect(safeReturnTo(value)).toBe('/')
     }
   })
