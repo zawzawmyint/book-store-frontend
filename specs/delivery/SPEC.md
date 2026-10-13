@@ -35,7 +35,8 @@ will not carry forward. Reset/reseed occurs during implementation, not spec draf
 
 **Cart → Delivery address → Review total → Stripe payment → Preparing → Shipped → Delivered**.
 
-- `/cart` keeps its compatible storage format and estimated book subtotal.
+- `/cart` keeps guest-storage compatibility and an estimated book subtotal. Verified
+  accounts use the server bag described by [account carts](../account-carts/SPEC.md).
   Label it **Books subtotal** and explain that delivery is added at checkout.
   Do not add a flat fee per book or claim that cart prices are authoritative.
 - `/checkout` remains session-protected. Show account email/contact information
@@ -61,7 +62,8 @@ will not carry forward. Reset/reseed occurs during implementation, not spec draf
   current lines/address. Changing either invalidates the reviewed quote and
   requires review again. Ignore late responses for superseded input snapshots.
 - Submit normalized address, saved reviewed fee/total, line IDs/quantities and
-  requestKey through `createCheckout`. Never submit a price to be trusted by the
+  requestKey through `createCheckout`; when the visible bag is server-owned, include
+  its accepted `cartRevision` so a stale review is rejected before reservation. Never submit a price to be trusted by the
   server, user identity, a paid flag or a client-selected currency/redirect URL.
 - A price/fee `CONFLICT` means show updated pricing via a new quote and require
   explicit review/submission; do not automatically redirect to payment at a new
@@ -86,20 +88,22 @@ will not carry forward. Reset/reseed occurs during implementation, not spec draf
   retaining the existing `book-store-checkout:<userId>` namespace. The delivery
   address is private data: do not add it to cart localStorage, URLs, analytics,
   console output or a global address draft. Fall back to memory if storage fails.
-- At the coordinated fresh-data cutover, clear old checkout attempts and the
-  persisted cart once. Old book/order IDs can be reused by reseeding, so retaining
-  them could submit different books or resume unrelated orders. Use a versioned
+- At the coordinated fresh-data cutover, clear old checkout attempts and stale
+  auth/Apollo data once. Old book/order IDs can be reused by reseeding, so retaining
+  a checkout attempt could resume an unrelated order. Use a versioned
   browser-data marker so this cleanup does not repeat on ordinary reloads.
   Discard unversioned pre-delivery attempts without resuming their deleted orders.
-  Preserve the existing cart key/raw-array format for newly created carts.
+  Preserve raw-array recovery for prior guest data and the versioned guest-cart format
+  for newly created carts; do not persist a verified account bag there.
   Clear stale auth/Apollo state and sign in again to the reseeded accounts.
 - Clear private attempt/address memory and storage on explicit sign-out/account
   switch. Session expiry during a retry may require re-entry and Orders recovery;
   do not expose one account's payload to another. Keep normal cart compatibility.
-- Preserve the existing confirmed-paid matching-cart clearing rule: compare the
-  submitted lines and matching user/order ID, rather than the current address form.
+- Confirmed-paid cleanup compares submitted line versions/quantities and the matching
+  user/order ID on the server, rather than the current address form.
   Retire matching terminal unpaid attempts as today. Remove their address payload
-  when retired/paid; never clear a changed cart or one without a matching snapshot.
+  when retired/paid; server-side paid cleanup never removes a changed account line or
+  one without a matching snapshot.
 - `/checkout/return/:orderId` keeps backend-confirmed payment state, bounded polling,
   explicit refresh/resume and owner checks. Show saved subtotal/fee/total and
   destination after confirmed payment; opening a success URL is not payment proof.
@@ -199,9 +203,9 @@ terminology only as explicit historical context.
 - [x] Edits and stale quote responses cannot submit an unreviewed destination/amount.
 - [x] Changed pricing requires explicit renewed review; failures preserve cart and input.
 - [x] Exact retries preserve request keys; address/amount changes cannot reuse them.
-- [x] Fresh-data cutover clears stale carts/attempts/cache once; ordinary reload preserves new data.
+- [x] Fresh-data cutover clears stale checkout attempts/cache once; ordinary reload preserves guest and server account bag data.
 - [x] Storage failure, sign-out and account switching remain safe.
-- [x] Paid return displays saved totals/address and clears only the matching cart.
+- [x] Paid return displays saved totals/address; server-side cleanup removes only unchanged submitted account lines once and the browser refreshes the visible bag.
 - [x] Customer detail/history hides other accounts and staff attribution.
 - [x] Single order status/actions/filter follow server permissions and allowed transitions.
 - [x] Delivery confirmation sets Delivered; no Completed or separate delivery status remains.

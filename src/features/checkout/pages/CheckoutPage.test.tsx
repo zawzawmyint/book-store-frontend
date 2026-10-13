@@ -55,6 +55,7 @@ vi.mock('../../../lib/auth-client', () => ({
 }))
 afterEach(() => {
   cleanup()
+  void useCartStore.getState().identify(null)
   useCartStore.getState().clear()
   clearCheckoutAttempts()
   localStorage.clear()
@@ -78,7 +79,7 @@ function mount(
   graphqlError: boolean | string = false,
   mutationDelay = 0,
 ) {
-  useCartStore.setState({ items: [item] })
+  useCartStore.setState({ items: [item], owner: 'ada', status: 'ready', revision: '1' })
   const variables = vi.fn((value) => value.input.items[0].bookId === '1')
   const quoteVariables = vi.fn(() => true)
   const checkout = () => (
@@ -198,6 +199,7 @@ it('requires server review then submits normalized destination and reviewed amou
     items: [{ bookId: '1', quantity: 1 }],
     requestKey: expect.any(String),
     ...reviewed,
+    cartRevision: '1',
   })
   expect(useCartStore.getState().items).toEqual([item])
 })

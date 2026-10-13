@@ -1,7 +1,7 @@
 import { testOrderDelivery, testReviewedCheckout } from '../delivery-test-fixtures'
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { MockedProvider } from '@apollo/client/testing/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { RefreshOrderPaymentDocument } from '../../../generated/graphql'
@@ -14,6 +14,7 @@ vi.mock('../../../lib/auth-client', () => ({
 afterEach(() => {
   cleanup()
   sessionStorage.clear()
+  void useCartStore.getState().identify(null)
   useCartStore.getState().clear()
 })
 const item = {
@@ -62,12 +63,21 @@ function mount(status = 'PAID', path = '/checkout/return/7?outcome=success') {
     </MockedProvider>,
   )
 }
-it('clears an unchanged bag only after server confirmed Paid', async () => {
-  useCartStore.setState({ items: [item] })
+it('reloads server cart truth after confirmed Paid instead of clearing local selections', async () => {
+  const read = vi
+    .fn()
+    .mockResolvedValueOnce({
+      revision: '1',
+      items: [{ ...item, bookId: '1', lineVersion: 'first', available: true }],
+      mergeNotices: [],
+    })
+    .mockResolvedValue({ revision: '2', items: [], mergeNotices: [] })
+  await useCartStore.getState().identify('return-reader', { read, set: vi.fn(), merge: vi.fn() })
   checkoutAttempt('return-reader', [item], testReviewedCheckout, '7')
   mount()
   await screen.findByRole('heading', { name: 'Payment confirmed' })
-  expect(useCartStore.getState().items).toEqual([])
+  await waitFor(() => expect(useCartStore.getState().items).toEqual([]))
+  expect(useCartStore.getState().revision).toBe('2')
 })
 it('preserves books added while payment was open', async () => {
   checkoutAttempt('return-reader', [item], testReviewedCheckout, '7')

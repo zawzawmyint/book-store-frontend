@@ -28,7 +28,8 @@ test('admin opens activity and book history while customer URLs are denied', asy
 }) => {
   await signIn(page, 'admin-e2e@example.com', '/admin/activity')
   await expect(page.getByRole('heading', { name: 'Activity', exact: true })).toBeVisible()
-  await page.goto('/admin/books/1/history')
+  // Cart recovery journeys deliberately adjust book 1; book 6 has no fixture changes.
+  await page.goto('/admin/books/6/history')
   await expect(page.getByText('No activity recorded yet', { exact: true })).toBeVisible()
   const customer = await browser.newContext({ extraHTTPHeaders: { 'X-Real-IP': '192.0.2.246' } })
   try {
@@ -40,7 +41,7 @@ test('admin opens activity and book history while customer URLs are denied', asy
     })
     await signIn(customerPage, 'customer-e2e@example.com', '/admin/activity')
     await expect(customerPage.getByText('Access denied', { exact: true })).toBeVisible()
-    await customerPage.goto('/admin/books/1/history')
+    await customerPage.goto('/admin/books/6/history')
     await expect(customerPage.getByText('Access denied', { exact: true })).toBeVisible()
     expect(historyRequests).toHaveLength(0)
   } finally {
@@ -124,7 +125,10 @@ test('staff changes appear once in admin activity and book history with safe det
     await historyLink.click()
     await expect(page.getByRole('heading', { name: 'Book history', exact: true })).toBeVisible()
     await expect(
-      page.getByRole('table', { name: 'activity events' }).locator('tbody tr'),
+      page
+        .getByRole('table', { name: 'activity events' })
+        .locator('tbody tr')
+        .filter({ hasText: 'Directory Reader 3' }),
     ).toHaveCount(2)
     await page.getByRole('link', { name: 'Back to books', exact: true }).click()
     await expect(page).toHaveURL(/\/admin\/books\?/)

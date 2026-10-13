@@ -2,6 +2,8 @@ import { clearCheckoutAttempts } from '../features/checkout/checkout-attempt'
 import { useEffect, useState } from 'react'
 import { useApolloClient } from '@apollo/client/react'
 import { authClient } from '../lib/auth-client'
+import { CartSession } from '../features/cart/CartSession'
+import { useCartStore } from '../features/cart/cart-store'
 
 /** Unmounts routed content until Apollo data is cleared for the current identity. */
 export function SessionBoundary({ children }: { children: React.ReactNode }) {
@@ -9,6 +11,10 @@ export function SessionBoundary({ children }: { children: React.ReactNode }) {
   const client = useApolloClient()
   const userId = data?.user.emailVerified === true ? data.user.id : null
   const [readyId, setReadyId] = useState<string | null | undefined>(undefined)
+
+  useEffect(() => {
+    if (isPending || readyId !== userId) void useCartStore.getState().identify(undefined)
+  }, [isPending, readyId, userId])
 
   useEffect(() => {
     if (isPending || readyId === userId) return
@@ -29,5 +35,5 @@ export function SessionBoundary({ children }: { children: React.ReactNode }) {
       </div>
     )
   }
-  return children
+  return <CartSession owner={userId}>{children}</CartSession>
 }

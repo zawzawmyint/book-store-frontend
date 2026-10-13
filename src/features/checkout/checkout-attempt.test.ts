@@ -129,3 +129,14 @@ it('preserves its in-memory key when storage reads work but writes fail', () => 
     write.mockRestore()
   }
 })
+
+it('creates a fresh attempt when the reviewed server cart revision changes', () => {
+  const lines = [{ id: '1', quantity: 1 }]
+  const first = checkoutAttempt('revision-reader', lines, { ...reviewed, cartRevision: '2' })
+  expect(
+    checkoutAttempt('revision-reader', lines, { ...reviewed, cartRevision: '3' }).requestKey,
+  ).not.toBe(first.requestKey)
+  expect(
+    checkoutAttempt('revision-reader', lines, { ...reviewed, cartRevision: '3' }).cartRevision,
+  ).toBe('3')
+})

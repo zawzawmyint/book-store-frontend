@@ -1,6 +1,7 @@
 import { deliveryAddressSchema, type DeliveryAddress } from './delivery-address'
 type Line = { id: string; quantity: number }
 export type ReviewedCheckout = {
+  cartRevision?: string
   deliveryAddress: DeliveryAddress
   expectedDeliveryFeeCents: number
   expectedTotalCents: number
@@ -45,6 +46,7 @@ export function savedCheckoutAttempt(userId: string): Attempt | undefined {
       ) ||
       new Set(value.lines.map((line) => line.id)).size !== value.lines.length ||
       !validMoney(value.expectedDeliveryFeeCents) ||
+      (value.cartRevision !== undefined && !/^(0|[1-9]\d*)$/.test(value.cartRevision)) ||
       !validMoney(value.expectedTotalCents) ||
       value.expectedTotalCents < 50 ||
       value.expectedTotalCents < value.expectedDeliveryFeeCents + 50 ||
@@ -60,6 +62,7 @@ export function savedCheckoutAttempt(userId: string): Attempt | undefined {
       deliveryAddress: address.data,
       expectedDeliveryFeeCents: value.expectedDeliveryFeeCents,
       expectedTotalCents: value.expectedTotalCents,
+      ...(value.cartRevision !== undefined ? { cartRevision: value.cartRevision } : {}),
       ...(value.orderId ? { orderId: value.orderId } : {}),
     }
   } catch {
@@ -76,6 +79,7 @@ export function checkoutAttempt(
     deliveryAddress: deliveryAddressSchema.parse(reviewed.deliveryAddress),
     expectedDeliveryFeeCents: reviewed.expectedDeliveryFeeCents,
     expectedTotalCents: reviewed.expectedTotalCents,
+    ...(reviewed.cartRevision !== undefined ? { cartRevision: reviewed.cartRevision } : {}),
   }
   const previous = savedCheckoutAttempt(userId)
   const attempt: Attempt =
@@ -85,6 +89,7 @@ export function checkoutAttempt(
       deliveryAddress: previous.deliveryAddress,
       expectedDeliveryFeeCents: previous.expectedDeliveryFeeCents,
       expectedTotalCents: previous.expectedTotalCents,
+      ...(previous.cartRevision !== undefined ? { cartRevision: previous.cartRevision } : {}),
     }) === JSON.stringify(payload)
       ? previous
       : {

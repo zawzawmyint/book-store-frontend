@@ -1,10 +1,12 @@
 # The Quiet Shelf storefront
 
+Implemented feature: [Account carts](specs/account-carts/SPEC.md) keeps a versioned guest bag in browser storage and each verified account's bag on the server.
+
 Implemented feature: [Auth email verification and recovery](specs/auth-email/SPEC.md) adds verification, resend, password-recovery pages, and read-only verification-status badges in the Admin user directory.
 
 A React + TypeScript + Tailwind bookstore storefront using shadcn/ui primitives, Zustand, React Hook Form, and Zod. This folder is its own Git repository. The backend lives in the sibling `backend` repository and should be started first.
 
-See [SPEC.md](SPEC.md) for the storefront behavior, [specs/order-workflow/SPEC.md](specs/order-workflow/SPEC.md) for request processing, [specs/icons-typography/SPEC.md](specs/icons-typography/SPEC.md) for icon actions and typography, [specs/appearance/SPEC.md](specs/appearance/SPEC.md) for Light/Dark appearance, [specs/authentication/SPEC.md](specs/authentication/SPEC.md) for sign-in, [specs/demo-login/SPEC.md](specs/demo-login/SPEC.md) for optional local demo controls, [specs/profile/SPEC.md](specs/profile/SPEC.md) for the account profile, [specs/staff/SPEC.md](specs/staff/SPEC.md) for workspace roles, [specs/users/SPEC.md](specs/users/SPEC.md) for user-directory compatibility, and [specs/activity/SPEC.md](specs/activity/SPEC.md) for Admin activity history.
+See [SPEC.md](SPEC.md) for the storefront behavior, [specs/account-carts/SPEC.md](specs/account-carts/SPEC.md) for account and guest bag ownership, [specs/order-workflow/SPEC.md](specs/order-workflow/SPEC.md) for request processing, [specs/icons-typography/SPEC.md](specs/icons-typography/SPEC.md) for icon actions and typography, [specs/appearance/SPEC.md](specs/appearance/SPEC.md) for Light/Dark appearance, [specs/authentication/SPEC.md](specs/authentication/SPEC.md) for sign-in, [specs/demo-login/SPEC.md](specs/demo-login/SPEC.md) for optional local demo controls, [specs/profile/SPEC.md](specs/profile/SPEC.md) for the account profile, [specs/staff/SPEC.md](specs/staff/SPEC.md) for workspace roles, [specs/users/SPEC.md](specs/users/SPEC.md) for user-directory compatibility, and [specs/activity/SPEC.md](specs/activity/SPEC.md) for Admin activity history.
 
 ## Development workflow
 
@@ -80,7 +82,16 @@ bun run codegen
 
 ## State ownership
 
-Zustand owns the shared cart items and add, update, and clear actions. Components subscribe through selectors; cart count and estimated total are derived from items. Persistence keeps the existing `book-store-cart` key and raw JSON array format so previously saved carts remain readable. Invalid saved items are filtered out; unavailable browser storage leaves the cart usable in memory. Appearance uses the separate `book-store-theme` key, defaults to Dark, and retains an in-memory choice if browser storage is unavailable.
+Zustand owns the visible bag and its actions. Guests use the version-2
+`book-store-cart` envelope; prior raw JSON arrays are retained as unowned legacy data
+until the signed-in shopper explicitly imports or discards them. Verified accounts use
+the server cart and never write their items to that shared key. Components derive count
+and estimated total from the visible items. Web Locks serialize cross-tab guest edits
+and merge claims when available; a browser without Web Locks uses the supported
+best-effort storage fallback. Invalid saved items are filtered out; unavailable browser
+storage leaves guest shopping usable in memory, but does not promise recovery after the
+page closes. Appearance uses the separate `book-store-theme` key, defaults to Dark,
+and retains an in-memory choice if browser storage is unavailable.
 
 Apollo Client owns catalog and order history queries and mutation state. React Hook Form owns account form values and validation; Better Auth owns the session. A session boundary hides routed content while the session changes and clears Apollo data before a different account is shown. The backend keeps books, stock, and orders through Drizzle using SQLite in development/test and PostgreSQL in production, with transactions enforcing consistency.
 
@@ -110,9 +121,12 @@ The workspace home at `/admin` is the implemented [Dashboard feature](specs/dash
 
 Sign-in and sign-up use React Hook Form with a Zod resolver from `@hookform/resolvers`.
 Checkout shows the signed-in account's name and email as read-only details and opens
-Stripe hosted Checkout for test payment. Server errors remain visible and failed or
-uncertain attempts keep the cart. Confirmed payment clears only the unchanged submitted
-cart. Signing out clears account-specific Apollo data but preserves the cart.
+Stripe hosted Checkout for test payment. For a server bag, checkout sends its accepted
+revision and the backend rejects a stale bag before reserving stock. Server errors remain
+visible and failed or uncertain attempts keep the bag. Confirmed payment performs
+server-side once-only cleanup of only unchanged submitted lines; the browser refreshes
+its visible state. Signing out clears account-specific Apollo data and hides the account
+bag while retaining server data; a separate guest bag is then available.
 
 ## Checks
 

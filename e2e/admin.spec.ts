@@ -1,4 +1,3 @@
-import { fillDelivery } from './delivery'
 import { expect, test, type Page } from '@playwright/test'
 
 // Distinct test clients retain production rate limiting without sharing one proxy bucket.
@@ -34,7 +33,8 @@ test('admin workspace stays separate from shopping and returns to the storefront
   await expect(page).toHaveURL('/admin')
   await page.getByRole('button', { name: 'Account', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click()
-  await expect(page).toHaveURL('/')
+  await expect(page).toHaveURL('/sign-in')
+  await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible()
 })
 
@@ -105,6 +105,8 @@ test('admin lists paginate in five-item pages without losing filters', async ({ 
     .getByRole('navigation', { name: 'Admin navigation' })
     .getByRole('link', { name: 'Order requests', exact: true })
     .click()
+  await page.getByRole('textbox', { name: 'Search orders' }).fill('admin-e2e@example.com')
+  await page.getByRole('button', { name: 'Search', exact: true }).click()
   await expect(rows).toHaveCount(5)
   await expect(page.getByText('Page 1 of 2', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Next', exact: true }).click()
@@ -112,7 +114,10 @@ test('admin lists paginate in five-item pages without losing filters', async ({ 
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled()
   await rows.first().getByRole('link', { name: 'View request' }).click()
   await page.getByRole('link', { name: 'Back to order requests', exact: true }).click()
-  await expect(page).toHaveURL(/orders\?page=2$/)
+  await expect(page).toHaveURL(/orders\?.*page=2$/)
+  await expect(page.getByRole('textbox', { name: 'Search orders' })).toHaveValue(
+    'admin-e2e@example.com',
+  )
   await expect(rows).toHaveCount(2)
 })
 
@@ -300,9 +305,11 @@ test('archived books in an existing cart fail checkout while keeping the cart', 
     if ((await response.json()).errors) throw new Error('Archive failed')
   }, id)
   await page.goto('/checkout')
-  await fillDelivery(page)
-  await page.getByRole('button', { name: 'Review order', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('unavailable')
+  await expect(
+    page.getByRole('heading', { name: 'Your bag needs attention', exact: true }),
+  ).toBeVisible()
+  await expect(page.getByText(/correct unavailable selections before checkout/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Review order', exact: true })).toHaveCount(0)
   await page.goto('/cart')
   await expect(page.getByRole('link', { name: 'Archive checkout book', exact: true })).toBeVisible()
 })
@@ -314,6 +321,8 @@ test('admin lists users and grants or revokes admin access', async ({ page, cont
   const users = navigation.getByRole('link', { name: 'Users', exact: true })
   await expect(users).toHaveAttribute('aria-current', 'page')
   await expect(page.getByRole('heading', { name: 'Users', exact: true })).toBeVisible()
+  await page.getByLabel('Search users').fill('Reader')
+  await page.getByRole('button', { name: 'Search', exact: true }).click()
   const rows = page.getByRole('table').locator('tbody tr')
   await expect(rows).toHaveCount(5)
   await expect(page.getByText('Showing 1–5 of 6 users', { exact: true })).toBeVisible()

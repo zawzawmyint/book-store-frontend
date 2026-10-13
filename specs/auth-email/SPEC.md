@@ -38,7 +38,7 @@ Signup now routes to verification without a usable session, and check-email, ver
 - Backend requires verification before sign-in, creates no automatic signup/verification session, and revokes sessions after password reset. Fresh sign-in follows successful verification or reset.
 - Verification/reset links expire after **3600 seconds**. Backend owns expiry and reset-token consumption; UI never verifies a token locally.
 - No GraphQL operation/schema change is expected. Auth calls stay under the existing same-origin `/api/auth` proxy.
-- Keep public browsing/cart available. Preserve `book-store-cart` compatibility and existing checkout-attempt safety; clear account-specific Apollo data when the active session becomes unusable.
+- Keep public browsing/cart available. Preserve guest-cart compatibility and existing checkout-attempt safety; the coordinated [account-carts specification](../account-carts/SPEC.md) keeps verified account bags server-owned and hides them when the active session becomes unusable.
 
 **Product / Business**
 

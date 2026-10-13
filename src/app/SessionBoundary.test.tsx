@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { ApolloClient, ApolloLink, InMemoryCache, gql } from '@apollo/client'
 import { ApolloProvider, useApolloClient } from '@apollo/client/react'
+import { MemoryRouter } from 'react-router-dom'
 import { SessionBoundary } from './SessionBoundary'
 import { checkoutAttempt } from '../features/checkout/checkout-attempt'
 import { testReviewedCheckout } from '../features/checkout/delivery-test-fixtures'
@@ -10,6 +11,11 @@ import { testReviewedCheckout } from '../features/checkout/delivery-test-fixture
 const session = vi.hoisted(() => ({ userId: 'A' as string | null, pending: false, verified: true }))
 vi.mock('../lib/auth-client', () => ({
   authClient: {
+    getSession: async () => ({
+      data: session.userId
+        ? { user: { id: session.userId, emailVerified: session.verified } }
+        : null,
+    }),
     useSession: () => ({
       data: session.userId
         ? { user: { id: session.userId, emailVerified: session.verified } }
@@ -48,9 +54,11 @@ it('clears private data when the same account loses verified status', async () =
   const client = new ApolloClient({ cache: new InMemoryCache(), link: ApolloLink.empty() })
   const view = () => (
     <ApolloProvider client={client}>
-      <SessionBoundary>
-        <ProtectedOrders />
-      </SessionBoundary>
+      <MemoryRouter>
+        <SessionBoundary>
+          <ProtectedOrders />
+        </SessionBoundary>
+      </MemoryRouter>
     </ApolloProvider>
   )
   const { rerender } = render(view())
@@ -72,9 +80,11 @@ describe('session data boundary', () => {
     const client = new ApolloClient({ cache: new InMemoryCache(), link: ApolloLink.empty() })
     const view = () => (
       <ApolloProvider client={client}>
-        <SessionBoundary>
-          <ProtectedOrders />
-        </SessionBoundary>
+        <MemoryRouter>
+          <SessionBoundary>
+            <ProtectedOrders />
+          </SessionBoundary>
+        </MemoryRouter>
       </ApolloProvider>
     )
     const { rerender } = render(view())

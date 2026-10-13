@@ -8,9 +8,11 @@ import { Button } from '../../../app/components/ui/button'
 export function CartLine({
   item,
   update,
+  disabled = false,
 }: {
   item: CartItem
   update: (id: string, quantity: number) => void
+  disabled?: boolean
 }) {
   return (
     <div className="flex gap-5 py-7 first:pt-0 sm:gap-8">
@@ -27,12 +29,18 @@ export function CartLine({
         </Link>
         <p className="mt-1 text-sm text-muted-foreground">{item.author}</p>
         <p className="mt-3 text-sm font-semibold">{money(item.priceCents)}</p>
+        {item.available === false && (
+          <p role="status" className="mt-2 text-sm text-destructive">
+            Unavailable for this quantity. Decrease or remove this book.
+          </p>
+        )}
         <div className="mt-auto flex items-end justify-between pt-5">
           <div className="inline-flex items-center border border-control">
             <Button
               type="button"
               variant="ghost"
               aria-label={`Remove one ${item.title}`}
+              disabled={disabled}
               onClick={() => update(item.id, item.quantity - 1)}
               className="p-2 hover:bg-muted"
             >
@@ -43,7 +51,9 @@ export function CartLine({
               type="button"
               variant="ghost"
               aria-label={`Add one ${item.title}`}
-              disabled={item.quantity >= item.stock}
+              disabled={
+                disabled || item.available === false || item.quantity >= Math.min(10, item.stock)
+              }
               onClick={() => update(item.id, item.quantity + 1)}
               className="p-2 hover:bg-muted disabled:opacity-30"
             >
@@ -54,6 +64,7 @@ export function CartLine({
             type="button"
             variant="ghost"
             aria-label={`Remove ${item.title} from bag`}
+            disabled={disabled}
             onClick={() => update(item.id, 0)}
             className="p-2 text-muted-foreground hover:text-destructive"
           >

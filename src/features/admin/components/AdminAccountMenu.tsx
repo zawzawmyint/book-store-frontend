@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { LogOut, UserRound } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useApolloClient } from '@apollo/client/react'
 import { authClient } from '../../../lib/auth-client'
 import { IconAction } from '../../../app/components/IconAction'
@@ -14,7 +14,6 @@ import {
 export function AdminAccountMenu() {
   const { data: session } = authClient.useSession()
   const client = useApolloClient()
-  const navigate = useNavigate()
   const [error, setError] = useState('')
   async function signOut() {
     setError('')
@@ -25,7 +24,8 @@ export function AdminAccountMenu() {
         return
       }
       await client.clearStore()
-      navigate('/', { replace: true })
+      // Reset session observers and pending workspace redirects after logout.
+      window.location.replace('/sign-in')
     } catch {
       setError('Unable to sign out. Please try again.')
     }

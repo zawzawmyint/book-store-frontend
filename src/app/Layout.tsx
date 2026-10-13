@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useApolloClient } from '@apollo/client/react'
 import { authClient } from '../lib/auth-client'
 import { useCartStore } from '../features/cart/cart-store'
+import { CartFeedback } from '../features/cart/CartFeedback'
 import { cartCount } from '../features/cart/cart'
 import { PageContainer } from './components/PageContainer'
 import { useAdminAccess } from '../features/admin/admin-access'
@@ -23,10 +24,15 @@ export function Layout() {
   const client = useApolloClient()
   const navigate = useNavigate()
   async function signOut() {
+    void useCartStore.getState().identify(undefined)
     const result = await authClient.signOut()
-    if (result.error) return
+    if (result.error) {
+      await authClient.getSession({ query: { disableCookieCache: true } })
+      window.location.reload()
+      return
+    }
     await client.clearStore()
-    navigate('/', { replace: true })
+    navigate('/sign-in', { replace: true })
   }
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -115,6 +121,9 @@ export function Layout() {
         </PageContainer>
       </header>
       <main>
+        <PageContainer>
+          <CartFeedback />
+        </PageContainer>
         <Outlet />
       </main>
       <footer className="mt-24 border-t border-border bg-muted">
