@@ -19,14 +19,19 @@ const deliveryFeeCents = Number(process.env.E2E_DELIVERY_FEE_CENTS ?? '500')
 if (!Number.isInteger(deliveryFeeCents) || deliveryFeeCents < 0 || deliveryFeeCents > 2147483647)
   throw new Error('Invalid isolated browser delivery fee')
 const inbox: EmailMessage[] = []
+// A separate loopback origin keeps manual test cookies away from a developer's
+// existing localhost session. Only the isolated fixture accepts this override.
+const frontendOrigin = process.env.E2E_FRONTEND_ORIGIN ?? 'http://localhost:4173'
+if (!['http://localhost:4173', 'http://127.0.0.1:4173'].includes(frontendOrigin))
+  throw new Error('Invalid isolated browser frontend origin')
 const options = {
   emailSender: {
     async send(message: EmailMessage) {
       inbox.push(message)
     },
   },
-  frontendOrigin: 'http://localhost:4173',
-  authBaseURL: 'http://localhost:4173',
+  frontendOrigin,
+  authBaseURL: frontendOrigin,
   authSecret: 'playwright-isolated-auth-secret-32-chars',
   trustedProxyIp: '127.0.0.1',
   deliveryEnabled: true,

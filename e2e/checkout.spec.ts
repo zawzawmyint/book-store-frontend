@@ -81,11 +81,17 @@ test('stock failure keeps the cart and protected API rejects guests', async ({ p
   await expect(page.getByRole('link', { name: 'Dracula', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Account', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Sign out' }).click()
+  await page.goto('/cart')
   await page.reload()
+  await expect(page.getByText('Nothing here yet.', { exact: true })).toBeVisible()
+  await page.goto('/sign-in?returnTo=%2Fcart')
+  await page.getByLabel('Email address').fill('second@example.com')
+  await page.getByLabel('Password', { exact: true }).fill('bookstore-password-456')
+  expect((await signInRespectingRateLimit(page)).status()).toBe(200)
   await expect(page.getByRole('link', { name: 'Dracula', exact: true })).toBeVisible()
 })
 
-test('interrupted hosted payment preserves the bag and changed bag survives confirmed payment', async ({
+test('interrupted payment keeps the bag and confirmed payment preserves later additions', async ({
   page,
 }) => {
   await hostedPayment(page, false)
@@ -119,7 +125,7 @@ test('interrupted hosted payment preserves the bag and changed bag survives conf
   await page.goto(`/checkout/return/${id}?outcome=back`)
   await expect(page.getByRole('heading', { name: 'Payment confirmed' })).toBeVisible()
   await page.goto('/cart')
-  await expect(page.getByRole('link', { name: 'The Great Gatsby', exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'The Great Gatsby', exact: true })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Pride and Prejudice', exact: true })).toBeVisible()
 })
 

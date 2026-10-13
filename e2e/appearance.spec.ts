@@ -97,6 +97,10 @@ test('switching preserves cart and admin form state and themes mobile overlays',
     'true',
   )
   await page.goto('/cart')
+  await expect(page.getByText('Nothing here yet.', { exact: true })).toBeVisible()
+  await page.goto('/books/1')
+  await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await page.goto('/cart')
   await expect(page.getByRole('link', { name: 'The Great Gatsby', exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: 'test-results/appearance-store-mobile-dark.png', fullPage: true })

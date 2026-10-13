@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { authClient } from '../../../lib/auth-client'
 import { signInPath } from '../../auth/return-to'
-import { useCartStore } from '../../cart/cart-store'
+import { checkoutCartReady, useCartStore } from '../../cart/cart-store'
 import { cartTotal } from '../../cart/cart'
 import { money } from '../../../lib/format'
 import {
@@ -63,6 +63,8 @@ export function CheckoutPage() {
 }
 function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessionProps) {
   const items = useCartStore((state) => state.items)
+  const cartState = useCartStore()
+  const ready = checkoutCartReady(cartState)
   const navigate = useNavigate()
   const client = useApolloClient()
   const [attempt, setAttempt] = useState<Attempt | undefined>(() =>
@@ -101,26 +103,30 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
     },
   })
   const lines = items.map(({ id, quantity }) => ({ bookId: id, quantity }))
-  const lineSnapshot = JSON.stringify(lines)
+  const lineSnapshot = JSON.stringify({ lines, revision: cartState.revision })
   useEffect(
     () =>
       useCartStore.subscribe((state, previous) => {
         const snapshot = (lines: typeof state.items) =>
           JSON.stringify(lines.map(({ id, quantity }) => ({ id, quantity })))
-        if (snapshot(state.items) !== snapshot(previous.items)) {
+        if (
+          snapshot(state.items) !== snapshot(previous.items) ||
+          state.revision !== previous.revision ||
+          state.status !== previous.status
+        ) {
           quoteGeneration.current++
           setQuote(undefined)
         }
       }),
     [],
   )
-  const validQuote = quote && quote.snapshot === lineSnapshot
+  const validQuote = ready && quote && quote.snapshot === lineSnapshot
   function invalidateQuote() {
     quoteGeneration.current++
     setQuote(undefined)
   }
   async function reviewOrder(address: DeliveryAddress) {
-    if (submissionPending.current || reviewing || !items.length) return
+    if (submissionPending.current || reviewing || !ready) return
     if (!deliveryOptionsQuery.data?.deliveryOptions.countryCodes.includes(address.countryCode)) {
       form.setError('countryCode', { message: 'Choose a supported country.' })
       return
@@ -137,9 +143,13 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
       if (
         !isMounted.current ||
         requestGeneration !== quoteGeneration.current ||
-        JSON.stringify(
-          useCartStore.getState().items.map(({ id, quantity }) => ({ bookId: id, quantity })),
-        ) !== lineSnapshot
+        JSON.stringify({
+          lines: useCartStore
+            .getState()
+            .items.map(({ id, quantity }) => ({ bookId: id, quantity })),
+          revision: useCartStore.getState().revision,
+        }) !== lineSnapshot ||
+        !checkoutCartReady(useCartStore.getState())
       )
         return
       if (!result.data?.quoteCheckout) throw new Error('Quote unavailable. Please review again.')
@@ -158,6 +168,7 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
     const current =
       attempt ??
       checkoutAttempt(userId, items, {
+        cartRevision: cartState.revision,
         deliveryAddress: quote!.address,
         expectedDeliveryFeeCents: quote!.value.deliveryFeeCents,
         expectedTotalCents: quote!.value.totalCents,
@@ -165,6 +176,7 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
     setAttempt(current)
     try {
       const result = await createCheckout({
+        context: { headers: { 'X-Cart-Account': userId } },
         variables: {
           input: {
             items: current.lines.map(({ id, quantity }) => ({ bookId: id, quantity })),
@@ -172,6 +184,7 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
             deliveryAddress: current.deliveryAddress,
             expectedDeliveryFeeCents: current.expectedDeliveryFeeCents,
             expectedTotalCents: current.expectedTotalCents,
+            cartRevision: current.cartRevision,
           },
         },
       })
@@ -193,6 +206,7 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
       if (CombinedGraphQLErrors.is(error)) {
         const code = error.errors[0]?.extensions?.code
         if (code === 'UNAUTHENTICATED') {
+          void useCartStore.getState().identify(undefined)
           clearCheckoutAttempts(userId)
           await client.clearStore()
           if (!isMounted.current) return
@@ -201,14 +215,17 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
           navigate(signInPath('/checkout'), { replace: true })
           return
         }
-        if (code === 'CONFLICT') {
+        if (code === 'CONFLICT' || code === 'CART_CONFLICT') {
           clearCheckoutAttempts(userId)
           setAttempt(undefined)
           invalidateQuote()
           form.reset(current.deliveryAddress)
           setMessage(
-            'Prices or delivery settings changed. Review order again and explicitly confirm the new total.',
+            code === 'CART_CONFLICT'
+              ? 'Your bag changed elsewhere. Review the current bag and order again.'
+              : 'Prices or delivery settings changed. Review order again and explicitly confirm the new total.',
           )
+          if (code === 'CART_CONFLICT') await useCartStore.getState().refresh()
           return
         }
       }
@@ -221,6 +238,18 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
       submissionPending.current = false
     }
   }
+  if (!ready && !attempt && cartState.status !== 'guest')
+    return (
+      <PageContainer className="py-24">
+        <h1 className="font-serif text-4xl">Your bag needs attention</h1>
+        <p className="mt-4">
+          Wait for your bag to load and save, and correct unavailable selections before checkout.
+        </p>
+        <Link to="/cart" className="mt-4 block underline">
+          Back to bag
+        </Link>
+      </PageContainer>
+    )
   if (!items.length && !attempt)
     return (
       <PageContainer className="py-24 text-center">

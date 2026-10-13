@@ -53,7 +53,7 @@ Give store administrators an `/admin` area in the existing React application for
 - Resolve access using the backend `viewer` query after Better Auth session resolution. Do not infer role from email, local storage, browser-supplied data, or the presence of an Admin link. A customer viewing the denied screen has no mounted admin data queries.
 - Provide loading and retryable error states while access is unresolved. Do not render private content during session transitions or before authorization succeeds.
 - Fetch viewer access on protected route entry and revalidate on window focus. On `FORBIDDEN`, immediately hide private content, remove admin cached results, and show access denied. On `UNAUTHENTICATED`, clear private data and redirect to sign-in. The backend checks membership on every request, even if a page still displays an old role.
-- Extend the existing session boundary/cache behavior to prevent admin data appearing after sign-out, switching accounts, or a detected role downgrade for the same account. If necessary, clearing the Apollo store is acceptable; preserve the local customer cart.
+- Extend the existing session boundary/cache behavior to prevent admin data appearing after sign-out, switching accounts, or a detected role downgrade for the same account. After successful workspace sign-out, clear the Apollo store and replace the document location with `/sign-in` so stale SPA session state cannot redirect elsewhere; failed sign-out retains its recovery behavior. Hide server account bags and retain the separate guest bag under the [account-cart contract](../account-carts/SPEC.md).
 - Admin provisioning is an operator task documented in the backend spec. No registration or account screen allows users to request or assign their own role.
 
 ## Phase 2 — books and stock
@@ -119,7 +119,7 @@ Give store administrators an `/admin` area in the existing React application for
 ## Acceptance criteria and validation
 
 - [x] Guests redirect to sign-in and return to their internal admin destination; customers see access denied; admins reach the dedicated layout and retain storefront access.
-- [x] Access loading, errors, expiry, sign-out, account switching, and detected membership revocation never expose cached admin results to another account.
+- [x] Access loading, errors, expiry, account switching, and detected membership revocation never expose cached admin results to another account; successful workspace sign-out replaces the document location with `/sign-in`.
 - [x] Admins can search/filter/page books, create/edit metadata, adjust stock, and archive/restore with the specified validation and confirmation behavior.
 - [x] Price input converts exactly to cents; metadata edits never submit stock; inventory errors retain input and display refreshed stock. Ambiguous mutation failures do not trigger automatic retries.
 - [x] Successful writes refresh affected admin/public data. Archived books disappear from browsing; stale-cart checkout fails visibly and preserves the cart.

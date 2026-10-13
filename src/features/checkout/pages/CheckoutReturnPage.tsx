@@ -37,6 +37,7 @@ function PaymentReturn({ orderId }: { orderId: string }) {
   async function fail(failure: unknown) {
     if (!alive.current) return
     if (accessErrorCode(failure) === 'UNAUTHENTICATED') {
+      void useCartStore.getState().identify(undefined)
       await client.clearStore()
       await refreshSession({ query: { disableCookieCache: true } })
       navigate(signInPath(`/checkout/return/${orderId}`), { replace: true })
@@ -51,19 +52,20 @@ function PaymentReturn({ orderId }: { orderId: string }) {
     if (!valid || busy.current) return
     busy.current = true
     try {
-      const result = await refresh({ variables: { orderId } })
+      const result = await refresh({
+        variables: { orderId },
+        context: { headers: { 'X-Cart-Account': session?.user.id ?? '' } },
+      })
       if (!alive.current) return
       const current = result.data?.refreshOrderPayment
       if (!current) throw new Error('Order unavailable or not found.')
       setOrder(current)
       if (session?.user.id) retireUnpaidAttempt(session.user.id, current)
       setError('')
-      if (
-        current.payment.status === 'PAID' &&
-        session?.user.id &&
+      if (current.payment.status === 'PAID' && session?.user.id) {
         confirmPaidAttempt(session.user.id, orderId, useCartStore.getState().items)
-      )
-        useCartStore.getState().clear()
+        await useCartStore.getState().refresh()
+      }
       return current
     } catch (failure) {
       await fail(failure)
@@ -101,7 +103,10 @@ function PaymentReturn({ orderId }: { orderId: string }) {
     if (busy.current || resuming) return
     busy.current = true
     try {
-      const result = await resume({ variables: { orderId } })
+      const result = await resume({
+        variables: { orderId },
+        context: { headers: { 'X-Cart-Account': session?.user.id ?? '' } },
+      })
       const current = result.data?.resumeCheckout
       if (!current || !alive.current) return
       setOrder(current.order)
@@ -109,12 +114,10 @@ function PaymentReturn({ orderId }: { orderId: string }) {
       if (current.checkoutUrl) {
         if (!safeCheckoutUrl(current.checkoutUrl)) throw new Error('Payment link unavailable.')
         window.location.assign(current.checkoutUrl)
-      } else if (
-        current.order.payment.status === 'PAID' &&
-        session?.user.id &&
+      } else if (current.order.payment.status === 'PAID' && session?.user.id) {
         confirmPaidAttempt(session.user.id, orderId, useCartStore.getState().items)
-      )
-        useCartStore.getState().clear()
+        await useCartStore.getState().refresh()
+      }
     } catch (failure) {
       await fail(failure)
     } finally {

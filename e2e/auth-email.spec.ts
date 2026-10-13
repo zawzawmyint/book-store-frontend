@@ -46,7 +46,9 @@ test('verification preserves the bag, requires fresh signin, and recovery revoke
     await page.goto('/forgot-password?returnTo=%2Fcheckout')
     await page.getByLabel('Email address').fill(email)
     await page.getByRole('button', { name: 'Request reset link' }).click()
-    await expect(page.getByRole('status')).toContainText('If this address is eligible')
+    await expect(
+      page.getByRole('status').filter({ hasText: 'If this address is eligible' }),
+    ).toBeVisible()
     const resetLink = await capturedEmailLink(page, email)
     await page.goto(resetLink)
     await expect(page.getByRole('heading', { name: 'Choose a new password' })).toBeVisible()
@@ -109,7 +111,9 @@ test('resend survives reload, respects cooldown, and unknown recovery stays neut
   await page.keyboard.press('Tab')
   await expect(page.getByRole('button', { name: 'Resend verification email' })).toBeFocused()
   await page.keyboard.press('Enter')
-  await expect(page.getByRole('status')).toContainText('If this address is eligible')
+  await expect(
+    page.getByRole('status').filter({ hasText: 'If this address is eligible' }),
+  ).toBeVisible()
   await expect(page.getByRole('button', { name: /Resend in/ })).toBeDisabled()
   expect(page.url()).not.toContain(email)
   const persisted = await page.evaluate(() => Object.values(localStorage).join('\n'))
@@ -125,7 +129,9 @@ test('resend survives reload, respects cooldown, and unknown recovery stays neut
   await page.keyboard.press('Tab')
   await expect(page.getByRole('button', { name: 'Request reset link' })).toBeFocused()
   await page.keyboard.press('Enter')
-  await expect(page.getByRole('status')).toContainText('If this address is eligible')
+  await expect(
+    page.getByRole('status').filter({ hasText: 'If this address is eligible' }),
+  ).toBeVisible()
   await expect(page.getByRole('link', { name: 'Sign in', exact: true }).last()).toHaveAttribute(
     'href',
     '/sign-in?returnTo=%2F',

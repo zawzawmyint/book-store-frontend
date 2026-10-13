@@ -499,3 +499,37 @@ query QuoteCheckout($input: QuoteCheckoutInput!) {
     currency
   }
 }
+
+fragment AccountCartFields on AccountCart {
+  revision
+  items {
+    bookId
+    quantity
+    lineVersion
+    title
+    author
+    genre
+    priceCents
+    stock
+    available
+  }
+  mergeNotices {
+    bookId
+    reason
+  }
+}
+query MyCart {
+  myCart {
+    ...AccountCartFields
+  }
+}
+mutation SetCartItem($input: SetCartItemInput!) {
+  setCartItem(input: $input) {
+    ...AccountCartFields
+  }
+}
+mutation MergeGuestCart($input: MergeGuestCartInput!) {
+  mergeGuestCart(input: $input) {
+    ...AccountCartFields
+  }
+}

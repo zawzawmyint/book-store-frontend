@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useCartStore } from '../cart-store'
+import { cartBlocked, checkoutCartReady, useCartStore } from '../cart-store'
 import { cartCount, cartTotal } from '../cart'
 import { money } from '../../../lib/format'
 import { BackLink } from '../../../app/components/BackLink'
@@ -12,6 +12,8 @@ import { Button } from '../../../app/components/ui/button'
 export function CartPage() {
   const items = useCartStore((state) => state.items)
   const update = useCartStore((state) => state.update)
+  const state = useCartStore()
+  const blocked = cartBlocked(state)
   const count = cartCount(items)
   const total = cartTotal(items)
   return (
@@ -26,7 +28,8 @@ export function CartPage() {
           {count} {count === 1 ? 'book' : 'books'}
         </span>
       </div>
-      {items.length === 0 ? (
+      {items.length === 0 && ['loading', 'merging'].includes(state.status) ? null : items.length ===
+        0 ? (
         <div className="py-28 text-center">
           <p className="font-serif text-3xl">Nothing here yet.</p>
           <p className="mt-3 text-sm text-muted-foreground">
@@ -42,7 +45,7 @@ export function CartPage() {
         <div className="grid gap-12 pt-9 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-16">
           <div className="divide-y divide-border">
             {items.map((item) => (
-              <CartLine key={item.id} item={item} update={update} />
+              <CartLine key={item.id} item={item} update={update} disabled={blocked} />
             ))}
           </div>
           <SummaryPanel title="Order summary">
@@ -60,11 +63,22 @@ export function CartPage() {
               Delivery is added at checkout. Book prices and availability are confirmed by the
               server.
             </p>
-            <Button asChild className="mt-7 flex w-full">
-              <Link to="/checkout">
-                Continue to checkout <ArrowRight size={17} />
-              </Link>
-            </Button>
+            {(!state.owner && !blocked) || checkoutCartReady(state) ? (
+              <Button asChild className="mt-7 flex w-full">
+                <Link to="/checkout">
+                  Continue to checkout <ArrowRight size={17} />
+                </Link>
+              </Button>
+            ) : (
+              <Button disabled className="mt-7 flex w-full">
+                Continue to checkout
+              </Button>
+            )}
+            {items.some((item) => item.available === false) && (
+              <p role="alert" className="mt-3 text-sm">
+                Remove or decrease unavailable selections before checkout.
+              </p>
+            )}
           </SummaryPanel>
         </div>
       )}

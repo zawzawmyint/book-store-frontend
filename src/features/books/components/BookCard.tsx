@@ -1,7 +1,7 @@
 import { ArrowUpRight, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { BookQuery } from '../../../generated/graphql'
-import { useCartStore } from '../../cart/cart-store'
+import { cartBlocked, useCartStore } from '../../cart/cart-store'
 import { BookCover } from './BookCover'
 import { money } from '../../../lib/format'
 import { Button } from '../../../app/components/ui/button'
@@ -11,6 +11,10 @@ import { Separator } from '../../../app/components/ui/separator'
 
 export function BookCard({ book }: { book: NonNullable<BookQuery['book']> }) {
   const add = useCartStore((state) => state.add)
+  const blocked = useCartStore(cartBlocked)
+  const quantity = useCartStore(
+    (state) => state.items.find((item) => item.id === book.id)?.quantity ?? 0,
+  )
   return (
     <article className="group min-w-0">
       <Card className="border-0 bg-transparent">
@@ -48,7 +52,7 @@ export function BookCard({ book }: { book: NonNullable<BookQuery['book']> }) {
             <Button
               type="button"
               onClick={() => add(book)}
-              disabled={book.stock < 1}
+              disabled={blocked || book.stock < 1 || quantity >= Math.min(10, book.stock)}
               variant="ghost"
               className="h-auto gap-1 p-0 text-xs font-bold uppercase tracking-[.13em] text-primary hover:bg-transparent hover:text-primary disabled:cursor-not-allowed disabled:text-muted-foreground"
             >

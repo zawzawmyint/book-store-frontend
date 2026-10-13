@@ -1,7 +1,7 @@
 export function initializeDeliveryBrowserData() {
   try {
     if (localStorage.getItem('book-store-browser-data') === 'delivery-v1') return
-    localStorage.removeItem('book-store-cart')
+    // Account-cart migration owns saved bags and requires consent for legacy import.
     for (const name of Object.keys(sessionStorage))
       if (name.startsWith('book-store-checkout:')) sessionStorage.removeItem(name)
     localStorage.setItem('book-store-browser-data', 'delivery-v1')

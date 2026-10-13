@@ -1,6 +1,6 @@
 # The Quiet Shelf storefront — Stripe checkout
 
-> **Historical contract:** This document records the pre-delivery addressless checkout. Current checkout and fulfillment use [the delivery specification](../delivery/SPEC.md); its no-delivery, legacy, Accepted, and Completed statements are historical.
+> **Historical contract:** This document records the pre-delivery addressless checkout. Current checkout and fulfillment use [the delivery specification](../delivery/SPEC.md), while [account carts](../account-carts/SPEC.md) defines the current server-owned bag and paid cleanup. Its no-delivery, legacy, Accepted, Completed, raw-array persistence, and browser-side cart-clearing statements are historical.
 
 > **Status:** Implemented. **Date:** 2026-10-07. Checkout opens Stripe hosted Checkout for test payments only.
 
@@ -33,12 +33,13 @@ initial 31-minute local deadline preserves that full window during session creat
 - Disable repeated clicks while pending. Redirect to the backend-returned HTTPS
   `checkout.stripe.com` URL only after validating its origin. Missing URL means
   show/open the returned order state, not invent a redirect or repeat payment.
-- Preserve the cart during creation failure, declines, interrupted payment and
-  uncertain network outcomes. Do not clear it when Stripe merely opens.
-- After server-confirmed Paid, clear the cart only if it still exactly matches
-  the persisted submitted snapshot for this user/order. Preserve a changed cart
-  or a cart without that snapshot; clear the matching attempt record afterwards.
-  This avoids deleting books added while payment was open.
+- In this historical rollout, preserve the cart during creation failure, declines,
+  interrupted payment and uncertain network outcomes. Do not clear it when Stripe
+  merely opens. Current behavior retains the visible bag on those outcomes under the
+  [account-cart contract](../account-carts/SPEC.md).
+- In this historical rollout, a paid return cleared a matching submitted browser cart.
+  Current paid reconciliation instead performs server-side once-only cleanup of only
+  unchanged submitted account lines and refreshes the visible bag; changed lines remain.
 - Retire only the matching user/order attempt after backend-confirmed Cancelled with
   Pending or Expired payment, retaining the cart so a new stock-checked attempt can
   start. Uncertain and resumable attempts retain their key. Changed lines receive a
@@ -101,7 +102,8 @@ Update `src/operations.graphql` for CreateCheckout, ResumeCheckout,
 RefreshOrderPayment, RetryOrderRefund and payment fields; regenerate
 `src/generated/graphql.ts` against the paired API. Stop calling PlaceOrder.
 Hosted redirect needs no Stripe.js dependency, frontend publishable key, secret key
-or webhook secret. Retain the existing Zustand storage key/raw-array cart format.
+or webhook secret. This historical rollout retained the Zustand raw-array cart format;
+current guest/account persistence is defined by [account carts](../account-carts/SPEC.md).
 
 ## Acceptance criteria and verification
 
@@ -111,8 +113,9 @@ or webhook secret. Retain the existing Zustand storage key/raw-array cart format
   same-key retries reuse one order; refresh and duplicate clicks remain safe.
 - [x] Success/back URLs never fabricate Paid or Cancelled. Return-before-webhook,
   provider unavailable, expiry and bounded polling have accurate messages/actions.
-- [x] Confirmed payment clears only the unchanged submitted cart, including tests
-  for cart edits while away, missing storage, another user and another device.
+- [x] Historical acceptance: confirmed payment cleared only the unchanged submitted
+  browser cart, including tests for cart edits while away, missing storage, another
+  user and another device. Current paid cleanup is defined by [account carts](../account-carts/SPEC.md).
 - [x] Customer lists/details expose only owner-safe payment information and allowed
   resume actions; legacy orders remain explicitly unpaid with no Pay button.
 - [x] Staff accepts/completes only eligible orders; cancellation/refund pending,

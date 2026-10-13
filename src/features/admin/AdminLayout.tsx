@@ -1,6 +1,7 @@
 import { BookOpenText, ArrowUpRight, X } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Button } from '../../app/components/ui/button'
+import { CartFeedback } from '../cart/CartFeedback'
 import {
   Sidebar,
   SidebarContent,
@@ -151,6 +152,7 @@ export function AdminLayout() {
             </div>
           </header>
           <main id="admin-main" tabIndex={-1} className="p-4 outline-none sm:p-8">
+            <CartFeedback workspace />
             <Outlet />
           </main>
         </div>

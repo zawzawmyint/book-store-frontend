@@ -2,7 +2,7 @@ import { useQuery } from '@apollo/client/react'
 import { ArrowRight, Check, ShoppingBag } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { BookCover } from '../components/BookCover'
-import { useCartStore } from '../../cart/cart-store'
+import { cartBlocked, useCartStore } from '../../cart/cart-store'
 import { BookDocument } from '../../../generated/graphql'
 import { money } from '../../../lib/format'
 import { BackLink } from '../../../app/components/BackLink'
@@ -20,6 +20,7 @@ export function BookPage() {
     variables: { id },
   })
   const add = useCartStore((state) => state.add)
+  const blocked = useCartStore(cartBlocked)
   const book = data?.book
   const inBag = useCartStore((state) => state.items.find((item) => item.id === id)?.quantity || 0)
 
@@ -91,7 +92,7 @@ export function BookPage() {
           <Button
             type="button"
             onClick={() => add(book)}
-            disabled={!book.stock || inBag >= book.stock}
+            disabled={blocked || !book.stock || inBag >= Math.min(10, book.stock)}
             className="mt-8 w-full disabled:cursor-not-allowed"
           >
             <ShoppingBag size={17} />{' '}
