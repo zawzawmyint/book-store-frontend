@@ -8,6 +8,8 @@
 
 > **Implemented engineering work:** [Storefront readability and consistency](specs/storefront-readability/SPEC.md) documents catalog and checkout readability refactoring with unchanged customer behavior.
 
+> **Implemented storefront homepage:** [Storefront homepage and dedicated catalog](specs/storefront-homepage/SPEC.md) provides curated discovery at `/` and moves full catalog browsing to `/books`.
+
 > **Implemented engineering work:** [Frontend readability and consistency](specs/readability-consistency/SPEC.md) documents admin pagination, navigation, and search-hook refactoring with unchanged UI and API behavior.
 
 > **Implemented delivery:** [Delivery](specs/delivery/SPEC.md) is the current checkout and fulfillment contract.
@@ -69,11 +71,21 @@ Provide a browser storefront for finding books, maintaining a cart, and beginnin
 authenticated Stripe hosted Checkout payment through the separate GraphQL API. Checkout
 collects a delivery address, requires a reviewed server quote, and displays delivery status.
 
+### Implemented: storefront homepage and dedicated catalog
+
+The curated homepage and `/books` catalog are defined in detail by [the storefront
+homepage specification](specs/storefront-homepage/SPEC.md). This frontend-only delivery
+does not change backend schema, persistence, payment, authentication, or the GraphQL
+contract. Its verification record, including the full-suite infrastructure failure and
+successful targeted rerun, is recorded in that feature specification.
+
 ## Routes and behavior
 
-- `/` shows the catalog, search, genre shortcuts, and pagination. It requests 12 books per page. The shortcut genres come from the API.
-- Search text is submitted with an icon-only Search books control, trimmed, and stored in the URL's `search` parameter. The backend searches title, author, and genre; the frontend does not filter the returned books itself.
-- Genre shortcuts set the same search parameter. They are text searches, not a separate exact-match genre filter. A new search returns to the first page.
+- `/` is a curated homepage. It has a short editorial hero with one available API-backed featured book, illustrated API-genre tiles, up to four configured selected books, available reading-mood cards, an optional matching editorial recommendation, an available selected author, a short store note, and the shared footer. It does not mount the full catalog toolbar or pagination.
+- `/books` is the full catalog. It requests 12 books per page and retains its `search` parameter and zero-based `page` URL parameter, loading/error/empty states, text search, genre shortcuts, and pagination. The backend searches title, author, and genre; the frontend does not filter returned books itself.
+- The shared header uses the logo as Home, visible desktop **All books**, and icon controls for search, account/sign-in, bag, and desktop appearance. At mobile widths its dialog menu contains Home, All books, and appearance while search, account/sign-in, bag, and the menu remain directly accessible. **Search the store** is initially closed in an autofocus dialog; Escape, close, and submit restore focus to its trigger. Its trimmed text opens `/books?search=…`, and empty input opens `/books`; repeated submissions work after navigation. Catalog-local **Search books** keeps its existing draft and browser-history behavior. Homepage genre, mood, and author links set the same catalog text-search parameter; they are not an exact-match genre filter and start at the first page.
+- Root URLs containing `search` or `page`, including empty values, replace history to `/books` while retaining the full query and any hash other than `#collection`. `/#collection` replaces history to `/books`; a root catalog URL with that hash removes it. Other root parameters and hashes remain on the homepage.
+- Homepage editorial selections are frontend configuration, currently IDs `1`, `2`, `4`, and `8`. One bounded `StorefrontHome` GraphQL query resolves those aliases and API genres. Missing selections are omitted, sold-out selections remain honestly disabled, and a recommendation is hidden when its configured book or editorial note is unavailable. This changes no backend schema, persistence, authentication, inventory, or payment contract.
 - `/books/:id` requests one book and shows its details, price, stock, and add-to-cart action.
 - `/cart` shows cart lines, quantity controls, removal, and a client-side estimated total. Zustand manages the visible bag: guests use the versioned `book-store-cart` envelope, while verified accounts load and save their server-owned bag. Prior raw arrays are readable only as unowned legacy imports. Count and estimated total are derived from visible items. Invalid guest entries are filtered out, and unavailable browser storage leaves guest interactions usable in memory.
 - `/sign-up` and `/sign-in` create or access a Better Auth account. Authentication is required for `/checkout`, `/account/orders`, `/account/orders/:id`, and `/account/profile`; a guarded route sends guests to sign-in with an internal return path.
@@ -113,7 +125,7 @@ collects a delivery address, requires a reviewed server quote, and displays deli
 
 ## GraphQL integration
 
-- `src/operations.graphql` defines catalog, checkout creation/resume/refresh, receipt,
+- `src/operations.graphql` defines bounded homepage selections, catalog, checkout creation/resume/refresh, receipt,
   owner detail/history, workspace order/refund retry, status-transition, and Activity
   operations; generated types are committed from codegen.
 - `src/generated/graphql.ts` contains generated typed documents and response/variable types; it is regenerated with `bun run codegen` when operations or the backend schema change.
@@ -135,7 +147,7 @@ collects a delivery address, requires a reviewed server quote, and displays deli
 
 - Run `bun run test`, `bun run lint`, and `bun run build`.
 - Playwright Chromium tests cover account creation, checkout access, owner-safe order history/detail, Customer→Staff→Admin workflow completion/cancellation, archived-stock restoration, direct API rejection, session/role loss, mobile/keyboard behavior, appearance, and Activity permissions/history. Run `bun run test:e2e:install` once, then `bun run test:e2e` with both repositories installed. The default suite starts an in-memory SQLite API on 4100 and frontend on 4173, keeping persisted databases untouched. Run `bun run test:postgres:browser` from the backend for the same suite against an isolated disposable PostgreSQL database.
-- Catalog loading, empty and error states, search, pagination, book detail, cart updates, and order-request success and failure remain usable.
+- Homepage and catalog loading, empty and error states, search, pagination, book detail, cart updates, and order-request success and failure remain usable.
 
 ## Implemented: stable dashboard navigation during refresh
 

@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import { Layout } from './Layout'
 import { HomePage } from '../features/books/pages/HomePage'
+import { CatalogPage } from '../features/books/pages/CatalogPage'
 import { BookPage } from '../features/books/pages/BookPage'
 import { CartPage } from '../features/cart/pages/CartPage'
 import { CheckoutPage } from '../features/checkout/pages/CheckoutPage'
@@ -44,6 +45,7 @@ export default function App() {
             <Routes>
               <Route element={<Layout />}>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/books" element={<CatalogPage />} />
                 <Route path="/books/:id" element={<BookPage />} />
                 <Route path="/cart" element={<CartPage />} />
                 <Route path="/sign-in" element={<AuthPage mode="sign-in" />} />

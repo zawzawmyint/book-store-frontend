@@ -6,6 +6,8 @@
 
 **Date:** 2026-10-12
 
+**Superseded catalog-route context:** This document records the 2026-10-12 behavior-preserving catalog extraction. The later [storefront homepage and dedicated catalog](../storefront-homepage/SPEC.md) delivery moves the catalog from `/` to `/books` and adds a shared header search; its current behavior governs those route and navigation statements. The checkout boundaries and the historical verification record below remain accurate.
+
 ---
 
 ## 🎯 Objective

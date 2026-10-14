@@ -71,7 +71,7 @@ export function OrdersPage() {
         <div className="mt-12">
           <p>No order requests yet.</p>
           <Button asChild variant="ghost" className="mt-3 text-primary underline">
-            <Link to="/">Browse books</Link>
+            <Link to="/books">Browse books</Link>
           </Button>
         </div>
       )}

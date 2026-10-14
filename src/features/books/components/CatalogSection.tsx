@@ -31,9 +31,7 @@ export function CatalogSection() {
       <div className="mb-8 flex flex-col justify-between gap-6 md:flex-row md:items-end">
         <div>
           <p className="eyebrow mb-3">The collection / 01</p>
-          <h2 className="font-serif text-4xl tracking-[-.04em] sm:text-5xl">
-            Stories to get lost in
-          </h2>
+          <h1 className="font-serif text-4xl tracking-[-.04em] sm:text-5xl">All books</h1>
         </div>
         <p className="max-w-xs text-sm leading-6 text-muted-foreground">
           A small shelf of timeless favorites, waiting to be discovered again.

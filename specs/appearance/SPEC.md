@@ -27,7 +27,7 @@ This feature changes appearance only. Routes, permissions, authentication, shopp
 
 The [icons and typography specification](../icons-typography/SPEC.md) defines the shared icon treatment while this specification remains the source of truth for the preference behavior.
 
-- Show the switch in the storefront header and workspace header, including workspace access-denied and retry screens. Guests do not need an Account menu to use it.
+- Show the switch in the desktop storefront header and in the mobile storefront navigation dialog, as defined by [the homepage specification](../storefront-homepage/SPEC.md). Keep it in the workspace header, including workspace access-denied and retry screens. Guests do not need an Account menu to use it.
 - Toggle directly between Light and Dark, without a dropdown or System option.
 - Show a sun icon for the current Light mode and a moon icon for the current Dark mode, without a visible mode label. Give it the accessible name **Dark mode**, expose whether Dark is enabled, and show a tooltip for the next action: **Switch to Dark mode** or **Switch to Light mode**.
 - Support keyboard activation, a visible focus indicator, and focus remaining on the control after switching.
@@ -45,7 +45,7 @@ The [icons and typography specification](../icons-typography/SPEC.md) defines th
 
 ## Acceptance criteria
 
-- [x] Guests, Customers, Staff, and Admin can switch between Light and Dark from applicable headers.
+- [x] Guests, Customers, Staff, and Admin can switch between Light and Dark from applicable desktop/workspace headers or the mobile storefront navigation dialog.
 - [x] First visits and missing, invalid, or unavailable saved preferences start in Dark.
 - [x] A saved Light or Dark choice survives reload and sign-out and applies across storefront/workspace navigation.
 - [x] Device appearance has no effect; changes or removal in another tab follow the persistence contract.

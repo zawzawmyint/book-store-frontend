@@ -18,7 +18,7 @@ export function CartPage() {
   const total = cartTotal(items)
   return (
     <PageContainer className="py-12 sm:py-20">
-      <BackLink to="/">Continue browsing</BackLink>
+      <BackLink to="/books">Continue browsing</BackLink>
       <div className="mt-7 flex items-end justify-between border-b border-border pb-7">
         <div>
           <p className="eyebrow mb-3">Your selection</p>
@@ -36,7 +36,7 @@ export function CartPage() {
             There are good stories waiting on the shelves.
           </p>
           <Button asChild className="mt-8">
-            <Link to="/">
+            <Link to="/books">
               Browse books <ArrowRight size={17} />
             </Link>
           </Button>
