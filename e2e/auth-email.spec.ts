@@ -87,8 +87,10 @@ test('resend survives reload, respects cooldown, and unknown recovery stays neut
   async function checkMobileThemes(title: string, labels: string[] = []) {
     const toggle = page.getByRole('switch', { name: 'Dark mode', exact: true })
     for (const dark of [true, false]) {
+      await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
       if ((await toggle.getAttribute('aria-checked')) !== String(dark)) await toggle.click()
       await expect(toggle).toHaveAttribute('aria-checked', String(dark))
+      await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
       await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible()
       for (const label of labels)
         await expect(page.getByLabel(label, { exact: true })).toBeVisible()

@@ -23,7 +23,14 @@ test('storefront loads local fonts and exposes icon controls to keyboard users o
       .evaluate((el) => getComputedStyle(el).fontFamily),
   ).toContain('Lora')
   await page.screenshot({ path: testInfo.outputPath('storefront-dark.png') })
-  for (const name of ['Browse', 'Sign in']) {
+  await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
+  await expect(
+    page
+      .getByRole('navigation', { name: 'Mobile navigation' })
+      .getByRole('link', { name: 'All books', exact: true }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
+  for (const name of ['Sign in']) {
     const action = page.getByRole('link', { name, exact: true })
     await expect(action).toBeVisible()
     const size = await action.boundingBox()
@@ -31,6 +38,7 @@ test('storefront loads local fonts and exposes icon controls to keyboard users o
     expect(size!.height).toBeGreaterThanOrEqual(44)
     await expect(action).toHaveText('')
   }
+  await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
   const theme = page.getByRole('switch', { name: 'Dark mode', exact: true })
   await theme.focus()
   await expect(page.getByRole('tooltip')).toContainText('Switch to Light mode')
@@ -39,6 +47,7 @@ test('storefront loads local fonts and exposes icon controls to keyboard users o
   await page.keyboard.press('Tab')
   await theme.focus()
   await expect(page.getByRole('tooltip')).toContainText('Switch to Dark mode')
+  await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: testInfo.outputPath('storefront-light.png') })
   await page.getByRole('link', { name: 'Sign in', exact: true }).click()
@@ -125,7 +134,9 @@ test('blocked font requests keep text readable and controls usable', async ({ pa
       () => [...document.fonts].filter((font) => font.status === 'loaded').length,
     ),
   ).toBe(0)
+  await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
   await page.getByRole('switch', { name: 'Dark mode', exact: true }).click()
+  await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.getByRole('link', { name: 'Sign in', exact: true }).click()

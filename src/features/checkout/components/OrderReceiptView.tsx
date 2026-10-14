@@ -67,7 +67,7 @@ export function OrderReceiptView({
         variant="ghost"
         className="mt-9 text-sm font-semibold text-primary hover:underline"
       >
-        <Link to="/">
+        <Link to="/books">
           Back to the shelves <ArrowRight size={16} />
         </Link>
       </Button>

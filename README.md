@@ -6,13 +6,15 @@ Implemented feature: [Auth email verification and recovery](specs/auth-email/SPE
 
 A React + TypeScript + Tailwind bookstore storefront using shadcn/ui primitives, Zustand, React Hook Form, and Zod. This folder is its own Git repository. The backend lives in the sibling `backend` repository and should be started first.
 
-See [SPEC.md](SPEC.md) for the storefront behavior, [specs/account-carts/SPEC.md](specs/account-carts/SPEC.md) for account and guest bag ownership, [specs/order-workflow/SPEC.md](specs/order-workflow/SPEC.md) for request processing, [specs/icons-typography/SPEC.md](specs/icons-typography/SPEC.md) for icon actions and typography, [specs/appearance/SPEC.md](specs/appearance/SPEC.md) for Light/Dark appearance, [specs/authentication/SPEC.md](specs/authentication/SPEC.md) for sign-in, [specs/demo-login/SPEC.md](specs/demo-login/SPEC.md) for optional local demo controls, [specs/profile/SPEC.md](specs/profile/SPEC.md) for the account profile, [specs/staff/SPEC.md](specs/staff/SPEC.md) for workspace roles, [specs/users/SPEC.md](specs/users/SPEC.md) for user-directory compatibility, and [specs/activity/SPEC.md](specs/activity/SPEC.md) for Admin activity history.
+See [SPEC.md](SPEC.md) for the storefront behavior, [specs/storefront-homepage/SPEC.md](specs/storefront-homepage/SPEC.md) for homepage and catalog behavior, [specs/account-carts/SPEC.md](specs/account-carts/SPEC.md) for account and guest bag ownership, [specs/order-workflow/SPEC.md](specs/order-workflow/SPEC.md) for request processing, [specs/icons-typography/SPEC.md](specs/icons-typography/SPEC.md) for icon actions and typography, [specs/appearance/SPEC.md](specs/appearance/SPEC.md) for Light/Dark appearance, [specs/authentication/SPEC.md](specs/authentication/SPEC.md) for sign-in, [specs/demo-login/SPEC.md](specs/demo-login/SPEC.md) for optional local demo controls, [specs/profile/SPEC.md](specs/profile/SPEC.md) for the account profile, [specs/staff/SPEC.md](specs/staff/SPEC.md) for workspace roles, [specs/users/SPEC.md](specs/users/SPEC.md) for user-directory compatibility, and [specs/activity/SPEC.md](specs/activity/SPEC.md) for Admin activity history.
 
 ## Development workflow
 
 Implemented engineering work: [Frontend readability and consistency](specs/readability-consistency/SPEC.md) documents focused admin pagination, navigation, and search-hook refactoring with unchanged UI and API behavior.
 
 Implemented engineering work: [Storefront readability and consistency](specs/storefront-readability/SPEC.md) documents catalog state handling and checkout naming/rendering boundaries with existing behavior preserved.
+
+Implemented feature: [Storefront homepage and dedicated catalog](specs/storefront-homepage/SPEC.md) places curated discovery at `/` and the full searchable catalog at `/books`.
 
 Future behavior changes follow spec-driven development (SDD) and test-driven development (TDD). Write or revise the relevant spec before implementation, with a proposed contract and testable acceptance criteria. For each criterion, write a focused failing test, confirm the failure is caused by the missing behavior, make it pass, and refactor. Finish with the checks below and any affected browser tests; then update the spec to reflect the delivered behavior and mark a feature spec `Implemented`. See [AGENTS.md](AGENTS.md) for the full workflow and cross-repository rules.
 
@@ -61,7 +63,7 @@ src/
     components/               UI composition used across features
       ui/                     Copied and tailored shadcn/ui primitives
   features/
-    books/                    Catalog page sections and book components
+    books/                    Homepage, catalog, and book-detail components
     cart/                     Cart state, rules, row, and page
     auth/                     Sign-in, sign-up, and route guard
     account/                  Order history and profile
@@ -72,7 +74,7 @@ src/
   operations.graphql          Queries and mutation used by the UI
 ```
 
-The home page composes a hero, catalog section, and store note. Shared page, back-link, form-field, and summary components live in `src/app/components/`, with copied and storefront-themed shadcn/ui primitives in `src/app/components/ui/` configured by `components.json`. Storefront and admin screens use those primitives for actions, forms, menus, dialogs, cards, tables, and feedback; feature-only components stay beside their feature. Apollo Client sends requests to GraphQL resolvers in the backend; business rules and SQL remain on the server.
+The home page composes a short API-backed featured-book hero, illustrated API-genre tiles, selected books, available reading moods, an editorial recommendation, an available selected author, and a store note. The full catalog, its text search, genre shortcuts, and pagination live at `/books`. The compact header uses a logo home link, desktop **All books**, icon search/account/bag controls, a desktop theme switch, and a mobile navigation dialog with Home, All books, and theme controls; the icon-triggered **Search the store** dialog opens `/books`. Shared page, back-link, form-field, and summary components live in `src/app/components/`, with copied and storefront-themed shadcn/ui primitives in `src/app/components/ui/` configured by `components.json`. Storefront and admin screens use those primitives for actions, forms, menus, dialogs, cards, tables, and feedback; feature-only components stay beside their feature. Apollo Client sends requests to GraphQL resolvers in the backend; business rules and SQL remain on the server.
 
 The operation definitions are in [`src/operations.graphql`](src/operations.graphql). Generated TypeScript types and documents are committed under `src/generated/`, so a normal build does not require the backend to be running. After changing the backend schema or frontend operations, start the backend and run:
 

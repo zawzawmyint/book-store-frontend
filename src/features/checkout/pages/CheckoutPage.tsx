@@ -254,7 +254,7 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
     return (
       <PageContainer className="py-24 text-center">
         <h1 className="font-serif text-4xl">Your bag is empty</h1>
-        <Link to="/">Browse books</Link>
+        <Link to="/books">Browse books</Link>
       </PageContainer>
     )
   return (

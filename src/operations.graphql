@@ -66,6 +66,32 @@ query DashboardFinance($period: DashboardPeriod!) {
   }
 }
 
+fragment HomepageBook on Book {
+  id
+  title
+  author
+  genre
+  description
+  priceCents
+  stock
+}
+
+query StorefrontHome($firstId: ID!, $secondId: ID!, $thirdId: ID!, $fourthId: ID!) {
+  first: book(id: $firstId) {
+    ...HomepageBook
+  }
+  second: book(id: $secondId) {
+    ...HomepageBook
+  }
+  third: book(id: $thirdId) {
+    ...HomepageBook
+  }
+  fourth: book(id: $fourthId) {
+    ...HomepageBook
+  }
+  genres
+}
+
 query Books($search: String, $limit: Int, $offset: Int) {
   books(search: $search, limit: $limit, offset: $offset) {
     total

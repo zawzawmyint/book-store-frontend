@@ -51,6 +51,9 @@ test('switching preserves cart and admin form state and themes mobile overlays',
 }) => {
   await page.goto('/books/1')
   await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('book-store-cart')))
+    .toContain('The Great Gatsby')
   const savedCart = await page.evaluate(() => localStorage.getItem('book-store-cart'))
   await page.getByRole('switch', { name: 'Dark mode', exact: true }).click()
   expect(await page.evaluate(() => localStorage.getItem('book-store-cart'))).toBe(savedCart)
@@ -92,10 +95,12 @@ test('switching preserves cart and admin form state and themes mobile overlays',
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.getByRole('button', { name: 'Account', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click()
+  await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
   await expect(page.getByRole('switch', { name: 'Dark mode', exact: true })).toHaveAttribute(
     'aria-checked',
     'true',
   )
+  await page.keyboard.press('Escape')
   await page.goto('/cart')
   await expect(page.getByText('Nothing here yet.', { exact: true })).toBeVisible()
   await page.goto('/books/1')
@@ -104,6 +109,8 @@ test('switching preserves cart and admin form state and themes mobile overlays',
   await expect(page.getByRole('link', { name: 'The Great Gatsby', exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: 'test-results/appearance-store-mobile-dark.png', fullPage: true })
+  await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
   await page.getByRole('switch', { name: 'Dark mode', exact: true }).click()
+  await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
   await page.screenshot({ path: 'test-results/appearance-store-mobile-light.png', fullPage: true })
 })

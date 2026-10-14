@@ -61,7 +61,7 @@ export function BookPage() {
     return (
       <PageContainer className="py-24">
         <h1 className="font-serif text-4xl">Book not found</h1>
-        <Link to="/" className="mt-5 inline-block text-primary underline">
+        <Link to="/books" className="mt-5 inline-block text-primary underline">
           Back to the collection
         </Link>
       </PageContainer>
@@ -69,7 +69,7 @@ export function BookPage() {
 
   return (
     <PageContainer className="py-9 sm:py-14">
-      <BackLink to="/">All books</BackLink>
+      <BackLink to="/books">All books</BackLink>
       <div className="mt-9 grid gap-12 md:grid-cols-2 md:gap-16 lg:gap-24">
         <Card className="grid min-h-[450px] place-items-center border-0 bg-cover-panel p-12 sm:min-h-[600px]">
           <BookCover id={book.id} title={book.title} author={book.author} large />

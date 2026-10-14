@@ -5,9 +5,9 @@ import { Card, CardContent } from '../../../app/components/ui/card'
 
 export function StoreNote() {
   return (
-    <section className="page-shell mt-24">
+    <section className="page-shell mt-14">
       <Card className="border-0 bg-[#244b3b] text-[#f6f0e4]">
-        <CardContent className="grid gap-8 p-8 pt-8 sm:p-12 sm:pt-12 md:grid-cols-[1fr_auto] md:items-center">
+        <CardContent className="grid gap-6 p-7 pt-7 sm:px-10 sm:py-8 md:grid-cols-[1fr_auto] md:items-center">
           <div>
             <p className="eyebrow eyebrow-light mb-3">A little more about this store</p>
             <h2 className="font-serif text-3xl sm:text-4xl">Good books. Clear ideas.</h2>
@@ -21,8 +21,8 @@ export function StoreNote() {
             variant="ghost"
             className="justify-start gap-3 p-0 text-xs font-bold uppercase tracking-[.16em] text-[#f3e6bf] hover:bg-transparent hover:underline"
           >
-            <Link to="/cart">
-              View your bag <ArrowRight size={16} />
+            <Link to="/books">
+              Find your next read <ArrowRight size={16} />
             </Link>
           </Button>
         </CardContent>
