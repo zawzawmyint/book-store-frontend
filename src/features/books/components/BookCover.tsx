@@ -44,24 +44,27 @@ export function BookCover({
     )
   return (
     <div
-      className={`book-cover relative flex aspect-[0.72] w-full flex-col overflow-hidden rounded-[3px] px-[12%] py-[12%] text-center shadow-[6px_8px_16px_rgba(43,35,28,.19)] ${large ? 'max-w-[310px]' : ''}`}
+      className={`book-cover @container relative flex aspect-[0.72] w-full flex-col overflow-hidden rounded-[3px] px-[12%] py-[12%] text-center shadow-[6px_8px_16px_rgba(43,35,28,.19)] ${large ? 'max-w-[310px]' : ''}`}
       style={{ backgroundColor: background, color: accent }}
       aria-label={`Cover design for ${title}`}
       role="img"
     >
       <span className="absolute inset-y-0 left-0 w-[5%] bg-black/15" />
-      <span className="text-[9px] font-semibold uppercase tracking-[.32em] opacity-75 sm:text-[10px]">
+      <span className="hidden text-[9px] font-semibold uppercase tracking-[.32em] opacity-75 @min-[140px]:block sm:text-[10px]">
         The Library Edit
       </span>
-      <div className="my-auto border-y border-current/40 py-6">
+      <div className="my-auto border-y border-current/40 py-3 @min-[180px]:py-6">
         <span
-          className="font-cover text-[clamp(1.1rem,2.7vw,2rem)] leading-[1.05] tracking-tight"
+          className="line-clamp-4 break-words font-cover text-[clamp(1.1rem,2.7vw,2rem)] leading-[1.05] tracking-tight"
           style={{ fontSize: large ? 'clamp(1.5rem, 3vw, 2.7rem)' : undefined }}
         >
           {title}
         </span>
       </div>
-      <span className="text-[10px] font-medium uppercase tracking-[.18em] sm:text-[11px]">
+      <span
+        title={author}
+        className="line-clamp-3 break-words text-[10px] font-medium uppercase tracking-[.18em] sm:text-[11px]"
+      >
         {author}
       </span>
     </div>

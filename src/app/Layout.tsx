@@ -1,5 +1,6 @@
 import { BookOpenText, LogIn, ShoppingBag, UserRound } from 'lucide-react'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useLayoutEffect, useRef } from 'react'
 import { useApolloClient } from '@apollo/client/react'
 import { authClient } from '../lib/auth-client'
 import { useCartStore } from '../features/cart/cart-store'
@@ -20,6 +21,28 @@ import {
 } from './components/ui/dropdown-menu'
 
 export function Layout() {
+  const { pathname } = useLocation()
+  const stickyHeader = pathname.replace(/\/+$/, '') !== '/books'
+  const rootRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLElement>(null)
+  useLayoutEffect(() => {
+    const root = rootRef.current
+    const header = headerRef.current
+    if (!root || !header) return
+    const measure = () =>
+      root.style.setProperty(
+        '--storefront-header-height',
+        `${stickyHeader ? header.getBoundingClientRect().height : 0}px`,
+      )
+    measure()
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure)
+      return () => window.removeEventListener('resize', measure)
+    }
+    const observer = new ResizeObserver(measure)
+    observer.observe(header)
+    return () => observer.disconnect()
+  }, [stickyHeader])
   const admin = useAdminAccess()
   const count = useCartStore((state) => cartCount(state.items))
   const { data: session, isPending } = authClient.useSession()
@@ -37,11 +60,14 @@ export function Layout() {
     navigate('/sign-in', { replace: true })
   }
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div ref={rootRef} className="storefront-layout min-h-screen bg-background text-foreground">
       <div className="bg-[#234a3b] px-4 py-2 text-center text-[10px] font-bold uppercase tracking-[.22em] text-[#eee9d9] sm:text-xs">
         A little bookstore for big imaginations
       </div>
-      <header className="border-b border-border bg-background">
+      <header
+        ref={headerRef}
+        className={`${stickyHeader ? 'sticky top-0 ' : ''}z-30 border-b border-border bg-background`}
+      >
         <PageContainer className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 py-3 sm:flex-nowrap sm:gap-6 sm:py-4">
           <Link to="/" className="flex items-center gap-2.5" aria-label="The Quiet Shelf home">
             <span className="hidden size-9 place-items-center rounded-full bg-[#2d5744] text-[#f7ebd2] sm:grid">

@@ -1,6 +1,7 @@
 import { useQuery } from '@apollo/client/react'
 import { ArrowRight, Check, ShoppingBag } from 'lucide-react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
+import { readCatalogReturn } from '../catalog-navigation'
 import { BookCover } from '../components/BookCover'
 import { cartBlocked, useCartStore } from '../../cart/cart-store'
 import { BookDocument } from '../../../generated/graphql'
@@ -16,6 +17,7 @@ import { Skeleton } from '../../../app/components/ui/skeleton'
 
 export function BookPage() {
   const { id = '' } = useParams()
+  const catalogReturn = readCatalogReturn(useLocation().state)
   const { data, loading, error, refetch } = useQuery(BookDocument, {
     variables: { id },
   })
@@ -69,7 +71,12 @@ export function BookPage() {
 
   return (
     <PageContainer className="py-9 sm:py-14">
-      <BackLink to="/books">All books</BackLink>
+      <BackLink
+        to={catalogReturn?.url ?? '/books'}
+        state={catalogReturn ? { catalogReturn } : undefined}
+      >
+        All books
+      </BackLink>
       <div className="mt-9 grid gap-12 md:grid-cols-2 md:gap-16 lg:gap-24">
         <Card className="grid min-h-[450px] place-items-center border-0 bg-cover-panel p-12 sm:min-h-[600px]">
           <BookCover id={book.id} title={book.title} author={book.author} large />

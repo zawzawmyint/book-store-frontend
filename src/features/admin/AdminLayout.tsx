@@ -152,7 +152,7 @@ export function AdminLayout() {
             </div>
           </header>
           <main id="admin-main" tabIndex={-1} className="p-4 outline-none sm:p-8">
-            <CartFeedback workspace />
+            <CartFeedback />
             <Outlet />
           </main>
         </div>

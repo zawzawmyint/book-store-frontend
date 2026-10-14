@@ -118,6 +118,22 @@ server cart data; reverting to the old frontend restores its shared-browser sema
 and does not provide isolation. Never copy an account cart into the old shared key as a
 rollback shortcut.
 
+## Implemented: quiet routine bag feedback
+
+Storefront and Staff/Admin share one `CartFeedback` policy. Loading, saving,
+**Bag saved.**, and **Your bag is up to date.** are polite screen-reader announcements
+with no visible wrapper or reserved space. Merging progress, unconfirmed-edit recovery,
+actionable failures/conflicts and retry controls, validation/storage warnings, legacy
+decisions, and adjusted merge notices remain visible. Cart synchronization, ownership,
+retry operations, storage, and API behavior are unchanged; no toast dependency was
+added.
+
+Focused `CartFeedback` coverage passed **8** tests (the four new tests failed before
+the change). The frontend suite passed **226 tests in 44 files**, lint and build passed
+with the existing main-chunk warning, and account-cart Chromium passed **11/11** in
+1.6 minutes, including Staff workspace unavailable-merge, retry, and session-ownership
+coverage.
+
 ## Release constraints
 
 - Automatic merge applies to new guest carts; old unowned carts require confirmation.

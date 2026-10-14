@@ -68,7 +68,7 @@ function HomeContent() {
               return (
                 <Link
                   key={genre}
-                  to={`/books?${new URLSearchParams({ search: genre })}`}
+                  to={`/books?${new URLSearchParams({ genre })}`}
                   className="group flex min-h-36 flex-col items-center justify-center gap-4 rounded-sm border border-border bg-surface px-3 py-5 text-center text-sm font-semibold transition-colors hover:bg-muted motion-reduce:transition-none"
                 >
                   <Icon size={32} strokeWidth={1.2} className="text-primary" aria-hidden="true" />

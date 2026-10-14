@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import {
@@ -75,7 +75,7 @@ it('reset validates confirmation and removes its token on success without signin
   await user.type(screen.getByLabelText('Confirm new password'), 'new-password-123')
   await user.click(screen.getByRole('button', { name: 'Reset password' }))
   expect(await screen.findByRole('heading', { name: 'Password reset' })).toBeTruthy()
-  expect(screen.getByTestId('location').textContent).not.toContain('token=')
+  await waitFor(() => expect(screen.getByTestId('location').textContent).not.toContain('token='))
   expect(screen.getByRole('link', { name: 'Sign in' }).getAttribute('href')).toBe(
     '/sign-in?returnTo=%2Fcheckout',
   )

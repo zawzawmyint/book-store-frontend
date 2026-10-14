@@ -10,6 +10,8 @@
 
 > **Implemented storefront homepage:** [Storefront homepage and dedicated catalog](specs/storefront-homepage/SPEC.md) provides curated discovery at `/` and moves full catalog browsing to `/books`.
 
+> **Implemented catalog upgrade:** [Catalog filtering, sorting, and continuity](specs/catalog-upgrade/SPEC.md) adds exact genre, stock, price, and sorting controls with return-context restoration.
+
 > **Implemented engineering work:** [Frontend readability and consistency](specs/readability-consistency/SPEC.md) documents admin pagination, navigation, and search-hook refactoring with unchanged UI and API behavior.
 
 > **Implemented delivery:** [Delivery](specs/delivery/SPEC.md) is the current checkout and fulfillment contract.
@@ -73,21 +75,21 @@ collects a delivery address, requires a reviewed server quote, and displays deli
 
 ### Implemented: storefront homepage and dedicated catalog
 
-The curated homepage and `/books` catalog are defined in detail by [the storefront
-homepage specification](specs/storefront-homepage/SPEC.md). This frontend-only delivery
-does not change backend schema, persistence, payment, authentication, or the GraphQL
-contract. Its verification record, including the full-suite infrastructure failure and
-successful targeted rerun, is recorded in that feature specification.
+The curated homepage is defined by [the storefront homepage specification](specs/storefront-homepage/SPEC.md).
+The implemented [catalog-upgrade specification](specs/catalog-upgrade/SPEC.md) defines
+the `/books` filter, sorting, URL, return-context, and responsive-card contract. It
+uses an additive backend GraphQL contract and changes no database schema, persistence,
+payment, or authentication behavior.
 
 ## Routes and behavior
 
 - `/` is a curated homepage. It has a short editorial hero with one available API-backed featured book, illustrated API-genre tiles, up to four configured selected books, available reading-mood cards, an optional matching editorial recommendation, an available selected author, a short store note, and the shared footer. It does not mount the full catalog toolbar or pagination.
-- `/books` is the full catalog. It requests 12 books per page and retains its `search` parameter and zero-based `page` URL parameter, loading/error/empty states, text search, genre shortcuts, and pagination. The backend searches title, author, and genre; the frontend does not filter returned books itself.
-- The shared header uses the logo as Home, visible desktop **All books**, and icon controls for search, account/sign-in, bag, and desktop appearance. At mobile widths its dialog menu contains Home, All books, and appearance while search, account/sign-in, bag, and the menu remain directly accessible. **Search the store** is initially closed in an autofocus dialog; Escape, close, and submit restore focus to its trigger. Its trimmed text opens `/books?search=…`, and empty input opens `/books`; repeated submissions work after navigation. Catalog-local **Search books** keeps its existing draft and browser-history behavior. Homepage genre, mood, and author links set the same catalog text-search parameter; they are not an exact-match genre filter and start at the first page.
+- `/books` is the full catalog. It requests 12 books per page with URL-backed text search, exact genre, stock, inclusive price-cents, and server sorting controls. At desktop widths, its sticky sidebar contains the catalog heading, range, search, sorting, filters, active-filter controls, and clear action; the adjacent column starts directly with books. Mobile uses a draft-and-apply **Filter & sort** drawer, including sorting. The backend filters, counts, and sorts before pagination; the frontend does not filter returned books itself. See the catalog-upgrade specification for normalization, price-draft, and scroll-return details.
+- The shared header uses the logo as Home, visible desktop **All books**, and icon controls for search, account/sign-in, bag, and desktop appearance. It sticks at the viewport top while the promotion strip scrolls normally, except on `/books` (including query and trailing-slash URLs), where it scrolls in normal flow. The catalog therefore uses a zero effective header height: its desktop sidebar and in-page anchors use a 24px viewport offset. Other storefront routes, including book details, retain the measured sticky-header behavior after route changes. At mobile widths its dialog menu contains Home, All books, and appearance while search, account/sign-in, bag, and the menu remain directly accessible above the header. **Search the store** is initially closed in an autofocus dialog; Escape, close, and submit restore focus to its trigger. Its trimmed text opens `/books?search=…`, and empty input opens `/books`; repeated submissions work after navigation. Catalog-local **Search books** keeps its existing draft and browser-history behavior. Homepage genre and mood links use the exact `genre` parameter; author discovery and header search use text search and start at the first page.
 - Root URLs containing `search` or `page`, including empty values, replace history to `/books` while retaining the full query and any hash other than `#collection`. `/#collection` replaces history to `/books`; a root catalog URL with that hash removes it. Other root parameters and hashes remain on the homepage.
 - Homepage editorial selections are frontend configuration, currently IDs `1`, `2`, `4`, and `8`. One bounded `StorefrontHome` GraphQL query resolves those aliases and API genres. Missing selections are omitted, sold-out selections remain honestly disabled, and a recommendation is hidden when its configured book or editorial note is unavailable. This changes no backend schema, persistence, authentication, inventory, or payment contract.
 - `/books/:id` requests one book and shows its details, price, stock, and add-to-cart action.
-- `/cart` shows cart lines, quantity controls, removal, and a client-side estimated total. Zustand manages the visible bag: guests use the versioned `book-store-cart` envelope, while verified accounts load and save their server-owned bag. Prior raw arrays are readable only as unowned legacy imports. Count and estimated total are derived from visible items. Invalid guest entries are filtered out, and unavailable browser storage leaves guest interactions usable in memory.
+- `/cart` shows cart lines, quantity controls, removal, and a client-side estimated total. Zustand manages the visible bag: guests use the versioned `book-store-cart` envelope, while verified accounts load and save their server-owned bag. Prior raw arrays are readable only as unowned legacy imports. Count and estimated total are derived from visible items. Invalid guest entries are filtered out, and unavailable browser storage leaves guest interactions usable in memory. Shared bag feedback keeps routine loading/saved/up-to-date status screen-reader-only while visible feedback is reserved for progress, recovery, actionable failures, warnings, decisions, and adjustments.
 - `/sign-up` and `/sign-in` create or access a Better Auth account. Authentication is required for `/checkout`, `/account/orders`, `/account/orders/:id`, and `/account/profile`; a guarded route sends guests to sign-in with an internal return path.
 - When Vite is in development, `VITE_DEMO_LOGIN=true`, and the browser uses a loopback host, `/sign-in` also offers the three local demo accounts seeded by the backend. Their normal Better Auth sign-in destinations are `/` for Customer and `/admin` for Staff or Admin; production, non-loopback, sign-up, and signed-in states show no demo controls.
 - `/checkout` validates a delivery address, obtains a server quote, and sends book IDs,

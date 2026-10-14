@@ -120,7 +120,7 @@ it('shows explicit API-backed selections in order with working genre and recomme
       .map((article) => within(article).getByRole('link', { name: /^API/ }).textContent),
   ).toEqual(['API First', 'API Second', 'API Third', 'API Fourth'])
   expect(screen.getByRole('link', { name: 'Classic Fiction' }).getAttribute('href')).toBe(
-    '/books?search=Classic+Fiction',
+    '/books?genre=Classic+Fiction',
   )
   expect(screen.getByRole('link', { name: /Discover this book/ }).getAttribute('href')).toBe(
     '/books/1',
@@ -218,7 +218,7 @@ it('uses available genres for moods and the current selected author for discover
     within(moods)
       .getByRole('link', { name: /A little imagination/ })
       .getAttribute('href'),
-  ).toBe('/books?search=Fantasy')
+  ).toBe('/books?genre=Fantasy')
   expect(within(moods).queryByRole('link', { name: /A little adventure/ })).toBeNull()
   const author = screen.getByRole('region', { name: 'Explore an author' })
   expect(
