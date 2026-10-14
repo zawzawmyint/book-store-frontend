@@ -85,7 +85,15 @@ have no cart side effect.
 
 ### Selected shelf and discovery
 
-**Selected for your shelf** displays up to four configured books in editorial order.
+**Selected for your shelf** displays up to four configured books in editorial order
+inside an edge-to-edge horizontal rail. Its first card aligns with the page content.
+Desktop shows about three cards and a preview; smaller screens show fewer cards with
+the next card peeking in. Previous/next controls advance by one visible rail width,
+touch/trackpad scrolling stays native, and a subtle fade marks more books at the right
+edge. The rail loops automatically every six seconds, pausing while hovered, focused,
+off screen, or the document is hidden; reduced-motion preferences disable autoplay.
+Controls expose a named carousel region and remain keyboard accessible. No API or
+dependency changes.
 Cards use current API metadata, generated covers, stock state, and existing cart
 behavior. Missing or archived selections are omitted; a sold-out selection remains
 visible with its existing disabled purchase action. The section has a link to the full
@@ -136,12 +144,16 @@ only when their corresponding API genres are available. Cart contents remain int
   dialog, and mobile navigation.
 - `src/features/books/pages/HomePage.tsx`, `HomeHero.tsx`, `ReadingDiscovery.tsx`,
   `BookRecommendation.tsx`, and `StoreNote.tsx` compose homepage discovery.
+- `src/features/books/components/BookRail.tsx` owns the shared accessible shelf rail,
+  including viewport-width paging, native scroll, edge fade, and motion-aware autoplay;
+  it is also used for related books on the detail page.
 - `src/features/books/homepage.ts` owns editorial selection IDs and notes.
 - `src/features/books/pages/CatalogPage.tsx`, existing catalog code, and existing
   shopping-return links retain catalog behavior and destinations.
 - `src/operations.graphql` and generated documents define the bounded homepage query.
-- `src/features/books/pages/HomePage.test.tsx` and `e2e/homepage.spec.ts` cover
-  homepage behavior and storefront regressions.
+- `src/features/books/pages/HomePage.test.tsx`,
+  `src/features/books/components/BookRail.test.tsx`, and `e2e/homepage.spec.ts` cover
+  homepage behavior, rail interaction, and storefront regressions.
 
 ## Acceptance criteria
 
@@ -154,7 +166,9 @@ only when their corresponding API genres are available. Cart contents remain int
 - [x] The hero uses one available API-backed featured book and Browse genres only when
       genres exist; genre tiles use API genres and exact-genre links.
 - [x] The shelf preserves configured order and handles missing/archived, sold-out, and
-      no-result states honestly. Mood and author discovery use only available API data.
+      no-result states honestly. Its full-width rail starts at the content edge, peeks
+      at the next book, pages by visible width, and supports touch scroll and reduced
+      motion. Mood and author discovery use only available API data.
 - [x] Legacy root catalog URLs replace history correctly, while unrelated root query
       strings and hashes remain homepage URLs.
 - [x] Homepage failures keep static navigation and cart state usable; no partial error

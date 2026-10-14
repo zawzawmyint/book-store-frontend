@@ -10,7 +10,10 @@ test('verification preserves the bag, requires fresh signin, and recovery revoke
 }) => {
   const email = 'email-journey@example.com'
   await page.goto('/books/1')
-  await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await page
+    .getByRole('form', { name: 'Book purchase' })
+    .getByRole('button', { name: 'Add to bag', exact: true })
+    .click()
   await page.goto('/sign-up?returnTo=%2Fcheckout')
   await page.getByLabel('Full name').fill('Email Reader')
   await page.getByLabel('Email address').fill(email)

@@ -138,6 +138,20 @@ query Book($id: ID!) {
   }
 }
 
+query RelatedBooks($genre: String!) {
+  books(genre: $genre, limit: 5, offset: 0) {
+    items {
+      id
+      title
+      author
+      genre
+      description
+      priceCents
+      stock
+    }
+  }
+}
+
 query MyOrders($limit: Int, $offset: Int) {
   myOrders(limit: $limit, offset: $offset) {
     total

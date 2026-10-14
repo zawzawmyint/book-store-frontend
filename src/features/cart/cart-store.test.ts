@@ -33,6 +33,231 @@ beforeEach(() => {
   localStorage.clear()
   sessionStorage.clear()
 })
+it('confirms one complete guest increment and rejects limits with feedback', async () => {
+  const store = createCartStore()
+  const result = store.getState().add(book, 3)
+  expect(store.getState().items[0].quantity).toBe(3)
+  expect(await result).toBe(true)
+  expect(await store.getState().add(book, 8)).toBe(false)
+  expect(store.getState().items[0].quantity).toBe(3)
+  expect(store.getState().validationMessage).not.toBe('')
+  expect(await store.getState().add({ ...book, stock: 4 }, 2)).toBe(false)
+  expect(store.getState().items[0].quantity).toBe(3)
+  for (const quantity of [0, -1, 1.5, NaN, Infinity])
+    expect(await store.getState().add(book, quantity)).toBe(false)
+  expect(await store.getState().add({ ...book, stock: 0 })).toBe(false)
+})
+it('adds a requested account increment using one accepted absolute write', async () => {
+  const store = createCartStore()
+  const api = transport()
+  api.read = async () => cart('4', 2)
+  api.set = vi.fn(async () => cart('5', 5))
+  await store.getState().identify('A', api)
+  expect(await store.getState().add(book, 3)).toBe(true)
+  expect(api.set).toHaveBeenCalledOnce()
+  expect(vi.mocked(api.set).mock.calls[0][0]).toMatchObject({ quantity: 5, expectedRevision: '4' })
+  expect(await store.getState().add(book, 6)).toBe(false)
+  expect(api.set).toHaveBeenCalledOnce()
+})
+it.each([false, true])(
+  'rejects stale-catalog additions after account availability refresh (%s)',
+  async (available) => {
+    const store = createCartStore()
+    const api = transport()
+    api.read = async () => cart('1', 2)
+    await store.getState().identify('A', api)
+    api.read = async () => ({
+      ...cart('2', 2),
+      items: cart('2', 2).items.map((item) => ({ ...item, stock: 2, available })),
+    })
+    await store.getState().refresh()
+    expect(await store.getState().add(book, 1)).toBe(false)
+    expect(api.set).not.toHaveBeenCalled()
+    expect(store.getState().validationMessage).toContain(available ? 'stock' : 'unavailable')
+    expect(store.getState().items[0].quantity).toBe(2)
+  },
+)
+it('uses fresh book stock when a guest saved line predates a restock', async () => {
+  const store = createCartStore()
+  await store.getState().add({ ...book, stock: 2 }, 2)
+  expect(await store.getState().add(book, 3)).toBe(true)
+  expect(store.getState().items[0]).toMatchObject({ stock: 10, quantity: 5 })
+})
+it.each([3, 2])(
+  'confirms only the own accepted set before a follow-on same-book merge (%s copies)',
+  async (acceptedQuantity) => {
+    const store = createCartStore()
+    const api = transport()
+    await store.getState().identify('A', api)
+    const response = deferred<ServerCart>()
+    api.set = vi.fn(() => response.promise)
+    api.merge = vi.fn(async () => cart('2', 5))
+    const adding = store.getState().add(book, 3)
+    // Another tab contributes a guest snapshot while the account write is pending.
+    localStorage.setItem(
+      CART_STORAGE_KEY,
+      JSON.stringify({
+        version: 2,
+        guestId: crypto.randomUUID(),
+        items: [{ ...book, quantity: 2 }],
+      }),
+    )
+    response.resolve(cart('1', acceptedQuantity))
+    expect(await adding).toBe(acceptedQuantity === 3)
+    expect(api.set).toHaveBeenCalledOnce()
+    expect(api.merge).toHaveBeenCalledOnce()
+    expect(store.getState().items[0].quantity).toBe(5)
+    if (acceptedQuantity === 2) expect(store.getState().validationMessage).toContain('adjusted')
+  },
+)
+it.each(['offline', 'conflict', 'validation', 'adjusted'])(
+  'never confirms an %s account addition',
+  async (failure) => {
+    const store = createCartStore()
+    const api = transport()
+    await store.getState().identify('A', api)
+    api.read = async () => cart('4', 4)
+    api.set = vi.fn(async () => {
+      if (failure === 'adjusted') return cart('1', 2)
+      throw Object.assign(new Error('Save failed'), {
+        code:
+          failure === 'conflict'
+            ? 'CART_CONFLICT'
+            : failure === 'validation'
+              ? 'BAD_USER_INPUT'
+              : undefined,
+      })
+    })
+    expect(await store.getState().add(book, 3)).toBe(false)
+    if (failure === 'offline') {
+      const sent = vi.mocked(api.set).mock.calls[0][0]
+      api.set = vi.fn(async () => cart('5', 3))
+      await store.getState().retry()
+      expect(vi.mocked(api.set).mock.calls[0][0]).toEqual(sent)
+    }
+  },
+)
+it.each(['B', 'A'])(
+  'does not confirm a pending addition after identity changes to %s',
+  async (owner) => {
+    const store = createCartStore()
+    const api = transport()
+    await store.getState().identify('A', api)
+    const response = deferred<ServerCart>()
+    api.set = () => response.promise
+    const adding = store.getState().add(book, 3)
+    expect(await store.getState().add(book, 1)).toBe(false)
+    await store.getState().identify(null)
+    await store.getState().identify(owner, transport())
+    response.resolve(cart('1', 3))
+    expect(await adding).toBe(false)
+    expect(store.getState().items).toEqual([])
+  },
+)
+it('rejects new titles in a full guest or account bag while allowing existing increments', async () => {
+  const store = createCartStore()
+  for (let id = 1; id <= 20; id++) await store.getState().add({ ...book, id: String(id) })
+  expect(await store.getState().add({ ...book, id: '21' }, 2)).toBe(false)
+  expect(store.getState().items).toHaveLength(20)
+  expect(await store.getState().add(book, 2)).toBe(true)
+  const fullItems = store.getState().items
+  localStorage.clear()
+  const account = createCartStore()
+  const api = transport()
+  api.read = async () => ({
+    ...cart(),
+    items: fullItems.map(({ id, ...line }) => ({
+      ...line,
+      bookId: id,
+      available: true,
+      lineVersion: '0',
+    })),
+  })
+  await account.getState().identify('A', api)
+  expect(await account.getState().add({ ...book, id: '21' })).toBe(false)
+  expect(api.set).not.toHaveBeenCalled()
+})
+it('revalidates queued guest increments against synchronized storage', async () => {
+  const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks')
+  const release = deferred<void>()
+  let tail = release.promise
+  Object.defineProperty(navigator, 'locks', {
+    configurable: true,
+    value: {
+      request: (_name: string, action: () => unknown) => {
+        const next = tail.then(action)
+        tail = next.then(() => {})
+        return next
+      },
+    },
+  })
+  try {
+    const first = createCartStore(),
+      second = createCartStore()
+    const one = first.getState().add(book, 6)
+    const two = second.getState().add(book, 5)
+    release.resolve()
+    expect(await one).toBe(true)
+    expect(await two).toBe(false)
+    expect(second.getState().items[0].quantity).toBe(6)
+    expect(JSON.parse(localStorage.getItem(CART_STORAGE_KEY)!).items[0].quantity).toBe(6)
+  } finally {
+    if (descriptor) Object.defineProperty(navigator, 'locks', descriptor)
+    else Reflect.deleteProperty(navigator, 'locks')
+  }
+})
+it('discards a guest addition queued before logout and a new guest generation', async () => {
+  const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks')
+  const release = deferred<void>()
+  Object.defineProperty(navigator, 'locks', {
+    configurable: true,
+    value: {
+      request: (_name: string, action: () => unknown) => release.promise.then(action),
+    },
+  })
+  try {
+    const store = createCartStore()
+    const adding = store.getState().add(book, 3)
+    await store.getState().identify(undefined)
+    await store.getState().identify(null)
+    release.resolve()
+    expect(await adding).toBe(false)
+    expect(store.getState().items).toEqual([])
+    expect(localStorage.getItem(CART_STORAGE_KEY)).toBeNull()
+  } finally {
+    if (descriptor) Object.defineProperty(navigator, 'locks', descriptor)
+    else Reflect.deleteProperty(navigator, 'locks')
+  }
+})
+it('preserves a queued guest addition through same-guest storage synchronization', async () => {
+  const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks')
+  const release = deferred<void>()
+  Object.defineProperty(navigator, 'locks', {
+    configurable: true,
+    value: {
+      request: (_name: string, action: () => unknown) => release.promise.then(action),
+    },
+  })
+  try {
+    const store = createCartStore()
+    const adding = store.getState().add(book, 3)
+    localStorage.setItem(
+      CART_STORAGE_KEY,
+      JSON.stringify({
+        version: 2,
+        guestId: crypto.randomUUID(),
+        items: [{ ...book, quantity: 2 }],
+      }),
+    )
+    await store.getState().identify(null)
+    release.resolve()
+    expect(await adding).toBe(true)
+    expect(store.getState().items[0].quantity).toBe(5)
+  } finally {
+    if (descriptor) Object.defineProperty(navigator, 'locks', descriptor)
+    else Reflect.deleteProperty(navigator, 'locks')
+  }
+})
 it('requires consent for legacy selections and persists new guest data separately', async () => {
   localStorage.setItem(CART_STORAGE_KEY, JSON.stringify([{ ...book, quantity: 2 }]))
   const store = createCartStore()

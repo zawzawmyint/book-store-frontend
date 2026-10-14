@@ -292,7 +292,10 @@ test('archived books in an existing cart fail checkout while keeping the cart', 
     return (await response.json()).data.createBook.id as string
   })
   await page.goto(`/books/${id}`)
-  await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await page
+    .getByRole('form', { name: 'Book purchase' })
+    .getByRole('button', { name: 'Add to bag', exact: true })
+    .click()
   await page.evaluate(async (bookId) => {
     const response = await fetch('/graphql', {
       method: 'POST',

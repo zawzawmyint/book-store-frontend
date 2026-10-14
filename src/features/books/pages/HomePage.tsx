@@ -6,6 +6,7 @@ import { homepageSelections, homepageVariables, type HomepageBook } from '../hom
 import { HomeHero } from '../components/HomeHero'
 import { StoreNote } from '../components/StoreNote'
 import { BookCard } from '../components/BookCard'
+import { BookRail } from '../components/BookRail'
 import { BookRecommendation } from '../components/BookRecommendation'
 import { ReadingMoods, AuthorDiscovery } from '../components/ReadingDiscovery'
 import { Button } from '../../../app/components/ui/button'
@@ -23,6 +24,31 @@ export function HomePage() {
       />
     )
   return <HomeContent />
+}
+
+function ShelfIntro() {
+  return (
+    <div>
+      <p className="eyebrow mb-3">The Quiet Shelf edit</p>
+      <h2 id="home-selections" className="font-serif text-3xl tracking-[-.04em] sm:text-4xl">
+        Selected for your shelf
+      </h2>
+      <p className="mt-3 text-sm text-muted-foreground">
+        A few favorites to begin your next reading adventure.
+      </p>
+    </div>
+  )
+}
+
+function ShelfLink() {
+  return (
+    <Link
+      to="/books"
+      className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:underline"
+    >
+      View all books <ArrowRight size={16} aria-hidden="true" />
+    </Link>
+  )
 }
 
 function HomeContent() {
@@ -80,66 +106,62 @@ function HomeContent() {
           </div>
         </section>
       )}
-      <section className="page-shell pt-16 sm:pt-20" aria-labelledby="home-selections">
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-5 border-t border-border pt-10">
-          <div>
-            <p className="eyebrow mb-3">The Quiet Shelf edit</p>
-            <h2 id="home-selections" className="font-serif text-3xl tracking-[-.04em] sm:text-4xl">
-              Selected for your shelf
-            </h2>
-            <p className="mt-3 text-sm text-muted-foreground">
-              A few favorites to begin your next reading adventure.
-            </p>
-          </div>
-          <Link
-            to="/books"
-            className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:underline"
+      <section className="pt-16 sm:pt-20" aria-labelledby="home-selections">
+        {books.length && !error ? (
+          <BookRail
+            label="selected books"
+            headerClassName="mb-8 border-t border-border pt-10"
+            title={<ShelfIntro />}
+            actions={<ShelfLink />}
           >
-            View all books <ArrowRight size={16} aria-hidden="true" />
-          </Link>
-        </div>
-        {loading && !data ? (
-          <>
-            <p className="sr-only" role="status">
-              Opening selected books…
-            </p>
-            <div className="grid grid-cols-2 gap-5 lg:grid-cols-4" aria-hidden="true">
-              {[0, 1, 2, 3].map((id) => (
-                <Skeleton key={id} className="h-72 sm:h-96" />
-              ))}
-            </div>
-          </>
-        ) : error ? (
-          <Alert variant="destructive">
-            <AlertDescription>
-              We could not load our selected books.{' '}
-              <Button
-                variant="ghost"
-                className="h-auto p-0 underline"
-                onClick={() => void refetch()}
-              >
-                Try again
-              </Button>
-            </AlertDescription>
-          </Alert>
-        ) : books.length ? (
-          <div className="grid gap-x-7 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
             {books.map((book) => (
               <BookCard key={book.id} book={book} />
             ))}
-          </div>
+          </BookRail>
         ) : (
-          <div className="rounded-sm bg-muted p-8 text-center">
-            <p className="font-serif text-2xl">No selections on this shelf just yet.</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Explore the full collection to find your next read.
-            </p>
-            <Link
-              to="/books"
-              className="mt-4 inline-block text-sm font-semibold text-primary underline"
-            >
-              Explore all books
-            </Link>
+          <div className="page-shell">
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-5 border-t border-border pt-10">
+              <ShelfIntro />
+              <ShelfLink />
+            </div>
+            {loading && !data ? (
+              <>
+                <p className="sr-only" role="status">
+                  Opening selected books…
+                </p>
+                <div className="grid grid-cols-2 gap-5 lg:grid-cols-4" aria-hidden="true">
+                  {[0, 1, 2, 3].map((id) => (
+                    <Skeleton key={id} className="h-72 sm:h-96" />
+                  ))}
+                </div>
+              </>
+            ) : error ? (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  We could not load our selected books.{' '}
+                  <Button
+                    variant="ghost"
+                    className="h-auto p-0 underline"
+                    onClick={() => void refetch()}
+                  >
+                    Try again
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <div className="rounded-sm bg-muted p-8 text-center">
+                <p className="font-serif text-2xl">No selections on this shelf just yet.</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Explore the full collection to find your next read.
+                </p>
+                <Link
+                  to="/books"
+                  className="mt-4 inline-block text-sm font-semibold text-primary underline"
+                >
+                  Explore all books
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </section>

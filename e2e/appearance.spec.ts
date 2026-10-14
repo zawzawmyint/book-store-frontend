@@ -50,7 +50,10 @@ test('switching preserves cart and admin form state and themes mobile overlays',
   page,
 }) => {
   await page.goto('/books/1')
-  await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await page
+    .getByRole('form', { name: 'Book purchase' })
+    .getByRole('button', { name: 'Add to bag', exact: true })
+    .click()
   await expect
     .poll(() => page.evaluate(() => localStorage.getItem('book-store-cart')))
     .toContain('The Great Gatsby')
@@ -104,7 +107,10 @@ test('switching preserves cart and admin form state and themes mobile overlays',
   await page.goto('/cart')
   await expect(page.getByText('Nothing here yet.', { exact: true })).toBeVisible()
   await page.goto('/books/1')
-  await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await page
+    .getByRole('form', { name: 'Book purchase' })
+    .getByRole('button', { name: 'Add to bag', exact: true })
+    .click()
   await page.goto('/cart')
   await expect(page.getByRole('link', { name: 'The Great Gatsby', exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)

@@ -11,6 +11,15 @@ const book = {
 }
 
 describe('cart', () => {
+  it('adds a complete increment and rejects increments exceeding capacity', () => {
+    const first = addToCart([], book, 3)
+    expect(first[0].quantity).toBe(3)
+    expect(addToCart(first, book, 4)[0].quantity).toBe(7)
+    expect(addToCart(first, { ...book, stock: 5 }, 3)).toBe(first)
+    expect(addToCart(first, book, 8)).toBe(first)
+    for (const quantity of [0, -1, 1.5, NaN, Infinity])
+      expect(addToCart(first, book, quantity)).toBe(first)
+  })
   it('adds a book once and increases its quantity', () => {
     const first = addToCart([], book)
     const next = addToCart(first, book)

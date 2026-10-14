@@ -42,7 +42,10 @@ async function signOut(page: Page) {
 
 async function addBook(page: Page, id: string) {
   await page.goto(`/books/${id}`)
-  await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await page
+    .getByRole('form', { name: 'Book purchase' })
+    .getByRole('button', { name: 'Add to bag', exact: true })
+    .click()
   await expect(page.getByRole('link', { name: /View bag/ })).toBeVisible()
   await page.getByRole('link', { name: /View bag/ }).click()
 }
@@ -189,7 +192,10 @@ test('lost account save has an explicit same-operation retry and blocks checkout
     await route.continue()
   })
   await page.goto('/books/1')
-  await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await page
+    .getByRole('form', { name: 'Book purchase' })
+    .getByRole('button', { name: 'Add to bag', exact: true })
+    .click()
   await page.getByRole('link', { name: /Bag with/ }).click()
   await expect(page.getByRole('button', { name: 'Retry save', exact: true })).toBeVisible()
   await expect(page.getByRole('link', { name: /Continue to checkout/i })).toHaveCount(0)
@@ -416,7 +422,11 @@ test('a definite stock rejection allows shopping to recover instead of retrying 
   await page.goto('/')
   await signIn(page, await register(page, 'stock-recovery'))
   await page.goto('/books/1')
-  await expect(page.getByRole('button', { name: 'Add to bag', exact: true })).toBeEnabled()
+  await expect(
+    page
+      .getByRole('form', { name: 'Book purchase' })
+      .getByRole('button', { name: 'Add to bag', exact: true }),
+  ).toBeEnabled()
   const admin = await browser.newContext()
   let stock = 0
   let reduced = false
@@ -446,7 +456,10 @@ test('a definite stock rejection allows shopping to recover instead of retrying 
     stock = currentBody.data.book.stock
     await adjust(-stock)
     reduced = true
-    await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+    await page
+      .getByRole('form', { name: 'Book purchase' })
+      .getByRole('button', { name: 'Add to bag', exact: true })
+      .click()
     await expect(page.getByRole('alert')).toContainText(/unavailable|stock/i)
     await expect(page.getByRole('button', { name: 'Retry save', exact: true })).toHaveCount(0)
     await addBook(page, '3')
