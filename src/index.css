@@ -6,7 +6,9 @@
   font-weight: 400 700;
   font-display: swap;
   src: url('/fonts/lora-latin-normal.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
@@ -15,7 +17,9 @@
   font-weight: 400;
   font-display: swap;
   src: url('/fonts/lora-latin-italic.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
@@ -24,14 +28,18 @@
   font-weight: 400 700;
   font-display: swap;
   src: url('/fonts/source-sans-3-latin-normal.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
   color-scheme: light;
-  --font-body: 'Source Sans 3', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body:
+    'Source Sans 3', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
   --font-display: 'Lora', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --font-cover-design: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --background: #f7f5f0;
@@ -613,21 +621,35 @@ button:disabled {
   --dashboard-info: #93c5fd;
   --dashboard-success: #5eead4;
 }
-.dashboard-cue { --cue-color: var(--muted-foreground); }
-.dashboard-cue[data-tone='warning'] { --cue-color: var(--dashboard-warning); }
-.dashboard-cue[data-tone='danger'] { --cue-color: var(--destructive); }
-.dashboard-cue[data-tone='info'] { --cue-color: var(--dashboard-info); }
-.dashboard-cue[data-tone='success'] { --cue-color: var(--dashboard-success); }
+.dashboard-cue {
+  --cue-color: var(--muted-foreground);
+}
+.dashboard-cue[data-tone='warning'] {
+  --cue-color: var(--dashboard-warning);
+}
+.dashboard-cue[data-tone='danger'] {
+  --cue-color: var(--destructive);
+}
+.dashboard-cue[data-tone='info'] {
+  --cue-color: var(--dashboard-info);
+}
+.dashboard-cue[data-tone='success'] {
+  --cue-color: var(--dashboard-success);
+}
 .admin-workspace [data-slot='card'].dashboard-metric:not([data-tone='neutral']) {
   border-color: color-mix(in srgb, var(--cue-color) 45%, var(--border));
   border-top-color: var(--cue-color);
 }
-.dashboard-icon, .dashboard-status {
+.dashboard-icon,
+.dashboard-status {
   color: var(--cue-color);
   background: color-mix(in srgb, var(--cue-color) 12%, var(--surface));
   border-radius: 0.375rem;
 }
-.dashboard-icon { display: inline-flex; padding: 0.25rem; }
+.dashboard-icon {
+  display: inline-flex;
+  padding: 0.25rem;
+}
 .dashboard-status {
   display: inline-flex;
   align-items: center;
@@ -636,10 +658,13 @@ button:disabled {
   font-size: 0.625rem;
   font-weight: 600;
 }
-select, textarea, input {
+select,
+textarea,
+input {
   color-scheme: inherit;
 }
-input::placeholder, textarea::placeholder {
+input::placeholder,
+textarea::placeholder {
   color: var(--muted-foreground);
   opacity: 1;
 }
@@ -647,9 +672,60 @@ select option {
   background: var(--input);
   color: var(--foreground);
 }
+.book-rail {
+  --rail-gap: 1.25rem;
+  --rail-inset: max(1.25rem, calc((100% - 1280px) / 2 + 1.25rem));
+  container-type: inline-size;
+  display: flex;
+  gap: var(--rail-gap);
+  width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--rail-inset);
+  padding-inline: var(--rail-inset) 1.25rem;
+  scrollbar-width: none;
+}
+.book-rail::-webkit-scrollbar {
+  display: none;
+}
+.book-rail-card {
+  flex: 0 0 calc((100cqi - var(--rail-gap)) / 1.18);
+  min-width: 0;
+  scroll-snap-align: start;
+}
+.book-rail-fade {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: min(7rem, 16vw);
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--background));
+}
+@media (min-width: 640px) {
+  .book-rail {
+    --rail-gap: 1.75rem;
+    --rail-inset: max(2.5rem, calc((100% - 1280px) / 2 + 2.5rem));
+    padding-inline-end: 2.5rem;
+  }
+}
+@container (min-width: 40rem) {
+  .book-rail-card {
+    flex-basis: calc((100cqi - (2 * var(--rail-gap))) / 2.2);
+  }
+}
+@container (min-width: 64rem) {
+  .book-rail-card {
+    flex-basis: calc((100cqi - (3 * var(--rail-gap))) / 3.22);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

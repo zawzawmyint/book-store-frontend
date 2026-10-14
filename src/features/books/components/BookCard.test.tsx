@@ -3,7 +3,7 @@ import '@testing-library/jest-dom/vitest'
 import { afterEach, beforeEach, expect, it } from 'vitest'
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { BookCard } from './BookCard'
 import { useCartStore, type ServerCart } from '../../cart/cart-store'
 
@@ -29,6 +29,31 @@ const mount = (stock = 20) =>
       <BookCard book={{ ...book, stock }} />
     </MemoryRouter>,
   )
+
+it('carries validated catalog context across related-detail navigation', async () => {
+  function Destination() {
+    return <output>{JSON.stringify(useLocation().state)}</output>
+  }
+  render(
+    <MemoryRouter initialEntries={['/books/9']}>
+      <Routes>
+        <Route
+          path="/books/9"
+          element={
+            <BookCard
+              book={book}
+              catalogContext={{ catalogReturn: { url: '/books?genre=Fiction&page=2', y: 240 } }}
+            />
+          }
+        />
+        <Route path="/books/1" element={<Destination />} />
+      </Routes>
+    </MemoryRouter>,
+  )
+  await userEvent.click(screen.getByRole('link', { name: 'View A story' }))
+  expect(screen.getByRole('status')).toHaveTextContent('"url":"/books?genre=Fiction&page=2"')
+  expect(screen.getByRole('status')).toHaveTextContent('"y":240')
+})
 
 it('confirms a guest addition and clears feedback when the bag owner changes', async () => {
   mount()

@@ -2,7 +2,7 @@ import { ArrowUpRight, Plus } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { MouseEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { catalogLinkState } from '../catalog-navigation'
+import { catalogLinkState, readCatalogReturn } from '../catalog-navigation'
 import type { BookQuery } from '../../../generated/graphql'
 import { cartBlocked, useCartStore } from '../../cart/cart-store'
 import { BookCover } from './BookCover'
@@ -12,7 +12,13 @@ import { Card, CardContent } from '../../../app/components/ui/card'
 import { Badge } from '../../../app/components/ui/badge'
 import { Separator } from '../../../app/components/ui/separator'
 
-export function BookCard({ book }: { book: NonNullable<BookQuery['book']> }) {
+export function BookCard({
+  book,
+  catalogContext,
+}: {
+  book: NonNullable<BookQuery['book']>
+  catalogContext?: unknown
+}) {
   const add = useCartStore((state) => state.add)
   const blocked = useCartStore(cartBlocked)
   const quantity = useCartStore(
@@ -54,7 +60,8 @@ export function BookCard({ book }: { book: NonNullable<BookQuery['book']> }) {
   function openBook(event: MouseEvent<HTMLAnchorElement>) {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
       return
-    const state = catalogLinkState()
+    const carried = readCatalogReturn(catalogContext)
+    const state = carried ? { catalogReturn: carried } : catalogLinkState()
     if (!state) return
     event.preventDefault()
     navigate(`/books/${book.id}`, { state })

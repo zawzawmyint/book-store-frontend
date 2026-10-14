@@ -39,7 +39,7 @@ export type CartState = {
   legacyItems: CartItem[]
   legacyUnreadable: boolean
   retryKind: 'save' | 'merge' | 'load'
-  add: (book: BookSummary) => void
+  add: (book: BookSummary, quantity?: number) => Promise<boolean>
   update: (id: string, quantity: number) => void
   clear: () => void
   identify: (owner: string | null | undefined, api?: CartTransport) => Promise<void>
@@ -92,7 +92,9 @@ export function createCartStore() {
       warning()
     }
     const editGuest = (edit: (items: CartItem[]) => CartItem[]) => {
+      const token = generation
       void withCartStorageLock(() => {
+        if (generation !== token || get().owner !== null) return
         synchronize()
         persistGuest(edit(guest.items))
       })
@@ -140,12 +142,12 @@ export function createCartStore() {
         })
       }
     }
-    async function execute() {
+    async function execute(): Promise<ServerCart | null> {
       const owner = get().owner,
         current = operation,
         transport = api,
         token = generation
-      if (!owner || !current || !transport) return
+      if (!owner || !current || !transport) return null
       if (current.kind === 'set') markUnconfirmedCartEdit(owner, current.input.requestKey)
       set({
         status: current.kind === 'merge' ? 'merging' : 'saving',
@@ -168,17 +170,18 @@ export function createCartStore() {
         if (current.kind === 'merge')
           await withCartStorageLock(() => disk.completePending(current.record))
         else acknowledgeCartEdit(owner, current.input.requestKey)
-        if (!active(owner, token)) return
+        if (!active(owner, token)) return null
         apply(cart)
         operation = undefined
         set({ status: 'ready', message: 'Bag saved.' })
         warning()
         await mergeNext()
+        return active(owner, token) ? cart : null
       } catch (error) {
-        if (!active(owner, token)) return
+        if (!active(owner, token)) return null
         if (errorCode(error) === 'UNAUTHENTICATED') {
           await get().identify(undefined)
-          return
+          return null
         }
         if (current.kind === 'set' && errorCode(error) === 'BAD_USER_INPUT') {
           operation = undefined
@@ -186,7 +189,7 @@ export function createCartStore() {
           set({ status: 'loading' })
           try {
             const cart = await transport.read()
-            if (!active(owner, token)) return
+            if (!active(owner, token)) return null
             apply(cart)
             set({
               status: 'ready',
@@ -202,18 +205,18 @@ export function createCartStore() {
                   'This selection was rejected. Reload your bag to review current availability before trying again.',
               })
           }
-          return
+          return null
         }
         if (errorCode(error) === 'CART_CONFLICT') {
           set({ status: 'loading' })
           try {
             const cart = await transport.read()
-            if (!active(owner, token)) return
+            if (!active(owner, token)) return null
             apply(cart)
             if (current.kind === 'merge') {
               current.record = { ...current.record, expectedRevision: cart.revision }
               await withCartStorageLock(() => disk.savePending(current.record))
-              if (!active(owner, token)) return
+              if (!active(owner, token)) return null
             } else current.input = { ...current.input, expectedRevision: cart.revision }
             set({
               status: 'conflict',
@@ -234,6 +237,7 @@ export function createCartStore() {
             message: `${current.kind === 'merge' ? 'Guest merge' : 'Bag save'} could not be confirmed. Retry the same operation to recover safely.`,
           })
         warning()
+        return null
       }
     }
     function freeze(source: 'guest' | 'legacy', items: CartItem[]) {
@@ -302,6 +306,11 @@ export function createCartStore() {
       legacyItems: disk.legacy,
       legacyUnreadable: disk.legacyUnreadable,
       identify: async (owner, transport) => {
+        // Storage events synchronize the existing guest owner without cancelling its queued edits.
+        if (owner === null && get().owner === null) {
+          synchronize()
+          return
+        }
         generation++
         accepted++
         readSequence++
@@ -323,14 +332,69 @@ export function createCartStore() {
           if (active(owner, token)) await mergeNext()
         }
       },
-      add: (book) => {
-        if (cartBlocked(get())) return
-        if (get().owner === null) {
-          editGuest((items) => addToCart(items, book))
-        } else {
-          const existing = get().items.find((item) => item.id === book.id)
-          if (book.stock < 1 || (existing && existing.quantity >= Math.min(10, book.stock))) return
-          get().update(book.id, (existing?.quantity ?? 0) + 1)
+      add: async (book, quantity = 1) => {
+        const owner = get().owner,
+          token = generation
+        const reject = (validationMessage: string) => {
+          set({ validationMessage })
+          return false
+        }
+        const invalid = (items: CartItem[]) => {
+          const existing = items.find((item) => item.id === book.id)
+          if (!Number.isInteger(quantity) || quantity < 1)
+            return 'Choose a positive whole-number quantity.'
+          if (owner !== null && existing?.available === false)
+            return 'This book is unavailable in your account bag. Review availability before adding again.'
+          if (book.stock < 1) return 'This book is sold out.'
+          const stock =
+            owner !== null && existing ? Math.min(book.stock, existing.stock) : book.stock
+          if ((existing?.quantity ?? 0) + quantity > Math.min(10, stock))
+            return 'This addition exceeds available stock or the ten-copy bag limit.'
+          if (!existing && items.length >= 20) return 'Your bag can hold at most twenty titles.'
+          return ''
+        }
+        if (cartBlocked(get())) return false
+        try {
+          if (owner === null) {
+            const result = await withCartStorageLock(() => {
+              if (generation !== token || get().owner !== null || cartBlocked(get())) return false
+              synchronize()
+              const reason = invalid(guest.items)
+              if (reason) return reject(reason)
+              persistGuest(addToCart(guest.items, book, quantity))
+              set({ validationMessage: '' })
+              return true
+            })
+            return result && generation === token && get().owner === null
+          }
+          const reason = invalid(get().items)
+          if (reason) return reject(reason)
+          if (!owner || !get().revision || !api) return false
+          const target = (get().items.find((item) => item.id === book.id)?.quantity ?? 0) + quantity
+          operation = {
+            kind: 'set',
+            input: {
+              bookId: book.id,
+              quantity: target,
+              expectedRevision: get().revision!,
+              requestKey: crypto.randomUUID(),
+            },
+          }
+          const saved = await execute()
+          const complete =
+            saved !== null &&
+            saved.items.find((item) => item.bookId === book.id)?.quantity === target &&
+            active(owner, token) &&
+            (get().items.find((item) => item.id === book.id)?.quantity ?? 0) >= target
+          if (saved && active(owner, token) && !complete)
+            set({
+              validationMessage: 'Your bag was adjusted. Review availability before adding again.',
+            })
+          return complete
+        } catch {
+          if (generation === token && get().owner === owner)
+            set({ validationMessage: 'This addition could not be confirmed. Please try again.' })
+          return false
         }
       },
       update: (id, quantity) => {

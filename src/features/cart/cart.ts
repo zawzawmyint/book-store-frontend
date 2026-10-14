@@ -11,16 +11,21 @@ export type CartItem = BookSummary & { quantity: number; available?: boolean; li
 
 export const CART_STORAGE_KEY = 'book-store-cart'
 
-export function addToCart(cart: CartItem[], book: BookSummary): CartItem[] {
-  if (book.stock < 1) return cart
+export function addToCart(cart: CartItem[], book: BookSummary, quantity = 1): CartItem[] {
+  if (!Number.isInteger(quantity) || quantity < 1 || book.stock < 1) return cart
   const existing = cart.find((item) => item.id === book.id)
+  if (quantity > 1 && (existing?.quantity ?? 0) + quantity > Math.min(10, book.stock)) return cart
   if (existing)
     return cart.map((item) =>
       item.id === book.id
-        ? { ...item, stock: book.stock, quantity: Math.min(item.quantity + 1, 10, book.stock) }
+        ? {
+            ...item,
+            stock: book.stock,
+            quantity: Math.min(item.quantity + quantity, 10, book.stock),
+          }
         : item,
     )
-  return cart.length < 20 ? [...cart, { ...book, quantity: 1 }] : cart
+  return cart.length < 20 ? [...cart, { ...book, quantity }] : cart
 }
 
 export function changeQuantity(cart: CartItem[], id: string, quantity: number): CartItem[] {

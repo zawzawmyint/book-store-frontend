@@ -8,7 +8,10 @@ test('cart survives sign-in redirect; account checkout appears in order history'
 }) => {
   await hostedPayment(page)
   await page.goto('/books/1')
-  await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await page
+    .getByRole('form', { name: 'Book purchase' })
+    .getByRole('button', { name: 'Add to bag', exact: true })
+    .click()
   await page.getByRole('link', { name: /View bag/ }).click()
   await page.getByRole('link', { name: /Continue to checkout/ }).click()
   await expect(page).toHaveURL(/\/sign-in\?returnTo=/)
@@ -57,7 +60,10 @@ test('stock failure keeps the cart and protected API rejects guests', async ({ p
   await verifyAndSignIn(page, 'second@example.com', 'bookstore-password-456')
   await expect(page).toHaveURL(/\/checkout$/)
   await page.goto('/books/10')
-  await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await page
+    .getByRole('form', { name: 'Book purchase' })
+    .getByRole('button', { name: 'Add to bag', exact: true })
+    .click()
   await page.getByRole('link', { name: /View bag/ }).click()
   await page.getByRole('link', { name: /Continue to checkout/ }).click()
 
@@ -103,7 +109,10 @@ test('interrupted payment keeps the bag and confirmed payment preserves later ad
   await verifyAndSignIn(page, 'interrupted@example.com', 'bookstore-password-123')
   await expect(page).toHaveURL('http://localhost:4173/')
   await page.goto('/books/1')
-  await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await page
+    .getByRole('form', { name: 'Book purchase' })
+    .getByRole('button', { name: 'Add to bag', exact: true })
+    .click()
   await page.goto('/checkout')
   await expect(page.getByRole('button', { name: 'Review order' })).toBeVisible()
   await page.clock.install()
@@ -120,7 +129,10 @@ test('interrupted payment keeps the bag and confirmed payment preserves later ad
   await page.goto('/cart')
   await expect(page.getByRole('link', { name: 'The Great Gatsby', exact: true })).toBeVisible()
   await page.goto('/books/2')
-  await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await page
+    .getByRole('form', { name: 'Book purchase' })
+    .getByRole('button', { name: 'Add to bag', exact: true })
+    .click()
   await page.request.post(`http://localhost:4100/__test__/pay/${id}`)
   await page.goto(`/checkout/return/${id}?outcome=back`)
   await expect(page.getByRole('heading', { name: 'Payment confirmed' })).toBeVisible()
@@ -142,7 +154,10 @@ test('address edits invalidate review and invalid phone cannot authorize payment
   await verifyAndSignIn(page, 'address-review@example.com', 'bookstore-password-123')
   await expect(page).toHaveURL('http://localhost:4173/')
   await page.goto('/books/1')
-  await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await page
+    .getByRole('form', { name: 'Book purchase' })
+    .getByRole('button', { name: 'Add to bag', exact: true })
+    .click()
   await page.goto('/checkout')
   await page.setViewportSize({ width: 390, height: 844 })
   await reviewDelivery(page)

@@ -32,7 +32,10 @@ test('customer pays, staff prepares ships and confirms delivery, and admin revie
   await hostedPayment(page)
   await signIn(page, 'Customer', '/')
   await page.goto('/books/1')
-  await page.getByRole('button', { name: 'Add to bag', exact: true }).click()
+  await page
+    .getByRole('form', { name: 'Book purchase' })
+    .getByRole('button', { name: 'Add to bag', exact: true })
+    .click()
   await page.goto('/checkout')
   await reviewDelivery(page)
   await page.getByRole('button', { name: 'Continue to payment' }).click()
