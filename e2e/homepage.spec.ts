@@ -19,15 +19,11 @@ test('homepage discovery, catalog navigation, and guest bag work together', asyn
   )
   await page.getByRole('link', { name: 'The Quiet Shelf home', exact: true }).click()
   await page.getByRole('link', { name: 'Fantasy', exact: true }).click()
-  await expect(page).toHaveURL('/books?search=Fantasy')
+  await expect(page).toHaveURL('/books?genre=Fantasy')
   await expect(page.getByRole('heading', { name: 'All books', exact: true })).toBeVisible()
-  await expect(page.getByRole('textbox', { name: 'Search books', exact: true })).toHaveValue(
-    'Fantasy',
-  )
+  await expect(page.getByRole('textbox', { name: 'Search books', exact: true })).toHaveValue('')
   await page.reload()
-  await expect(page.getByRole('textbox', { name: 'Search books', exact: true })).toHaveValue(
-    'Fantasy',
-  )
+  await expect(page.getByRole('textbox', { name: 'Search books', exact: true })).toHaveValue('')
   await page.getByRole('link', { name: 'Bag with 1 item', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Your bag', exact: true })).toBeVisible()
   await page.getByRole('link', { name: 'Continue browsing', exact: true }).click()
@@ -67,7 +63,7 @@ test('header search and old catalog links preserve navigation state', async ({
   await expect(searchTrigger).toBeFocused()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.goto('/?search=Jane&page=0&extra=yes#collection')
-  await expect(page).toHaveURL('/books?search=Jane&page=0&extra=yes')
+  await expect(page).toHaveURL('/books?search=Jane&extra=yes')
   await page.goto('/#collection')
   await expect(page).toHaveURL('/books')
   await page.goto('/?campaign=autumn')
@@ -128,7 +124,7 @@ test('reading moods and author discovery open useful catalog searches', async ({
   await page.goto('/')
   const moods = page.getByRole('region', { name: 'Find your reading mood' })
   await moods.getByRole('link', { name: /A little adventure/ }).click()
-  await expect(page).toHaveURL('/books?search=Adventure')
+  await expect(page).toHaveURL('/books?genre=Adventure')
   await page.getByRole('link', { name: 'The Quiet Shelf home', exact: true }).click()
   const author = page.getByRole('region', { name: 'Explore an author' })
   await expect(author).toContainText('F. Scott Fitzgerald')

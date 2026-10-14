@@ -4,9 +4,10 @@
 
 ## Purpose
 
-Give The Quiet Shelf a curated homepage for discovery while keeping the complete,
-searchable catalog at `/books`. The homepage keeps the forest-green palette, warm
-surfaces, serif headings, Light/Dark appearance, and existing shopping flows.
+Give The Quiet Shelf a curated homepage for discovery while keeping the complete
+catalog at `/books`. The homepage keeps the forest-green palette, warm surfaces, serif
+headings, Light/Dark appearance, and existing shopping flows. Catalog controls and
+their backend contract are specified in [the catalog upgrade](../catalog-upgrade/SPEC.md).
 
 This specification describes the delivered frontend contract. The root
 [storefront specification](../../SPEC.md) summarizes the public contract.
@@ -16,13 +17,14 @@ This specification describes the delivered frontend contract. The root
 - Curated homepage at `/` and a dedicated catalog at `/books`.
 - Compact shared storefront navigation, dialog search, API-backed discovery, four
   selected books, an optional recommendation, and a short store note.
-- Existing catalog search, pagination, book cards, generated covers, account controls,
-  cart feedback, and checkout behavior.
+- Catalog search, exact genre discovery links, pagination, shared book cards,
+  generated covers, account controls, cart feedback, and checkout behavior.
 - Existing catalog-bookmark compatibility.
-- No backend schema, database migration, authentication, price, inventory, payment,
-  dependency, or GraphQL-contract change.
-- No exact-match genre filter, sorting/filtering feature, real cover upload, reviews,
-  wishlists, discounts, newsletter, CMS, or admin curation editor.
+- The original homepage delivery introduced no backend schema, database migration,
+  authentication, price, inventory, payment, dependency, or GraphQL-contract change.
+- No real cover upload, reviews, wishlists, discounts, newsletter, CMS, or admin
+  curation editor. Exact genre filtering and catalog controls are outside this
+  homepage delivery and are covered by the catalog upgrade.
 
 ## Routes and compatibility
 
@@ -47,6 +49,14 @@ desktop header. Desktop shows visible **All books**, then icon controls for sear
 account/sign-in, bag, and appearance. The All books link is active at catalog and
 book-detail routes.
 
+The storefront header sticks at the viewport top while the small promotion strip
+remains in normal flow, except on `/books` (including query and trailing-slash URLs),
+where the header scrolls normally with the catalog. The shared height variable updates
+after viewport, font, and route changes: the catalog uses an effective zero header
+height and its own 24px sidebar/anchor offset, while the homepage and book-detail routes
+retain measured sticky-header clearance. Search, account, and mobile-menu dialogs layer
+above the header; Admin navigation is unchanged.
+
 At 320px and other mobile widths, the compact two-line brand remains visible. Search,
 account/sign-in, bag, and the menu remain directly accessible as icons. The menu dialog
 contains **Home**, **All books**, and the existing Light/Dark switch. Desktop keeps the
@@ -70,8 +80,8 @@ It does not use a slideshow, overlapping-cover arrangement, or invented book fal
 
 The genre section appears only when usable API genres exist. Each API genre is an
 illustrated tile whose vector icon is decorative; its label opens
-`/books?search=<encoded genre>`. These links preserve text-search semantics, do not
-create a separate genre-filter contract, and have no cart side effect.
+`/books?genre=<encoded genre>`. These links use the catalog's exact genre filter and
+have no cart side effect.
 
 ### Selected shelf and discovery
 
@@ -82,8 +92,8 @@ visible with its existing disabled purchase action. The section has a link to th
 catalog and keeps loading separate from a successful empty result.
 
 **Find your reading mood** follows the shelf. Its editorial cards are available only
-for API genres named Adventure, Fantasy, or Classic Fiction. Each available card is a
-catalog text-search link; unavailable moods are omitted.
+for API genres named Adventure, Fantasy, or Classic Fiction. Each available card is an
+exact-genre catalog link; unavailable moods are omitted.
 
 The existing editorial recommendation appears after the mood cards only when its
 configured selected book and note are available. **Explore an author** follows that
@@ -142,7 +152,7 @@ only when their corresponding API genres are available. Cart contents remain int
 - [x] Dialog search is initially closed, autofocuses, dismisses through Escape/close/
       submit with focus restoration, and handles trimmed, empty, and repeated searches.
 - [x] The hero uses one available API-backed featured book and Browse genres only when
-      genres exist; genre tiles use API genres and text-search links.
+      genres exist; genre tiles use API genres and exact-genre links.
 - [x] The shelf preserves configured order and handles missing/archived, sold-out, and
       no-result states honestly. Mood and author discovery use only available API data.
 - [x] Legacy root catalog URLs replace history correctly, while unrelated root query
@@ -179,6 +189,11 @@ honest mixed full-suite record, not a claim that 62/62 passed.
 
 No PostgreSQL browser run, hosted-payment validation, or real-cover-upload validation
 is claimed for this frontend-only change.
+
+The final sticky-header increment passed **226 tests in 44 files**, lint, build with
+the existing bundle warning, and **8/8** affected Chromium journeys in 1.3 minutes.
+Live desktop and 375px inspection confirmed the sticky header, dialog layering, Escape
+behavior, restored homepage viewport, and the saved catalog-layout screenshot.
 
 Rollback is frontend-only: deploy the preceding compatible frontend. If rolling back to
 a version that lacks `/books`, hosting must redirect new `/books` bookmarks to `/` while

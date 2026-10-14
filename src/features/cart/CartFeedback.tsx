@@ -1,7 +1,7 @@
 import { useCartStore } from './cart-store'
 import { Button } from '../../app/components/ui/button'
 
-export function CartFeedback({ workspace = false }: { workspace?: boolean } = {}) {
+export function CartFeedback() {
   const state = useCartStore()
   const failed = state.status === 'error' || state.status === 'conflict'
   const announcement =
@@ -24,6 +24,11 @@ export function CartFeedback({ workspace = false }: { workspace?: boolean } = {}
     !state.notices.length
   )
     return null
+  const routine =
+    state.status === 'loading' ||
+    state.status === 'saving' ||
+    announcement === 'Bag saved.' ||
+    announcement === 'Your bag is up to date.'
   const actionable =
     failed ||
     !!state.validationMessage ||
@@ -31,8 +36,8 @@ export function CartFeedback({ workspace = false }: { workspace?: boolean } = {}
     state.legacyUnreadable ||
     state.legacyItems.length > 0 ||
     state.notices.length > 0 ||
-    state.status === 'merging'
-  if (workspace && !actionable)
+    (!!announcement && !routine)
+  if (!actionable)
     return announcement ? (
       <p className="sr-only" role="status" aria-live="polite">
         {announcement}
@@ -41,11 +46,7 @@ export function CartFeedback({ workspace = false }: { workspace?: boolean } = {}
   return (
     <div className="space-y-3 py-4">
       {announcement && (
-        <p
-          className={workspace && state.status !== 'merging' ? 'sr-only' : undefined}
-          role="status"
-          aria-live="polite"
-        >
+        <p className={routine ? 'sr-only' : undefined} role="status" aria-live="polite">
           {announcement}
         </p>
       )}

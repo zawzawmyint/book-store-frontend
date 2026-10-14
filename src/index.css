@@ -325,6 +325,10 @@ button:disabled {
 .admin-skip-link:focus {
   transform: translateY(0);
 }
+.storefront-layout main [id] {
+  scroll-margin-top: calc(var(--storefront-header-height, 5rem) + 1.5rem);
+}
+
 .admin-page-header {
   display: flex;
   flex-wrap: wrap;
@@ -589,6 +593,14 @@ button:disabled {
 :where(a, button, input, textarea, select, [role='button']):focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 3px;
+}
+
+/* The search row owns input focus so it stays inside the scrollable sidebar. */
+.catalog-search-field input:focus-visible {
+  outline: none;
+}
+.catalog-search-field button:focus-visible {
+  outline-offset: -3px;
 }
 
 .admin-workspace {

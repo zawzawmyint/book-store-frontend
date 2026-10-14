@@ -92,8 +92,26 @@ query StorefrontHome($firstId: ID!, $secondId: ID!, $thirdId: ID!, $fourthId: ID
   genres
 }
 
-query Books($search: String, $limit: Int, $offset: Int) {
-  books(search: $search, limit: $limit, offset: $offset) {
+query Books(
+  $search: String
+  $genre: String
+  $inStockOnly: Boolean
+  $sort: CatalogSort
+  $minPriceCents: Int
+  $maxPriceCents: Int
+  $limit: Int
+  $offset: Int
+) {
+  books(
+    search: $search
+    genre: $genre
+    inStockOnly: $inStockOnly
+    sort: $sort
+    minPriceCents: $minPriceCents
+    maxPriceCents: $maxPriceCents
+    limit: $limit
+    offset: $offset
+  ) {
     total
     items {
       id

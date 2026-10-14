@@ -37,7 +37,7 @@ export function ReadingMoods({ genres }: { genres: string[] }) {
         {available.map(({ genre, title, copy, Icon }) => (
           <Link
             key={genre}
-            to={`/books?${new URLSearchParams({ search: genre })}`}
+            to={`/books?${new URLSearchParams({ genre })}`}
             className="group flex min-h-56 flex-col rounded-sm border border-border bg-surface p-7 transition-colors hover:bg-muted motion-reduce:transition-none"
           >
             <Icon className="mb-6 size-8 text-primary" strokeWidth={1.3} aria-hidden="true" />
