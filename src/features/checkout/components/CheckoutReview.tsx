@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import type { QuoteCheckoutQuery } from '../../../generated/graphql'
 import type { DeliveryAddress } from '../delivery-address'
-import { DeliveryDetails } from '../../orders/DeliveryDetails'
+import { CheckoutDestination } from './CheckoutDestination'
+import { CheckoutTotals } from './CheckoutSummary'
 import { Button } from '../../../app/components/ui/button'
 
 type CheckoutReviewProps = {
@@ -20,40 +21,38 @@ export function CheckoutReview({
   onContinuePayment,
 }: CheckoutReviewProps) {
   return (
-    <section className="mt-8 space-y-5" aria-label="Reviewed order">
-      <h2 className="font-semibold">Review your order</h2>
-      <DeliveryDetails
-        delivery={{
-          address: address,
-          shipment: null,
-          shippedAt: null,
-          deliveredAt: null,
-        }}
-        subtotalCents={quote.subtotalCents}
-        deliveryFeeCents={quote.deliveryFeeCents}
-        totalCents={quote.totalCents}
-        status="SUBMITTED"
-      />
-      <p className="text-sm">Review is not a reservation or delivery date guarantee.</p>
-      <div className="grid gap-3 sm:flex sm:flex-wrap">
+    <section className="space-y-6" aria-label="Reviewed order">
+      <h2 className="font-serif text-2xl">Review your order</h2>
+      <CheckoutDestination address={address} />
+      <CheckoutTotals amounts={quote} />
+      <p className="text-xs leading-5 text-muted-foreground">
+        Review is not a reservation or delivery date guarantee.
+      </p>
+      <Button className="min-h-11 w-full" disabled={paymentLoading} onClick={onContinuePayment}>
+        {paymentLoading ? 'Opening payment…' : 'Continue to payment'}
+      </Button>
+      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
         <Button
-          className="min-h-11 sm:min-h-9"
+          className="min-h-11 px-3 text-sm underline underline-offset-4"
           variant="ghost"
           disabled={paymentLoading}
           onClick={onEditAddress}
         >
           Edit address
         </Button>
-        <Button className="min-h-11 sm:min-h-9" asChild variant="ghost">
-          <Link to="/cart">Edit cart</Link>
-        </Button>
-        <Button
-          className="min-h-11 sm:min-h-9"
-          disabled={paymentLoading}
-          onClick={onContinuePayment}
-        >
-          Continue to payment
-        </Button>
+        {paymentLoading ? (
+          <Button className="min-h-11 px-3 text-sm" variant="ghost" disabled>
+            Edit bag
+          </Button>
+        ) : (
+          <Button
+            className="min-h-11 px-3 text-sm underline underline-offset-4"
+            asChild
+            variant="ghost"
+          >
+            <Link to="/cart">Edit bag</Link>
+          </Button>
+        )}
       </div>
     </section>
   )

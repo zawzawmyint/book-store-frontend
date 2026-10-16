@@ -35,7 +35,12 @@ Excluded: offline account edits, server-stored guest carts, live push updates, w
 ## Guest merge and legacy compatibility
 
 - New guest carts use the version-2 local envelope containing validated items and a guest identity. Preserve the ability to read prior raw `book-store-cart` arrays, but distinguish those unowned legacy arrays from new guest data.
-- At rollout, show a clear prompt before importing legacy selections: **Add this browser's saved bag to your account?** Explain that the old bag was shared on this browser. Keep it in a separate local legacy-import slot until imported or explicitly discarded; do not present it automatically as A's or B's account cart.
+- At rollout, show a compact recovery notice before importing legacy selections.
+  Explain that an older bag was found on this browser and may belong to someone
+  else. Keep its book/quantity details behind an optional disclosure, with explicit
+  import and discard choices. Keep it in a separate local legacy-import slot until
+  imported or explicitly discarded; disclosure or navigation must not act on it, and
+  it must never be presented automatically as A's or B's account cart.
 - After the first successful new-format migration, `book-store-cart` stores only new guest data. Never write signed-in account carts to that shared key. Do not silently erase an unreadable legacy payload; report that recovery is unavailable and offer a fresh guest cart.
 - Newly created guest carts merge automatically on verified sign-in. Matching quantities add, limited to ten/current stock; existing account lines take priority at twenty lines. Show backend notices for skipped unavailable items or capped quantities. Clear the guest snapshot after a confirmed merge even when notices explain partial acceptance.
 - Freeze the merge payload and UUID before sending. Persist a bounded pending-merge record with intended account ID, guest identity, payload, and key so a lost response/reload retries the same operation without doubling quantities.

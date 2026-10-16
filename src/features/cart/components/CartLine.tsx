@@ -28,7 +28,13 @@ export function CartLine({
           {item.title}
         </Link>
         <p className="mt-1 text-sm text-muted-foreground">{item.author}</p>
-        <p className="mt-3 text-sm font-semibold">{money(item.priceCents)}</p>
+        <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
+          <span className="text-muted-foreground">{money(item.priceCents)} each</span>
+          <strong>
+            <span className="sr-only">Line total for {item.title}: </span>
+            {money(item.priceCents * item.quantity)}
+          </strong>
+        </div>
         {item.available === false && (
           <p role="status" className="mt-2 text-sm text-destructive">
             Unavailable for this quantity. Decrease or remove this book.
@@ -42,7 +48,7 @@ export function CartLine({
               aria-label={`Remove one ${item.title}`}
               disabled={disabled}
               onClick={() => update(item.id, item.quantity - 1)}
-              className="p-2 hover:bg-muted"
+              className="h-11 w-11 hover:bg-muted"
             >
               <Minus size={14} />
             </Button>
@@ -55,7 +61,7 @@ export function CartLine({
                 disabled || item.available === false || item.quantity >= Math.min(10, item.stock)
               }
               onClick={() => update(item.id, item.quantity + 1)}
-              className="p-2 hover:bg-muted disabled:opacity-30"
+              className="h-11 w-11 hover:bg-muted disabled:opacity-30"
             >
               <Plus size={14} />
             </Button>
@@ -66,7 +72,7 @@ export function CartLine({
             aria-label={`Remove ${item.title} from bag`}
             disabled={disabled}
             onClick={() => update(item.id, 0)}
-            className="p-2 text-muted-foreground hover:text-destructive"
+            className="h-11 w-11 shrink-0 text-muted-foreground hover:text-destructive"
           >
             <Trash2 size={17} />
           </Button>

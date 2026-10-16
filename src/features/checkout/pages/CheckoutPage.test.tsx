@@ -1,7 +1,7 @@
 import { GraphQLError } from 'graphql'
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from 'vitest'
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MockedProvider } from '@apollo/client/testing/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -209,6 +209,63 @@ it('invalidates reviewed destination when editing address', async () => {
   await user.click(screen.getByRole('button', { name: 'Edit address' }))
   await user.type(screen.getByLabelText('City'), ' changed')
   expect(screen.queryByRole('button', { name: 'Continue to payment' })).toBeNull()
+})
+
+it('keeps summary amounts aligned with review and removes the total on invalidation', async () => {
+  const { user } = mount()
+  expect(
+    screen
+      .getByRole('navigation', { name: 'Checkout progress' })
+      .querySelector('[aria-current="step"]')?.textContent,
+  ).toContain('Delivery')
+  const summary = screen.getByRole('complementary', { name: 'Your order' })
+  expect(within(summary).queryByText('Total')).toBeNull()
+  await fill(user)
+  expect(within(summary).getAllByText('$17.00')).toHaveLength(2)
+  expect(within(summary).getByText('$5.00')).toBeTruthy()
+  expect(within(summary).queryByText(/added at review/)).toBeNull()
+  expect(screen.getByRole('region', { name: 'Reviewed order' }).textContent).toContain(
+    'United States',
+  )
+  expect(
+    screen
+      .getByRole('navigation', { name: 'Checkout progress' })
+      .querySelector('[aria-current="step"]')?.textContent,
+  ).toContain('Review')
+  await user.click(screen.getByRole('button', { name: 'Edit address' }))
+  expect(within(summary).queryByText('Total')).toBeNull()
+  expect(within(summary).getByText('Calculated at review')).toBeTruthy()
+})
+
+it('reveals optional address line and retains it across review and edit', async () => {
+  const { user } = mount()
+  expect(screen.queryByLabelText('Address line 2 (optional)')).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Add apartment, suite, etc. (optional)' }))
+  await user.type(screen.getByLabelText('Address line 2 (optional)'), 'Suite 12')
+  await fill(user)
+  expect(screen.getByText('Suite 12')).toBeTruthy()
+  await user.click(screen.getByRole('button', { name: 'Edit address' }))
+  expect(screen.getByLabelText('Address line 2 (optional)')).toHaveProperty('value', 'Suite 12')
+})
+
+it('shows saved attempt amounts rather than a changed current bag estimate', () => {
+  checkoutAttempt('ada', [item], { ...reviewed, expectedTotalCents: 2500 })
+  mount()
+  const summary = screen.getByRole('complementary', { name: 'Your order' })
+  expect(summary.textContent).toContain('Saved payment attempt')
+  expect(summary.textContent).toContain('$25.00')
+  expect(summary.textContent).not.toContain('$12.00')
+  expect(screen.queryByRole('button', { name: 'Continue to payment' })).toBeNull()
+})
+
+it('does not mix estimated line prices into a reviewed server quote', async () => {
+  const { user } = mount()
+  await fill(user)
+  act(() => useCartStore.setState({ items: [{ ...item, priceCents: 999 }] }))
+  const summary = screen.getByRole('complementary', { name: 'Your order' })
+  expect(summary.textContent).toContain('A book')
+  expect(summary.textContent).toContain('$17.00')
+  expect(summary.textContent).not.toContain('$9.99')
 })
 it('preserves an uncertain attempted payload across reload despite disabled delivery options', async () => {
   const previous = checkoutAttempt('ada', [item], reviewed)

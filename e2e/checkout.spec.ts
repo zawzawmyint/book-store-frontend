@@ -160,14 +160,36 @@ test('address edits invalidate review and invalid phone cannot authorize payment
     .click()
   await page.goto('/checkout')
   await page.setViewportSize({ width: 390, height: 844 })
+  const summary = page.getByRole('complementary', { name: 'Your order' })
+  const summaryToggle = summary.getByRole('button', { name: 'Your order', exact: true })
+  await expect(summaryToggle).toHaveAttribute('aria-expanded', 'false')
+  const summaryBox = (await summary.boundingBox())!
+  const addressBox = (await page
+    .getByRole('heading', { name: 'Delivery address', exact: true })
+    .boundingBox())!
+  expect(summaryBox.y).toBeLessThan(addressBox.y)
+  await summaryToggle.click()
+  await expect(summary.getByText('Calculated at review', { exact: true })).toBeVisible()
+  await summaryToggle.click()
+  await page.getByRole('button', { name: 'Add apartment, suite, etc. (optional)' }).click()
+  await expect(page.getByLabel('Address line 2 (optional)')).toBeFocused()
+  await page.getByLabel('Address line 2 (optional)').fill('Suite 12')
   await reviewDelivery(page)
+  const review = page.getByRole('region', { name: 'Reviewed order' })
+  await expect(review.getByText('Suite 12', { exact: true })).toBeVisible()
+  await expect(review.getByText('United States', { exact: true })).toBeVisible()
+  await expect(summary.getByText('Reviewed total', { exact: true })).toBeVisible()
+  await expect(
+    summary.getByText(`$${((1699 + fee) / 100).toFixed(2)}`, { exact: true }).first(),
+  ).toBeVisible()
+  await expect(page.getByText('Delivery is added at review.', { exact: false })).toHaveCount(0)
   if (fee > 0)
-    await expect(
-      page.getByText(`$${(fee / 100).toFixed(2)}`, { exact: true }).first(),
-    ).toBeVisible()
-  else await expect(page.getByText('Free delivery', { exact: true }).first()).toBeVisible()
+    await expect(review.getByText(`$${(fee / 100).toFixed(2)}`, { exact: true })).toBeVisible()
+  else await expect(review.getByText('Free delivery', { exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.getByRole('button', { name: /Edit address/i }).click()
+  await expect(summary.getByText('Estimated books subtotal', { exact: true })).toBeVisible()
+  await expect(page.getByLabel('Address line 2 (optional)')).toHaveValue('Suite 12')
   await page.getByLabel('Phone number', { exact: true }).fill('123')
   await page.getByRole('button', { name: 'Review order', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Continue to payment', exact: true })).toHaveCount(

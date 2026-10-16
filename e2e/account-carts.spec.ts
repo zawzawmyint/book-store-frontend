@@ -69,6 +69,53 @@ async function serverCart(page: Page) {
   }
 }
 
+test('mobile bag keeps checkout reachable with clear line prices and comfortable controls', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await signIn(page, await register(page, 'mobile-ui'))
+  await addBook(page, '1')
+  await addBook(page, '2')
+  const increment = page.getByRole('button', { name: 'Add one The Great Gatsby', exact: true })
+  await increment.click()
+  await expect(
+    page.getByText('Line total for The Great Gatsby:', { exact: true }).locator('..'),
+  ).toContainText('$33.98')
+  await expect(page.getByText('$16.99 each', { exact: true })).toBeVisible()
+  await expect.poll(async () => (await serverCart(page)).items[0].quantity).toBe(2)
+  for (const name of [
+    'Add one The Great Gatsby',
+    'Remove one The Great Gatsby',
+    'Remove The Great Gatsby from bag',
+  ]) {
+    const box = (await page.getByRole('button', { name, exact: true }).boundingBox())!
+    expect(box.width).toBeGreaterThanOrEqual(44)
+    expect(box.height).toBeGreaterThanOrEqual(44)
+  }
+  await page.evaluate(() => window.scrollTo(0, 0))
+  const checkout = page.getByRole('link', { name: 'Continue to checkout', exact: true })
+  await expect(checkout).toBeInViewport()
+  const lastRemove = page.getByRole('button', {
+    name: 'Remove Pride and Prejudice from bag',
+    exact: true,
+  })
+  await lastRemove.focus()
+  await expect(lastRemove).toBeFocused()
+  await expect
+    .poll(async () => {
+      const focusedBox = (await lastRemove.boundingBox())!
+      const stickyBox = (await checkout.locator('..').boundingBox())!
+      return focusedBox.y + focusedBox.height - stickyBox.y
+    })
+    .toBeLessThanOrEqual(0)
+  const barBox = (await checkout.boundingBox())!
+  expect(barBox.y + barBox.height).toBeLessThanOrEqual(844)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await checkout.click()
+  await expect(page.getByRole('heading', { name: 'Checkout', exact: true })).toBeVisible()
+})
+
 test('guest cart merges into A, logout hides it, B stays separate, and another browser restores A', async ({
   page,
   browser,
@@ -128,7 +175,9 @@ test('legacy shared bag requires explicit account import and account items never
     ),
   )
   await signIn(page, email)
-  await expect(page.getByText(/Add this browser.s saved bag to your account\?/)).toBeVisible()
+  await expect(page.getByText('An older bag was found on this browser')).toBeVisible()
+  await page.getByText('View saved books', { exact: true }).click()
+  await expect(page.getByText('2 × The Great Gatsby', { exact: true })).toBeVisible()
   expect((await serverCart(page)).items).toEqual([])
   await page.getByRole('button', { name: /Add saved bag|Import saved bag/i }).click()
   await expect

@@ -7,8 +7,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { authClient } from '../../../lib/auth-client'
 import { signInPath } from '../../auth/return-to'
 import { checkoutCartReady, useCartStore } from '../../cart/cart-store'
-import { cartTotal } from '../../cart/cart'
-import { money } from '../../../lib/format'
 import {
   CreateCheckoutDocument,
   DeliveryOptionsDocument,
@@ -30,9 +28,9 @@ import {
 } from '../delivery-address'
 import { BackLink } from '../../../app/components/BackLink'
 import { PageContainer } from '../../../app/components/PageContainer'
-import { SummaryPanel } from '../../../app/components/SummaryPanel'
 import { Button } from '../../../app/components/ui/button'
-import { DeliveryDetails } from '../../orders/DeliveryDetails'
+import { CheckoutDestination } from '../components/CheckoutDestination'
+import { CheckoutSummary, CheckoutTotals } from '../components/CheckoutSummary'
 import { DeliveryAddressForm } from '../components/DeliveryAddressForm'
 import { CheckoutReview } from '../components/CheckoutReview'
 
@@ -260,40 +258,83 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
   return (
     <PageContainer className="checkout-shell py-12 sm:py-20">
       <BackLink to="/cart">Back to bag</BackLink>
-      <div className="mt-8 grid gap-12 lg:grid-cols-[1fr_340px]">
-        <div>
-          <h1 className="font-serif text-5xl">Checkout</h1>
-          <p className="mt-5 text-sm text-muted-foreground">
-            Books delivered to your saved destination. Pay securely through Stripe hosted test
-            checkout.
-          </p>
-          <p className="mt-4">
-            {name} · {email}
-          </p>
+      <div className="mt-7 border-b border-border pb-7">
+        <p className="eyebrow mb-3">One step closer to a good book</p>
+        <h1 className="font-serif text-5xl">Checkout</h1>
+        <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
+          Enter a delivery address, review your total, then continue to Stripe test payment.
+        </p>
+        <p className="mt-3 break-words text-sm">
+          {name} · {email}
+        </p>
+      </div>
+      <nav aria-label="Checkout progress" className="py-6">
+        <ol className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
+          {['Delivery', 'Review', 'Payment'].map((step, index) => {
+            const current = index === (attempt ? 2 : validQuote ? 1 : 0)
+            return (
+              <li
+                key={step}
+                aria-current={current ? 'step' : undefined}
+                className={`flex items-center gap-2 ${current ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`flex h-7 w-7 items-center justify-center rounded-full border ${current ? 'border-primary bg-primary text-primary-foreground' : 'border-border'}`}
+                >
+                  {index + 1}
+                </span>
+                {step}
+                {step === 'Payment' && (
+                  <span className="sr-only"> through Stripe test checkout</span>
+                )}
+              </li>
+            )
+          })}
+        </ol>
+      </nav>
+      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
+        <CheckoutSummary
+          items={items}
+          savedAttempt={!!attempt}
+          amounts={
+            attempt
+              ? {
+                  subtotalCents: attempt.expectedTotalCents - attempt.expectedDeliveryFeeCents,
+                  deliveryFeeCents: attempt.expectedDeliveryFeeCents,
+                  totalCents: attempt.expectedTotalCents,
+                }
+              : validQuote
+                ? quote.value
+                : undefined
+          }
+        />
+        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
           {message && (
             <p role="alert" className="mt-5 text-destructive">
               {message}
             </p>
           )}
           {attempt ? (
-            <section className="mt-8 space-y-5" aria-label="Interrupted checkout">
+            <section className="space-y-5" aria-label="Interrupted checkout">
+              <h2 className="font-serif text-2xl">Your saved payment attempt</h2>
               <p>
                 Your previous payment setup may have created an order. Retry its exact saved
                 destination and amount, or inspect Orders before beginning another attempt.
               </p>
-              <DeliveryDetails
-                delivery={{
-                  address: attempt.deliveryAddress,
-                  shipment: null,
-                  shippedAt: null,
-                  deliveredAt: null,
+              <CheckoutDestination address={attempt.deliveryAddress} />
+              <CheckoutTotals
+                amounts={{
+                  subtotalCents: attempt.expectedTotalCents - attempt.expectedDeliveryFeeCents,
+                  deliveryFeeCents: attempt.expectedDeliveryFeeCents,
+                  totalCents: attempt.expectedTotalCents,
                 }}
-                subtotalCents={attempt.expectedTotalCents - attempt.expectedDeliveryFeeCents}
-                deliveryFeeCents={attempt.expectedDeliveryFeeCents}
-                totalCents={attempt.expectedTotalCents}
-                status="SUBMITTED"
               />
-              <Button disabled={creatingPayment} onClick={() => void submitPayment()}>
+              <Button
+                className="min-h-11 w-full"
+                disabled={creatingPayment}
+                onClick={() => void submitPayment()}
+              >
                 {creatingPayment ? 'Opening payment…' : 'Retry payment setup'}
               </Button>
               <Link className="block underline" to="/account/orders">
@@ -301,6 +342,7 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
               </Link>
               <Button
                 variant="ghost"
+                className="min-h-11 whitespace-normal px-3 py-2 text-sm"
                 disabled={creatingPayment}
                 onClick={() => {
                   clearCheckoutAttempts(userId)
@@ -342,25 +384,6 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
             Recover an interrupted payment in Orders
           </Link>
         </div>
-        <SummaryPanel title="Your order">
-          <div className="mt-6 space-y-4">
-            {items.map((item) => (
-              <div key={item.id} className="flex justify-between gap-4 text-sm">
-                <span>
-                  {item.quantity} × <span className="font-serif">{item.title}</span>
-                </span>
-                <span>{money(item.priceCents * item.quantity)}</span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-7 flex justify-between border-t pt-5">
-            <span>Books subtotal</span>
-            <span>{money(cartTotal(items))}</span>
-          </div>
-          <p className="mt-4 text-xs text-muted-foreground">
-            Delivery is added at review. Final prices and availability are checked by the server.
-          </p>
-        </SummaryPanel>
       </div>
     </PageContainer>
   )
