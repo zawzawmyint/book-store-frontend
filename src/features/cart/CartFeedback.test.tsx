@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, expect, it } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import userEvent from '@testing-library/user-event'
 import { act, cleanup, render, screen } from '@testing-library/react'
 import { CartFeedback } from './CartFeedback'
 import { useCartStore } from './cart-store'
@@ -40,6 +41,40 @@ it('keeps the unconfirmed-edit recovery warning visible', () => {
   })
   render(<CartFeedback />)
   expect(screen.getByRole('status').closest('.sr-only')).toBeNull()
+})
+
+it('discloses legacy items without importing or discarding them', async () => {
+  const importLegacy = vi.fn()
+  const discardLegacy = vi.fn()
+  const original = useCartStore.getState()
+  useCartStore.setState({
+    legacyItems: [
+      {
+        id: '1',
+        title: 'Old book',
+        author: 'Author',
+        genre: 'Fiction',
+        priceCents: 1000,
+        quantity: 2,
+        stock: 10,
+      },
+    ],
+    importLegacy,
+    discardLegacy,
+  })
+  render(<CartFeedback />)
+  expect(screen.getByText(/may belong to someone else/)).toBeTruthy()
+  const disclosure = screen.getByText('View saved books')
+  await userEvent.click(disclosure)
+  expect(screen.getByText('2 × Old book')).toBeTruthy()
+  expect(importLegacy).not.toHaveBeenCalled()
+  expect(discardLegacy).not.toHaveBeenCalled()
+  await userEvent.click(screen.getByRole('button', { name: 'Add saved bag to my account' }))
+  expect(importLegacy).toHaveBeenCalledTimes(1)
+  useCartStore.setState({
+    importLegacy: original.importLegacy,
+    discardLegacy: original.discardLegacy,
+  })
 })
 
 it('keeps merge progress and failed-save retry controls visible', () => {

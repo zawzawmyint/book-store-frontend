@@ -4,8 +4,8 @@
 
 ## Goal and scope
 
-Let a signed-in customer order books for delivery only, review a saved destination
-and complete amount before Stripe test payment, and follow preparation, shipment
+Let a signed-in customer order books for delivery only, enter a delivery address,
+review the server-quoted amount before Stripe test payment, and follow preparation, shipment
 and delivery. Staff confirms shipment and actual delivery in the existing workspace.
 Follow [the backend specification](../../../backend/specs/delivery/SPEC.md) for
 the authoritative contract, configuration, validation, pricing and transition rules.
@@ -37,11 +37,15 @@ will not carry forward. Reset/reseed occurs during implementation, not spec draf
 
 - `/cart` keeps guest-storage compatibility and an estimated book subtotal. Verified
   accounts use the server bag described by [account carts](../account-carts/SPEC.md).
-  Label it **Books subtotal** and explain that delivery is added at checkout.
-  Do not add a flat fee per book or claim that cart prices are authoritative.
+  Label it **Books subtotal** and show delivery as **Calculated at checkout**.
+  The bag can show a mobile sticky checkout action with that same subtotal and
+  readiness gating. Do not add a flat fee per book or claim that cart prices are
+  authoritative.
 - `/checkout` remains session-protected. Show account email/contact information
   and an address form: recipient name, phone, address line 1, optional line 2,
-  city, optional region/postal code, and country.
+  city, optional region/postal code, and country. The presentation shows
+  Delivery, Review, and Payment progress; optional address line 2 may be disclosed
+  until it contains a value or validation error.
 - Load authenticated `deliveryOptions` for supported country choices and the
   configured USD fee. Display country names with their codes as values; only
   configured whole countries are supported in the initial slice. Do not infer
@@ -56,8 +60,10 @@ will not carry forward. Reset/reseed occurs during implementation, not spec draf
   Do not imply the address or phone has been independently verified.
 - **Review order** calls `quoteCheckout` with current lines and normalized address.
   Display the reviewed address, Books subtotal, Delivery, and Total in USD; show
-  **Free delivery** when the server fee is zero. Provide Edit address/cart actions.
-  A review is not a reservation or delivery-date guarantee.
+  **Free delivery** when the server fee is zero. Use that single quote for every
+  reviewed total and do not show current client line-price estimates in a reviewed
+  summary. Provide Edit address/bag actions. A review is not a reservation or
+  delivery-date guarantee.
 - **Continue to payment** is available only after a successful quote for the
   current lines/address. Changing either invalidates the reviewed quote and
   requires review again. Ignore late responses for superseded input snapshots.

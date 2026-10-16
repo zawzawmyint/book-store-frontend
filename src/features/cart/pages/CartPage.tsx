@@ -16,8 +16,20 @@ export function CartPage() {
   const blocked = cartBlocked(state)
   const count = cartCount(items)
   const total = cartTotal(items)
+  const canCheckout = (!state.owner && !blocked) || checkoutCartReady(state)
+  const checkoutAction = canCheckout ? (
+    <Button asChild className="w-full">
+      <Link to="/checkout">
+        Continue to checkout <ArrowRight size={17} />
+      </Link>
+    </Button>
+  ) : (
+    <Button disabled className="w-full">
+      Continue to checkout
+    </Button>
+  )
   return (
-    <PageContainer className="py-12 sm:py-20">
+    <PageContainer className="bag-page py-12 sm:py-20">
       <BackLink to="/books">Continue browsing</BackLink>
       <div className="mt-7 flex items-end justify-between border-b border-border pb-7">
         <div>
@@ -42,44 +54,41 @@ export function CartPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-12 pt-9 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-16">
+        <div className="grid gap-10 pt-9 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-16">
           <div className="divide-y divide-border">
             {items.map((item) => (
               <CartLine key={item.id} item={item} update={update} disabled={blocked} />
             ))}
           </div>
           <SummaryPanel title="Order summary">
-            <div className="mt-7 flex justify-between border-b border-border pb-5 text-sm">
-              <span className="text-muted-foreground">
-                Books subtotal · {count} {count === 1 ? 'book' : 'books'}
-              </span>
-              <strong>{money(total)}</strong>
-            </div>
-            <div className="mt-5 flex justify-between text-base font-semibold">
+            <div className="mt-7 flex justify-between text-base font-semibold">
               <span>Books subtotal</span>
               <span>{money(total)}</span>
+            </div>
+            <div className="mt-4 flex flex-wrap justify-between gap-2 border-b border-border pb-5 text-sm text-muted-foreground">
+              <span>Delivery</span>
+              <span>Calculated at checkout</span>
             </div>
             <p className="mt-3 text-xs leading-5 text-muted-foreground">
               Delivery is added at checkout. Book prices and availability are confirmed by the
               server.
             </p>
-            {(!state.owner && !blocked) || checkoutCartReady(state) ? (
-              <Button asChild className="mt-7 flex w-full">
-                <Link to="/checkout">
-                  Continue to checkout <ArrowRight size={17} />
-                </Link>
-              </Button>
-            ) : (
-              <Button disabled className="mt-7 flex w-full">
-                Continue to checkout
-              </Button>
-            )}
+            <div className="mt-7 hidden lg:block">{checkoutAction}</div>
             {items.some((item) => item.available === false) && (
               <p role="alert" className="mt-3 text-sm">
                 Remove or decrease unavailable selections before checkout.
               </p>
             )}
           </SummaryPanel>
+        </div>
+      )}
+      {items.length > 0 && (
+        <div className="sticky bottom-0 z-20 -mx-5 mt-8 border-t border-border bg-background px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:-mx-10 sm:px-10 lg:hidden">
+          <div className="mb-3 flex items-baseline justify-between gap-4 text-sm">
+            <span>Books subtotal</span>
+            <strong className="text-lg">{money(total)}</strong>
+          </div>
+          {checkoutAction}
         </div>
       )}
     </PageContainer>

@@ -8,6 +8,8 @@ test('verification preserves the bag, requires fresh signin, and recovery revoke
   page,
   browser,
 }) => {
+  // Keep this multi-session journey independent of preceding sign-in rate buckets.
+  await page.setExtraHTTPHeaders({ 'X-Real-IP': '198.51.100.245' })
   const email = 'email-journey@example.com'
   await page.goto('/books/1')
   await page
@@ -39,6 +41,7 @@ test('verification preserves the bag, requires fresh signin, and recovery revoke
   const otherContext = await browser.newContext()
   const other = await otherContext.newPage()
   try {
+    await other.setExtraHTTPHeaders({ 'X-Real-IP': '198.51.100.246' })
     await other.goto('http://localhost:4173/sign-in?returnTo=%2Faccount%2Fprofile')
     await other.getByLabel('Email address').fill(email)
     await other.getByLabel('Password', { exact: true }).fill(oldPassword)

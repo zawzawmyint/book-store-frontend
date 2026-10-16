@@ -73,28 +73,43 @@ export function CartFeedback() {
         </div>
       )}
       {state.legacyItems.length > 0 && (
-        <section className="rounded border p-4" aria-label="Saved browser bag">
-          <h2 className="font-semibold">Add this browser's saved bag to your account?</h2>
-          <p className="mt-2 text-sm">
-            The old bag was shared on this browser. Import only selections you want in your account.
+        <section
+          className="border border-border bg-muted/40 p-4 text-sm"
+          aria-label="Saved browser bag"
+        >
+          <h2 className="font-semibold">An older bag was found on this browser</h2>
+          <p className="mt-1 text-muted-foreground">
+            It may belong to someone else. Add only books you recognize to your account.
           </p>
-          <ul className="my-3 text-sm">
-            {state.legacyItems.map((item) => (
-              <li key={item.id}>
-                {item.quantity} × {item.title}
-              </li>
-            ))}
-          </ul>
-          {state.owner ? (
-            <Button disabled={state.status !== 'ready'} onClick={() => void state.importLegacy()}>
-              Add saved bag to my account
+          <details className="mt-2">
+            <summary className="w-fit cursor-pointer py-2 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring">
+              View saved books
+            </summary>
+            <ul className="my-2 space-y-1">
+              {state.legacyItems.map((item) => (
+                <li key={item.id}>
+                  {item.quantity} × {item.title}
+                </li>
+              ))}
+            </ul>
+          </details>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+            {state.owner ? (
+              <Button
+                variant="outline"
+                className="min-h-11 whitespace-normal px-3 py-2"
+                disabled={state.status !== 'ready'}
+                onClick={() => void state.importLegacy()}
+              >
+                Add saved bag to my account
+              </Button>
+            ) : (
+              <p>Sign in to choose whether to import this saved bag.</p>
+            )}
+            <Button variant="ghost" className="min-h-11 px-3 py-2" onClick={state.discardLegacy}>
+              Discard saved bag
             </Button>
-          ) : (
-            <p>Sign in to choose whether to import this saved bag.</p>
-          )}
-          <Button variant="ghost" onClick={state.discardLegacy}>
-            Discard saved bag
-          </Button>
+          </div>
         </section>
       )}
       {state.notices.length > 0 && (

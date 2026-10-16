@@ -337,6 +337,11 @@ button:disabled {
   scroll-margin-top: calc(var(--storefront-header-height, 5rem) + 1.5rem);
 }
 
+.bag-page :is(a, button) {
+  scroll-margin-top: calc(var(--storefront-header-height, 5rem) + 1.5rem);
+  scroll-margin-bottom: 10rem;
+}
+
 .admin-page-header {
   display: flex;
   flex-wrap: wrap;
