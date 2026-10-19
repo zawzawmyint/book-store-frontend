@@ -572,10 +572,10 @@ button:disabled {
 }
 .admin-workspace [data-slot='table-cell']:last-child,
 .admin-workspace [data-slot='table-head']:last-child {
-  text-align: right;
+  text-align: end;
 }
 .admin-workspace .admin-numeric {
-  text-align: right;
+  text-align: end;
   font-variant-numeric: tabular-nums;
 }
 .admin-workspace [data-slot='badge'] {
@@ -762,6 +762,44 @@ select option {
   width: min(7rem, 16vw);
   pointer-events: none;
   background: linear-gradient(to right, transparent, var(--background));
+}
+
+/* Native script fonts avoid downloading large multilingual font families. */
+:root:lang(ar) {
+  --font-body: 'Segoe UI', Tahoma, Arial, sans-serif;
+  --font-display: 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+:root:lang(th) {
+  --font-body: 'Leelawadee UI', Thonburi, Tahoma, sans-serif;
+  --font-display: 'Leelawadee UI', Thonburi, Tahoma, sans-serif;
+}
+:root:lang(zh) {
+  --font-body: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif;
+  --font-display: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif;
+}
+:root:is(:lang(ar), :lang(th), :lang(zh)) :is(.eyebrow, .uppercase, [class*='tracking-']:not([data-brand]), label, button, h1, h2, h3, nav, th) {
+  letter-spacing: normal;
+  text-transform: none;
+}
+[data-brand] {
+  font-family: 'Lora', ui-serif, Georgia, serif;
+}
+:root:is(:lang(ar), :lang(th)) {
+  line-height: 1.7;
+}
+[dir='rtl'] .book-rail-fade {
+  background: linear-gradient(to left, transparent, var(--background));
+}
+[dir='rtl'] :is(.lucide-arrow-left, .lucide-arrow-right, .lucide-chevron-left, .lucide-chevron-right, .lucide-panel-left) {
+  transform: scaleX(-1);
+}
+/* Canonical inputs retain their existing decimal/identifier syntax inside RTL. */
+:is(input[type='email'], input[type='url'], input[type='number'], input[type='tel'], input[inputmode='decimal'], input[inputmode='numeric']) {
+  direction: ltr;
+  text-align: start;
+}
+:is([data-slot='select-item'], [data-slot='dropdown-menu-item']) {
+  text-align: start;
 }
 @media (min-width: 640px) {
   .book-rail {

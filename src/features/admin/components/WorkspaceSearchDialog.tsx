@@ -1,3 +1,4 @@
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { BookOpenText, ClipboardList, Search } from 'lucide-react'
@@ -19,6 +20,8 @@ import { orderStatusLabels } from '../../orders/order-status'
 import { useWorkspaceSearch } from '../search/use-workspace-search'
 
 export function WorkspaceSearch() {
+  useI18n()
+
   const [open, setOpen] = useState(false)
   const trigger = useRef<HTMLButtonElement>(null)
   const close = useCallback(() => setOpen(false), [])
@@ -56,14 +59,14 @@ export function WorkspaceSearch() {
       <Button
         ref={trigger}
         variant="outline"
-        aria-label="Search workspace"
+        aria-label={t('admin:searchWorkspace')}
         onClick={() => setOpen(true)}
         className="gap-2"
       >
         <Search size={16} aria-hidden="true" />
-        <span className="hidden md:inline">Search workspace</span>
+        <span className="hidden md:inline">{t('admin:searchWorkspace')}</span>
         <kbd aria-hidden="true" className="hidden text-xs text-muted-foreground xl:inline">
-          Ctrl / ⌘ K
+          {t('admin:ctrlK')}
         </kbd>
       </Button>
       {open && (
@@ -88,6 +91,8 @@ function WorkspaceSearchDialog({
   close: () => void
   returnFocusTo: () => void
 }) {
+  useI18n()
+
   const [value, setValue] = useState('')
   const [active, setActive] = useState<string>()
   const term = value.trim()
@@ -108,14 +113,21 @@ function WorkspaceSearchDialog({
       to: `/admin/books/${book.id}/edit`,
       type: 'books' as const,
       title: book.title,
-      detail: `${book.author} · ${book.stock === 0 ? 'Out of stock' : `${book.stock} copies`}`,
+      detail: t('admin:searchResultDetail', {
+        value0: book.author,
+        value1:
+          book.stock === 0 ? msg('admin:outOfStock') : t('common:copyCount', { count: book.stock }),
+      }),
     })),
     ...(orders.data?.adminOrders.items ?? []).map((order) => ({
       key: `order-${order.id}`,
       to: `/admin/orders/${order.id}`,
       type: 'orders' as const,
-      title: `Order #${order.id} · ${order.customerName}`,
-      detail: `${order.email} · ${orderStatusLabels[order.status]}`,
+      title: msg('admin:orderValueValue', { value0: order.id, value1: order.customerName }),
+      detail: t('admin:searchResultDetail', {
+        value0: order.email,
+        value1: orderStatusLabels[order.status],
+      }),
     })),
   ]
   const selected = results.find((row) => row.key === active)
@@ -142,11 +154,13 @@ function WorkspaceSearchDialog({
         }}
       >
         <DialogHeader>
-          <DialogTitle>Search workspace</DialogTitle>
-          <DialogDescription>Find books and orders without leaving your work.</DialogDescription>
+          <DialogTitle>{t('admin:searchWorkspace')}</DialogTitle>
+          <DialogDescription>
+            {t('admin:findBooksAndOrdersWithoutLeavingYourWork')}
+          </DialogDescription>
         </DialogHeader>
         <label htmlFor={`${prefix}-input`} className="sr-only">
-          Search books and orders
+          {t('admin:searchBooksAndOrders')}
         </label>
         <Input
           ref={input}
@@ -157,7 +171,7 @@ function WorkspaceSearchDialog({
           aria-controls={`${prefix}-results`}
           aria-activedescendant={selected ? `${prefix}-${selected.key}` : undefined}
           maxLength={100}
-          placeholder="Book title, author, order number, customer name or email"
+          placeholder={t('admin:bookTitleAuthorOrderNumberCustomerNameOrEmail')}
           value={value}
           onChange={(event) => {
             setValue(event.target.value)
@@ -185,23 +199,38 @@ function WorkspaceSearchDialog({
           }}
         />
         <p role="status" aria-live="polite" className="sr-only">
-          {!eligible
-            ? 'Enter at least two characters or an order number.'
-            : books.loading || orders.loading
-              ? books.eligible
-                ? 'Searching books and orders…'
-                : 'Searching orders…'
-              : books.eligible
-                ? `${books.data?.adminBooks.total ?? 0} books and ${orders.data?.adminOrders.total ?? 0} orders found.`
-                : `${orders.data?.adminOrders.total ?? 0} orders found.`}
+          {localized(
+            !eligible
+              ? t('admin:enterAtLeastTwoCharactersOrAnOrderNumber')
+              : books.loading || orders.loading
+                ? books.eligible
+                  ? t('admin:searchingBooksAndOrders')
+                  : t('admin:searchingOrders')
+                : books.eligible
+                  ? t('admin:searchResults', {
+                      value0: t('common:bookCount', { count: books.data?.adminBooks.total ?? 0 }),
+                      value1: t('common:orderCount', {
+                        count: orders.data?.adminOrders.total ?? 0,
+                      }),
+                    })
+                  : t('admin:orderSearchResults', {
+                      value0: t('common:orderCount', {
+                        count: orders.data?.adminOrders.total ?? 0,
+                      }),
+                    }),
+          )}
         </p>
         <div className="max-h-[55vh] overflow-y-auto">
           {!eligible && (
             <p className="py-6 text-sm text-muted-foreground">
-              Enter at least two characters or an order number.
+              {t('admin:enterAtLeastTwoCharactersOrAnOrderNumber')}
             </p>
           )}
-          <div role="listbox" aria-label="Workspace search results" id={`${prefix}-results`}>
+          <div
+            role="listbox"
+            aria-label={t('admin:workspaceSearchResults')}
+            id={`${prefix}-results`}
+          >
             {(['books', 'orders'] as const).map((type) => {
               const state = type === 'books' ? books : orders
               const total =
@@ -220,18 +249,29 @@ function WorkspaceSearchDialog({
                       className="mb-2 flex items-center gap-2 text-sm font-semibold capitalize"
                     >
                       <Icon size={16} aria-hidden="true" />
-                      {type}
+                      {t(type === 'books' ? 'admin:books' : 'admin:orders')}
                     </h3>
                     {state.loading && (
-                      <BookLoader compact label={`Searching ${type}…`} />
+                      <BookLoader
+                        compact
+                        label={t(
+                          type === 'books' ? 'admin:searchingBooks' : 'admin:searchingOrders',
+                        )}
+                      />
                     )}
                     {state.error && (
                       <p role="alert" className="text-sm">
-                        Unable to search {type}.
+                        {t(
+                          type === 'books'
+                            ? 'admin:unableToSearchBooks'
+                            : 'admin:unableToSearchOrders',
+                        )}
                       </p>
                     )}
                     {!state.loading && !state.error && total === 0 && (
-                      <p className="text-sm text-muted-foreground">No matching {type}.</p>
+                      <p className="text-sm text-muted-foreground">
+                        {t(type === 'books' ? 'admin:noMatchingBooks' : 'admin:noMatchingOrders')}
+                      </p>
                     )}
                     {results
                       .filter((row) => row.type === type)
@@ -245,11 +285,13 @@ function WorkspaceSearchDialog({
                           type="button"
                           onMouseDown={(event) => event.preventDefault()}
                           onClick={() => choose(row)}
-                          className={`block w-full rounded-md px-3 py-2 text-left hover:bg-muted ${active === row.key ? 'bg-muted ring-1 ring-ring' : ''}`}
+                          className={`block w-full rounded-md px-3 py-2 text-start hover:bg-muted ${active === row.key ? 'bg-muted ring-1 ring-ring' : ''}`}
                         >
-                          <span className="block break-words text-sm font-medium">{row.title}</span>
+                          <span className="block break-words text-sm font-medium">
+                            <bdi dir="auto">{localized(row.title)}</bdi>
+                          </span>
                           <span className="block break-words text-xs text-muted-foreground">
-                            {row.detail}
+                            {localized(row.detail)}
                           </span>
                         </button>
                       ))}
@@ -260,29 +302,29 @@ function WorkspaceSearchDialog({
           </div>
           {books.error && (
             <Button variant="outline" onClick={books.retry}>
-              Retry books search
+              {t('admin:retryBooksSearch')}
             </Button>
           )}
           {orders.error && (
             <Button variant="outline" onClick={orders.retry}>
-              Retry orders search
+              {t('admin:retryOrdersSearch')}
             </Button>
           )}
           <div className="mt-2 flex flex-wrap gap-3 text-sm">
             {!!books.data?.adminBooks.total && (
               <Link className="underline" to={listURL('books', term)} onClick={close}>
-                View all matching books ({books.data.adminBooks.total})
+                {t('admin:viewAllMatchingBooksValue', { value0: books.data.adminBooks.total })}
               </Link>
             )}
             {!!orders.data?.adminOrders.total && (
               <Link className="underline" to={listURL('orders', term)} onClick={close}>
-                View all matching orders ({orders.data.adminOrders.total})
+                {t('admin:viewAllMatchingOrdersValue', { value0: orders.data.adminOrders.total })}
               </Link>
             )}
           </div>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          ↑ ↓ to select · Enter to open · Esc to close
+          {t('admin:toSelectEnterToOpenEscToClose')}
         </p>
       </DialogContent>
     </Dialog>

@@ -2,26 +2,58 @@ import type { ComponentProps } from 'react'
 import { cn } from '../../../lib/utils'
 
 export function Table({ className, ...props }: ComponentProps<'table'>) {
-  return <table data-slot="table" className={cn('w-full text-left text-sm', className)} {...props} />
+  return (
+    <table data-slot="table" className={cn('w-full text-start text-sm', className)} {...props} />
+  )
 }
 export function TableHeader({ className, ...props }: ComponentProps<'thead'>) {
-  return <thead data-slot="table-header" className={cn('[&_tr]:border-b [&_tr]:border-border', className)} {...props} />
+  return (
+    <thead
+      data-slot="table-header"
+      className={cn('[&_tr]:border-b [&_tr]:border-border', className)}
+      {...props}
+    />
+  )
 }
 export function TableBody({ className, ...props }: ComponentProps<'tbody'>) {
-  return <tbody data-slot="table-body" className={cn('[&_tr:last-child]:border-0', className)} {...props} />
+  return (
+    <tbody
+      data-slot="table-body"
+      className={cn('[&_tr:last-child]:border-0', className)}
+      {...props}
+    />
+  )
 }
 export function TableFooter({ className, ...props }: ComponentProps<'tfoot'>) {
-  return <tfoot data-slot="table-footer" className={cn('border-t border-border font-medium', className)} {...props} />
+  return (
+    <tfoot
+      data-slot="table-footer"
+      className={cn('border-t border-border font-medium', className)}
+      {...props}
+    />
+  )
 }
 export function TableRow({ className, ...props }: ComponentProps<'tr'>) {
   return <tr data-slot="table-row" className={cn('border-b border-border', className)} {...props} />
 }
 export function TableHead({ className, ...props }: ComponentProps<'th'>) {
-  return <th data-slot="table-head" className={cn('p-3 text-left font-semibold', className)} {...props} />
+  return (
+    <th
+      data-slot="table-head"
+      className={cn('p-3 text-start font-semibold', className)}
+      {...props}
+    />
+  )
 }
 export function TableCell({ className, ...props }: ComponentProps<'td'>) {
   return <td data-slot="table-cell" className={cn('p-3 align-top', className)} {...props} />
 }
 export function TableCaption({ className, ...props }: ComponentProps<'caption'>) {
-  return <caption data-slot="table-caption" className={cn('mt-4 text-sm text-muted-foreground', className)} {...props} />
+  return (
+    <caption
+      data-slot="table-caption"
+      className={cn('mt-4 text-sm text-muted-foreground', className)}
+      {...props}
+    />
+  )
 }

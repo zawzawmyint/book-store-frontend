@@ -1,3 +1,4 @@
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { useState } from 'react'
 import { useQuery } from '@apollo/client/react'
 import { AdminActivityDocument } from '../../../generated/graphql'
@@ -14,6 +15,8 @@ import { activityActions, readActivityFilters } from '../activity-data'
 import { useAdminQueryError } from '../admin-access'
 
 export function ActivityPage() {
+  useI18n()
+
   const { params, setParams, page, limit, offset, changePage } = useAdminPagination()
   const filters = readActivityFilters(params)
   const [validation, setValidation] = useState('')
@@ -32,13 +35,15 @@ export function ActivityPage() {
   return (
     <section>
       <AdminPageHeader
-        title="Activity"
-        description={`Store changes, newest first. Times and date filters use your local timezone (${Intl.DateTimeFormat().resolvedOptions().timeZone}).`}
+        title={t('admin:activity')}
+        description={t('admin:storeChangesNewestFirstTimesAndDateFiltersUseYourLocal', {
+          value0: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        })}
       />
       <form
         key={params.toString()}
         className="admin-toolbar"
-        aria-label="Activity filters"
+        aria-label={t('admin:activityFilters')}
         onSubmit={(event) => {
           event.preventDefault()
           const values = new FormData(event.currentTarget)
@@ -54,7 +59,7 @@ export function ActivityPage() {
         }}
       >
         <div className="admin-toolbar-field">
-          <Label htmlFor="activity-actor">Actor user ID</Label>
+          <Label htmlFor="activity-actor">{t('admin:actorUserId')}</Label>
           <Input
             id="activity-actor"
             name="actorUserId"
@@ -63,27 +68,27 @@ export function ActivityPage() {
           />
         </div>
         <div className="admin-toolbar-field">
-          <Label htmlFor="activity-action">Action</Label>
+          <Label htmlFor="activity-action">{t('admin:action')}</Label>
           <select
             id="activity-action"
             name="action"
             defaultValue={filters.action}
             className="h-10 rounded-md border border-control bg-input px-3 text-sm"
           >
-            <option value="">All actions</option>
+            <option value="">{t('admin:allActions')}</option>
             {Object.entries(activityActions).map(([value, label]) => (
               <option key={value} value={value}>
-                {label}
+                {localized(label)}
               </option>
             ))}
           </select>
         </div>
         <div className="admin-toolbar-field">
-          <Label htmlFor="activity-from">From date</Label>
+          <Label htmlFor="activity-from">{t('admin:fromDate')}</Label>
           <Input id="activity-from" name="from" type="date" defaultValue={filters.from} />
         </div>
         <div className="admin-toolbar-field">
-          <Label htmlFor="activity-to">To date</Label>
+          <Label htmlFor="activity-to">{t('admin:toDate')}</Label>
           <Input id="activity-to" name="to" type="date" defaultValue={filters.to} />
         </div>
         <div className="admin-toolbar-toggle">
@@ -92,18 +97,20 @@ export function ActivityPage() {
             name="priceOnly"
             defaultChecked={params.get('changedField') === 'PRICE_CENTS'}
           />
-          <Label htmlFor="activity-price">Price changes only</Label>
+          <Label htmlFor="activity-price">{t('admin:priceChangesOnly')}</Label>
         </div>
         <Button type="submit" variant="outline">
-          Apply filters
+          {t('admin:applyFilters')}
         </Button>
       </form>
       {(validation || filters.error) && (
         <Alert role="alert" variant="destructive" className="my-4">
-          <AlertDescription>{validation || filters.error}</AlertDescription>
+          <AlertDescription>{localized(validation || filters.error)}</AlertDescription>
         </Alert>
       )}
-      {!filters.error && <AdminFeedback loading={loading} error={error} retry={refetch} />}
+      {!filters.error && (
+        <AdminFeedback loading={loading} error={localized(error)} retry={refetch} />
+      )}
       {!filters.error && !loading && !error && events && (
         <ActivityTable
           items={events.items}

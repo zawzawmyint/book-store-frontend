@@ -1,3 +1,5 @@
+import { formatDateTime, money, serverDate } from '../../../lib/format'
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { PaymentStatus } from '../../orders/PaymentStatus'
 import { OrderStatusBadge } from '../../orders/OrderStatusBadge'
 import { orderStatusLabels } from '../../orders/order-status'
@@ -16,7 +18,6 @@ import { AdminFilterToolbar } from '../components/AdminFilterToolbar'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@apollo/client/react'
 import { AdminOrdersDocument } from '../../../generated/graphql'
-import { money, serverDate } from '../../../lib/format'
 import { IconAction } from '../../../app/components/IconAction'
 import { Eye } from 'lucide-react'
 import { TableCell } from '../../../app/components/ui/table'
@@ -25,6 +26,8 @@ import { useAdminPagination, useAdminPageCorrection } from '../use-admin-paginat
 import { AdminFeedback } from '../components/AdminFeedback'
 
 export function OrdersPage() {
+  useI18n()
+
   const { params, page, limit, offset, changePage, changeParams } = useAdminPagination()
   const search = (params.get('search') ?? '').slice(0, 100).trim()
   const value = params.get('status') ?? 'ALL'
@@ -46,17 +49,17 @@ export function OrdersPage() {
   return (
     <section>
       <AdminPageHeader
-        title="All order requests"
-        description="Saved delivery orders with payment and fulfillment state."
+        title={t('admin:allOrderRequests')}
+        description={t('admin:savedDeliveryOrdersWithPaymentAndFulfillmentState')}
       />
       <AdminFilterToolbar
         search={search}
-        searchLabel="Search orders"
-        searchPlaceholder="Order number, customer name or email"
+        searchLabel={t('admin:searchOrders')}
+        searchPlaceholder={t('admin:orderNumberCustomerNameOrEmail')}
         onSearch={(value) => changeParams({ search: value, page: '' })}
       >
         <div className="admin-toolbar-field">
-          <Label htmlFor="order-status-filter">Status</Label>
+          <Label htmlFor="order-status-filter">{t('admin:status')}</Label>
           <Select
             value={status}
             onValueChange={(value) => changeParams({ status: value, page: '' })}
@@ -65,50 +68,58 @@ export function OrdersPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All</SelectItem>
+              <SelectItem value="ALL">{t('admin:all')}</SelectItem>
               {Object.entries(orderStatusLabels).map(([key, label]) => (
                 <SelectItem value={key} key={key}>
-                  {label}
+                  {localized(label)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
       </AdminFilterToolbar>
-      <AdminFeedback loading={loading} error={error} retry={refetch} />
+      <AdminFeedback loading={loading} error={localized(error)} retry={refetch} />
       {!loading && !error && orders && (
         <AdminPageTable
           columns={[
-            { label: 'Request' },
-            { label: 'Date' },
-            { label: 'Status' },
-            { label: 'Customer' },
-            { label: 'Total', numeric: true },
-            { label: 'Details' },
+            { label: t('common:labelRequest') },
+            { label: t('common:labelDate') },
+            { label: t('common:labelStatus') },
+            { label: t('common:labelCustomer') },
+            { label: t('common:labelTotal'), numeric: true },
+            { label: t('common:labelDetails') },
           ]}
           items={orders.items}
           rowKey={(order) => order.id}
-          label="order requests"
-          emptyMessage="No order requests on this page."
+          label={t('admin:orderRequests2')}
+          emptyMessage={t('admin:noOrderRequestsOnThisPage')}
           page={page}
           total={orders.total}
           onPageChange={changePage}
           tableClassName="min-w-[640px]"
           renderRow={(order) => (
             <>
-              <TableCell>#{order.id}</TableCell>
-              <TableCell>{serverDate(order.createdAt).toLocaleString()}</TableCell>
+              <TableCell>
+                #<bdi dir="ltr">{localized(order.id)}</bdi>
+              </TableCell>
+              <TableCell>{localized(formatDateTime(serverDate(order.createdAt)))}</TableCell>
               <TableCell>
                 <OrderStatusBadge status={order.status} paymentStatus={order.payment.status} />
                 <PaymentStatus payment={order.payment} />
               </TableCell>
               <TableCell>
-                {order.customerName}
-                <p className="mt-1 text-xs text-muted-foreground">{order.email}</p>
+                <bdi dir="auto">{localized(order.customerName)}</bdi>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  <bdi dir="ltr">{localized(order.email)}</bdi>
+                </p>
               </TableCell>
-              <TableCell className="admin-numeric">{money(order.totalCents)}</TableCell>
+              <TableCell className="admin-numeric">{localized(money(order.totalCents))}</TableCell>
               <TableCell>
-                <IconAction asChild label={`View request #${order.id}`} workspace>
+                <IconAction
+                  asChild
+                  label={t('admin:viewRequestValue', { value0: order.id })}
+                  workspace
+                >
                   <Link to={order.id} state={{ returnTo: `/admin/orders?${params}` }}>
                     <Eye aria-hidden="true" />
                   </Link>

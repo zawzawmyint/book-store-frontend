@@ -1,3 +1,5 @@
+import { localized, t, useI18n } from '../../../lib/i18n'
+import { formatDate } from '../../../lib/format'
 import { useMemo, type ReactNode } from 'react'
 import { Coins, Undo2, Wallet, PackageCheck } from 'lucide-react'
 import type { DashboardPeriod } from '../../../generated/graphql'
@@ -32,71 +34,87 @@ export function DashboardFinance({
   returnTo: string
   fulfillment: ReactNode
 }) {
+  useI18n()
+
   const variables = useMemo(() => ({ period }), [period])
   const state = useDashboardQuery(DashboardFinanceDocument, variables, refreshKey)
   const finance = state.data?.adminDashboardFinance
   return (
-    <section aria-label="Financial overview" className="space-y-4">
+    <section aria-label={t('admin:financialOverview')} className="space-y-4">
       <DashboardFeedback {...state} hasData={!!finance} />
-      {!finance && fulfillment}
+      {localized(!finance && fulfillment)}
       {finance && (
         <>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-sm font-medium">Financial overview</h3>
+            <h3 className="text-sm font-medium">{t('admin:financialOverview')}</h3>
             <UpdatedAt value={finance.generatedAt} refreshing={state.loading} />
           </div>
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             <MetricCard
-              label="Captured payments"
+              label={t('admin:capturedPayments')}
               value={exactMoney(finance.capturedCents)}
               icon={Coins}
             />
             <MetricCard
-              label="Successful refunds"
+              label={t('admin:successfulRefunds')}
               value={exactMoney(finance.refundedCents)}
               icon={Undo2}
             />
-            <MetricCard label="Net captured" value={exactMoney(finance.netCents)} icon={Wallet} />
-            <MetricCard label="Paid orders" value={finance.paidOrderCount} icon={PackageCheck} />
+            <MetricCard
+              label={t('admin:netCaptured')}
+              value={exactMoney(finance.netCents)}
+              icon={Wallet}
+            />
+            <MetricCard
+              label={t('admin:paidOrders')}
+              value={finance.paidOrderCount}
+              icon={PackageCheck}
+            />
           </div>
           <div className="grid gap-4 xl:grid-cols-2">
-            {fulfillment}
-            <DashboardPanel title="Recorded payments">
+            {localized(fulfillment)}
+            <DashboardPanel title={t('admin:recordedPayments')}>
               <p className="mb-4 text-sm text-muted-foreground">
-                {finance.startDate} – {finance.endDate} · {finance.currency.toUpperCase()} ·{' '}
-                {finance.timeZone}. Today is partial.
+                {t('admin:valueValueValueValueValueTodayIsPartial', {
+                  value0: formatDate(finance.startDate + 'T12:00:00'),
+                  value1: formatDate(finance.endDate + 'T12:00:00'),
+                  value2: finance.currency.toUpperCase(),
+                  value3: ' ',
+                  value4: finance.timeZone,
+                })}
               </p>
               <PaymentsChart days={finance.days} />
               <p className="my-4 text-xs text-muted-foreground">
-                Test payments include delivery fees. Net captured subtracts successful refunds; it
-                is not profit.
+                {t('admin:testPaymentsIncludeDeliveryFeesNetCapturedSubtractsSuccessfulRefundsIt')}
               </p>
               <details className="rounded-lg border border-border p-3">
-                <summary className="cursor-pointer text-sm font-medium">View daily values</summary>
+                <summary className="cursor-pointer text-sm font-medium">
+                  {t('admin:viewDailyValues')}
+                </summary>
                 <div className="mt-3 max-h-80 overflow-auto">
-                  <Table aria-label="Daily recorded payments">
+                  <Table aria-label={t('admin:dailyRecordedPayments')}>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Captured</TableHead>
-                        <TableHead>Refunded</TableHead>
-                        <TableHead>Paid orders</TableHead>
+                        <TableHead>{t('admin:date')}</TableHead>
+                        <TableHead>{t('admin:captured')}</TableHead>
+                        <TableHead>{t('admin:refunded')}</TableHead>
+                        <TableHead>{t('admin:paidOrders')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {finance.days.map((day) => (
                         <TableRow key={day.date}>
                           <TableCell className="whitespace-nowrap">
-                            {day.date}
-                            {day.date === finance.endDate ? ' (partial)' : ''}
+                            {formatDate(day.date + 'T12:00:00')}
+                            {day.date === finance.endDate && t('admin:partialDay')}
                           </TableCell>
                           <TableCell className="tabular-nums">
-                            {exactMoney(day.capturedCents)}
+                            {localized(exactMoney(day.capturedCents))}
                           </TableCell>
                           <TableCell className="tabular-nums">
-                            {exactMoney(day.refundedCents)}
+                            {localized(exactMoney(day.refundedCents))}
                           </TableCell>
-                          <TableCell>{day.paidOrderCount}</TableCell>
+                          <TableCell>{localized(day.paidOrderCount)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -106,12 +124,12 @@ export function DashboardFinance({
             </DashboardPanel>
           </div>
           <p className="text-sm text-muted-foreground">
-            Current failed refunds:{' '}
-            <strong className="text-foreground">{finance.failedRefundCount}</strong> · independent
-            of the selected period.
+            {t('admin:currentFailedRefunds')}
+            <strong className="text-foreground">{localized(finance.failedRefundCount)}</strong>{' '}
+            {t('admin:independentOfTheSelectedPeriod')}
           </p>
           <OrderPreview
-            title="Current failed refunds"
+            title={t('admin:currentFailedRefunds2')}
             orders={finance.failedRefundOrders}
             returnTo={returnTo}
           />

@@ -1,3 +1,5 @@
+import { errorMessage } from '../../../lib/i18n/errors'
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { DeliveryDetails } from '../../orders/DeliveryDetails'
 import { useEffect, useRef, useState } from 'react'
 import { useApolloClient, useMutation } from '@apollo/client/react'
@@ -19,11 +21,15 @@ import { PaymentStatus } from '../../orders/PaymentStatus'
 import { money } from '../../../lib/format'
 
 export function CheckoutReturnPage() {
+  useI18n()
+
   const { orderId = '' } = useParams()
   const { data: session } = authClient.useSession()
   return <PaymentReturn key={`${orderId}:${session?.user.id ?? ''}`} orderId={orderId} />
 }
 function PaymentReturn({ orderId }: { orderId: string }) {
+  useI18n()
+
   const valid = /^[1-9]\d*$/.test(orderId) && Number.isSafeInteger(Number(orderId))
   const [order, setOrder] = useState<CustomerOrderFieldsFragment>()
   const [error, setError] = useState('')
@@ -44,9 +50,7 @@ function PaymentReturn({ orderId }: { orderId: string }) {
       navigate(signInPath(`/checkout/return/${orderId}`), { replace: true })
     } else
       setError(
-        failure instanceof Error
-          ? failure.message
-          : 'Payment confirmation is unavailable. Check again shortly.',
+        errorMessage(failure, 'storefront:paymentConfirmationIsUnavailableCheckAgainShortly'),
       )
   }
   async function check() {
@@ -59,7 +63,7 @@ function PaymentReturn({ orderId }: { orderId: string }) {
       })
       if (!alive.current) return
       const current = result.data?.refreshOrderPayment
-      if (!current) throw new Error('Order unavailable or not found.')
+      if (!current) throw new Error(msg('storefront:orderUnavailableOrNotFound'))
       setOrder(current)
       if (session?.user.id) retireUnpaidAttempt(session.user.id, current)
       setError('')
@@ -113,7 +117,8 @@ function PaymentReturn({ orderId }: { orderId: string }) {
       setOrder(current.order)
       if (session?.user.id) retireUnpaidAttempt(session.user.id, current.order)
       if (current.checkoutUrl) {
-        if (!safeCheckoutUrl(current.checkoutUrl)) throw new Error('Payment link unavailable.')
+        if (!safeCheckoutUrl(current.checkoutUrl))
+          throw new Error(msg('storefront:paymentLinkUnavailable'))
         window.location.assign(current.checkoutUrl)
       } else if (current.order.payment.status === 'PAID' && session?.user.id) {
         confirmPaidAttempt(session.user.id, orderId, useCartStore.getState().items)
@@ -128,60 +133,68 @@ function PaymentReturn({ orderId }: { orderId: string }) {
   return (
     <PageContainer className="py-12 sm:py-20">
       <h1 className="font-serif text-4xl">
-        {!valid
-          ? 'Order unavailable or not found'
-          : order?.payment.status === 'PAID'
-            ? 'Payment confirmed'
-            : 'Payment status'}
+        {localized(
+          !valid
+            ? t('storefront:orderUnavailableOrNotFound2')
+            : order?.payment.status === 'PAID'
+              ? t('storefront:paymentConfirmed')
+              : t('storefront:paymentStatus'),
+        )}
       </h1>
       {error && (
         <p role="alert" className="mt-4">
-          {error}
+          {localized(error)}
         </p>
       )}
-      {valid && !order && loading && <BookLoader compact label="Confirming payment…" />}
+      {valid && !order && loading && (
+        <BookLoader compact label={t('storefront:confirmingPayment')} />
+      )}
       {order && (
         <div className="mt-6 max-w-xl space-y-5">
           <PaymentStatus payment={order.payment} />
           {order.payment.status === 'PENDING' && (
             <p role="status">
-              {stopped
-                ? 'Payment has not been confirmed. Check payment status when you are ready.'
-                : 'Payment has not been confirmed. Confirming payment. Returning from Stripe does not cancel your order.'}
+              {localized(
+                stopped
+                  ? t('storefront:paymentHasNotBeenConfirmedCheckPaymentStatusWhenYouAre')
+                  : t(
+                      'storefront:paymentHasNotBeenConfirmedConfirmingPaymentReturningFromStripeDoes',
+                    ),
+              )}
             </p>
           )}
           {order.payment.status === 'EXPIRED' && (
-            <p>
-              Your payment window expired and the reservation was released. Return to your bag for a
-              new stock check.
-            </p>
+            <p>{t('storefront:yourPaymentWindowExpiredAndTheReservationWasReleasedReturnTo')}</p>
           )}
           <ul>
             {order.items.map((line, index) => (
               <li key={index}>
-                {line.quantity} × <span className="font-serif">{line.title}</span> ·{' '}
-                {money(line.quantity * line.unitPriceCents)}
+                {localized(line.quantity)} ×{' '}
+                <span className="font-serif">
+                  <bdi dir="auto">{localized(line.title)}</bdi>
+                </span>{' '}
+                · {localized(money(line.quantity * line.unitPriceCents))}
               </li>
             ))}
           </ul>
           <DeliveryDetails {...order} />
           {order.status === 'SUBMITTED' && order.payment.status === 'PENDING' && (
             <Button disabled={loading || resuming} onClick={() => void openPayment()}>
-              Resume payment
+              {t('storefront:resumePayment')}
             </Button>
           )}
           <Button asChild variant="ghost">
-            <Link to={`/account/orders/${order.id}`}>View order details</Link>
+            <Link to={`/account/orders/${order.id}`}>{t('storefront:viewOrderDetails')}</Link>
           </Button>
         </div>
       )}
       {valid && (!order || order.payment.status === 'PENDING') && (
         <Button className="mt-5" disabled={loading || resuming} onClick={() => void check()}>
-          Check payment status
+          {t('storefront:checkPaymentStatus')}
         </Button>
       )}
       <Link className="mt-6 block text-primary underline" to="/cart">
-        Back to bag
+        {t('storefront:backToBag')}
       </Link>
     </PageContainer>
   )

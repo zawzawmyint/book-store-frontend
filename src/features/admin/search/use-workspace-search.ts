@@ -1,3 +1,4 @@
+import { message as msg, useI18n } from '../../../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { useApolloClient } from '@apollo/client/react'
 import type { TypedDocumentNode } from '@apollo/client'
@@ -16,6 +17,8 @@ export function useWorkspaceSearch<TData>({
   onDenied,
   allowSingleDigit = false,
 }: WorkspaceSearchOptions<TData>) {
+  useI18n()
+
   const client = useApolloClient()
   const { handleError } = useAdminAccess()
   const generation = useRef(0)
@@ -52,7 +55,7 @@ export function useWorkspaceSearch<TData>({
             setState({
               term,
               loading: false,
-              error: failure instanceof Error ? failure : new Error('Search failed'),
+              error: failure instanceof Error ? failure : new Error(msg('admin:searchFailed')),
             })
         })
     }, 250)

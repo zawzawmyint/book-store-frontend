@@ -1,3 +1,5 @@
+import { errorMessage } from '../../../lib/i18n/errors'
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { useState } from 'react'
 import { useApolloClient, useMutation } from '@apollo/client/react'
 import { CombinedGraphQLErrors } from '@apollo/client'
@@ -23,6 +25,8 @@ export function StockDialog({
   close: () => void
   saved: (message: string) => void
 }) {
+  useI18n()
+
   const client = useApolloClient()
   const { handleError } = useAdminAccess()
   const [adjust, { loading }] = useMutation(AdjustBookStockDocument)
@@ -40,12 +44,12 @@ export function StockDialog({
         variables: { id: book.id },
         fetchPolicy: 'no-cache',
       })
-      if (!result.data?.adminBook) throw new Error('Book was not found')
+      if (!result.data?.adminBook) throw new Error(msg('admin:bookWasNotFound'))
       setStock(result.data.adminBook.stock)
       setChecked(true)
     } catch (failure) {
       handleError(failure)
-      setError(failure instanceof Error ? failure.message : 'Unable to refresh stock')
+      setError(errorMessage(failure, 'admin:unableToRefreshStock'))
     } finally {
       setChecking(false)
     }
@@ -61,40 +65,49 @@ export function StockDialog({
     try {
       const response = await adjust({ variables: { id: book.id, delta: Number(result.data) } })
       // The write succeeded. Refresh errors must never turn it into a retryable write.
-      saved(`Stock updated to ${response.data!.adjustBookStock.stock}.`)
+      saved(msg('admin:stockUpdatedToValue', { value0: response.data!.adjustBookStock.stock }))
       void refreshCatalog(client).catch(() => {})
     } catch (failure) {
       handleError(failure)
       if (CombinedGraphQLErrors.is(failure)) {
-        setError(failure.message)
+        setError(errorMessage(failure, 'admin:unableToRefreshStock'))
         await checkStock()
       } else {
         setUnknown(true)
         setChecked(false)
-        setError(
-          'The result is unknown. Check inventory before deciding whether to submit another adjustment.',
-        )
+        setError(msg('admin:theResultIsUnknownCheckInventoryBeforeDecidingWhetherToSubmit'))
       }
     }
   }
   return (
-    <AdminDialog title={`Adjust stock: ${book.title}`} close={close} busy={loading || checking}>
+    <AdminDialog
+      title={t('admin:adjustStockValue', { value0: book.title })}
+      close={close}
+      busy={loading || checking}
+    >
       <p className="mb-4">
-        Current stock: <strong>{stock}</strong>
+        {t('admin:currentStock')} <strong>{localized(stock)}</strong>
       </p>
       <form onSubmit={submit} className="space-y-4">
         <FormField
           id="stock-delta"
-          label="Quantity change"
+          label={t('admin:quantityChange')}
           inputMode="numeric"
           value={delta}
           onChange={(event) => setDelta(event.target.value)}
         />
+        <p className="text-xs text-muted-foreground">{t('common:wholeNumberHint')}</p>
         <p className="text-sm">
-          Positive adds stock; negative removes stock. Estimated result:{' '}
-          {stock + (Number(delta) || 0)}.
+          {t('admin:positiveAddsStockNegativeRemovesStockEstimatedResultValueValue', {
+            value0: ' ',
+            value1: stock + (Number(delta) || 0),
+          })}
         </p>
-        {error && <Alert role="alert" variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
+        {error && (
+          <Alert role="alert" variant="destructive">
+            <AlertDescription>{localized(error)}</AlertDescription>
+          </Alert>
+        )}
         {unknown && (
           <>
             <Button
@@ -105,18 +118,17 @@ export function StockDialog({
                 void checkStock()
               }}
             >
-              Check inventory
+              {t('admin:checkInventory')}
             </Button>
             {checked && (
               <p role="status" className="text-sm">
-                Inventory refreshed. This does not confirm whether the earlier adjustment ran.
-                Review the quantity change before another deliberate submission.
+                {t('admin:inventoryRefreshedThisDoesNotConfirmWhetherTheEarlierAdjustmentRan')}
               </p>
             )}
           </>
         )}
         <Button type="submit" disabled={loading || checking || (unknown && !checked)}>
-          {loading ? 'Saving…' : 'Apply adjustment'}
+          {localized(loading ? t('admin:saving') : t('admin:applyAdjustment'))}
         </Button>
       </form>
     </AdminDialog>

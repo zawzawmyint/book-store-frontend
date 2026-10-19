@@ -1,3 +1,4 @@
+import { t, useI18n } from '../lib/i18n'
 import { CheckoutReturnPage } from '../features/checkout/pages/CheckoutReturnPage'
 import { OrderPage as CustomerOrderPage } from '../features/account/pages/OrderPage'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
@@ -35,72 +36,77 @@ import { LegacyUsersRedirect } from '../features/admin/LegacyUsersRedirect'
 import { ActivityPage } from '../features/admin/pages/ActivityPage'
 import { BookHistoryPage } from '../features/admin/pages/BookHistoryPage'
 import { TooltipProvider } from './components/ui/tooltip'
+import { Direction } from 'radix-ui'
 const DashboardPage = lazy(() => import('../features/admin/pages/DashboardPage'))
 
 export default function App() {
+  const { direction } = useI18n()
+
   return (
-    <TooltipProvider>
-      <BrowserRouter>
-        <SessionBoundary>
-          <AdminAccessProvider>
-            <Routes>
-              <Route element={<Layout />}>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/books" element={<CatalogPage />} />
-                <Route path="/books/:id" element={<BookPage />} />
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/sign-in" element={<AuthPage mode="sign-in" />} />
-                <Route path="/sign-up" element={<AuthPage mode="sign-up" />} />
-                <Route path="/check-email" element={<CheckEmailPage />} />
-                <Route path="/verification-result" element={<VerificationResultPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
-                <Route element={<RequireSession />}>
-                  <Route path="/checkout" element={<CheckoutPage />} />
-                  <Route path="/checkout/return/:orderId" element={<CheckoutReturnPage />} />
-                  <Route path="/account/orders" element={<OrdersPage />} />
-                  <Route path="/account/orders/:id" element={<CustomerOrderPage />} />
-                  <Route path="/account/profile" element={<ProfilePage />} />
-                </Route>
-                <Route
-                  path="*"
-                  element={
-                    <PageContainer className="py-24 font-serif text-4xl">
-                      Page not found
-                    </PageContainer>
-                  }
-                />
-              </Route>
-              <Route element={<RequireWorkspaceAccess />}>
-                <Route path="/admin" element={<AdminLayout />}>
+    <Direction.Provider dir={direction}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <SessionBoundary>
+            <AdminAccessProvider>
+              <Routes>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/books" element={<CatalogPage />} />
+                  <Route path="/books/:id" element={<BookPage />} />
+                  <Route path="/cart" element={<CartPage />} />
+                  <Route path="/sign-in" element={<AuthPage mode="sign-in" />} />
+                  <Route path="/sign-up" element={<AuthPage mode="sign-up" />} />
+                  <Route path="/check-email" element={<CheckEmailPage />} />
+                  <Route path="/verification-result" element={<VerificationResultPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
+                  <Route element={<RequireSession />}>
+                    <Route path="/checkout" element={<CheckoutPage />} />
+                    <Route path="/checkout/return/:orderId" element={<CheckoutReturnPage />} />
+                    <Route path="/account/orders" element={<OrdersPage />} />
+                    <Route path="/account/orders/:id" element={<CustomerOrderPage />} />
+                    <Route path="/account/profile" element={<ProfilePage />} />
+                  </Route>
                   <Route
-                    index
+                    path="*"
                     element={
-                      <Suspense fallback={<BookLoader label="Loading dashboard…" />}>
-                        <DashboardPage />
-                      </Suspense>
+                      <PageContainer className="py-24 font-serif text-4xl">
+                        {t('common:pageNotFound')}
+                      </PageContainer>
                     }
                   />
-                  <Route path="books" element={<AdminBooksPage />} />
-                  <Route path="books/new" element={<BookFormPage />} />
-                  <Route path="books/:id/edit" element={<BookFormPage />} />
-                  <Route path="orders" element={<AdminOrdersPage />} />
-                  <Route path="orders/:id" element={<OrderPage />} />
-                  <Route element={<RequireWorkspaceAccess adminOnly />}>
-                    <Route path="activity" element={<ActivityPage />} />
-                    <Route path="books/:id/history" element={<BookHistoryPage />} />
-                    <Route path="users" element={<UsersPage />} />
-                    <Route path="users/:id" element={<UserPage />} />
-                    <Route path="customers" element={<LegacyUsersRedirect />} />
-                    <Route path="customers/:id" element={<LegacyUsersRedirect />} />
-                  </Route>
-                  <Route path="profile" element={<AdminProfilePage />} />
                 </Route>
-              </Route>
-            </Routes>
-          </AdminAccessProvider>
-        </SessionBoundary>
-      </BrowserRouter>
-    </TooltipProvider>
+                <Route element={<RequireWorkspaceAccess />}>
+                  <Route path="/admin" element={<AdminLayout />}>
+                    <Route
+                      index
+                      element={
+                        <Suspense fallback={<BookLoader label={t('common:loadingDashboard')} />}>
+                          <DashboardPage />
+                        </Suspense>
+                      }
+                    />
+                    <Route path="books" element={<AdminBooksPage />} />
+                    <Route path="books/new" element={<BookFormPage />} />
+                    <Route path="books/:id/edit" element={<BookFormPage />} />
+                    <Route path="orders" element={<AdminOrdersPage />} />
+                    <Route path="orders/:id" element={<OrderPage />} />
+                    <Route element={<RequireWorkspaceAccess adminOnly />}>
+                      <Route path="activity" element={<ActivityPage />} />
+                      <Route path="books/:id/history" element={<BookHistoryPage />} />
+                      <Route path="users" element={<UsersPage />} />
+                      <Route path="users/:id" element={<UserPage />} />
+                      <Route path="customers" element={<LegacyUsersRedirect />} />
+                      <Route path="customers/:id" element={<LegacyUsersRedirect />} />
+                    </Route>
+                    <Route path="profile" element={<AdminProfilePage />} />
+                  </Route>
+                </Route>
+              </Routes>
+            </AdminAccessProvider>
+          </SessionBoundary>
+        </BrowserRouter>
+      </TooltipProvider>
+    </Direction.Provider>
   )
 }

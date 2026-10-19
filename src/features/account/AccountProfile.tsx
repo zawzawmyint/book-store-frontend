@@ -1,3 +1,6 @@
+import { errorMessage } from '../../lib/i18n/errors'
+import { formatDate } from '../../lib/format'
+import { localized, message as msg, t, useI18n } from '../../lib/i18n'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -8,19 +11,23 @@ import { Button } from '../../app/components/ui/button'
 import { Alert, AlertDescription } from '../../app/components/ui/alert'
 
 const nameSchema = z.object({
-  name: z.string().trim().min(1, 'Enter your name.').max(120, 'Use 120 characters or fewer.'),
+  name: z
+    .string()
+    .trim()
+    .min(1, msg('storefront:enterYourName'))
+    .max(120, msg('storefront:use120CharactersOrFewer')),
 })
 const passwordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Enter your current password.'),
+    currentPassword: z.string().min(1, msg('storefront:enterYourCurrentPassword')),
     newPassword: z
       .string()
-      .min(8, 'Use at least 8 characters.')
-      .max(128, 'Use 128 characters or fewer.'),
+      .min(8, msg('storefront:useAtLeast8Characters'))
+      .max(128, msg('storefront:use128CharactersOrFewer')),
     confirmPassword: z.string(),
   })
   .refine((fields) => fields.newPassword === fields.confirmPassword, {
-    message: 'Enter the same password again.',
+    message: msg('storefront:enterTheSamePasswordAgain'),
     path: ['confirmPassword'],
   })
 
@@ -28,6 +35,8 @@ type NameFields = z.infer<typeof nameSchema>
 type PasswordFields = z.infer<typeof passwordSchema>
 
 export function AccountProfile({ tone }: { tone: 'store' | 'admin' }) {
+  useI18n()
+
   const { data: session, refetch } = authClient.useSession()
   const user = session?.user
   const [nameMessage, setNameMessage] = useState('')
@@ -54,11 +63,11 @@ export function AccountProfile({ tone }: { tone: 'store' | 'admin' }) {
     setNameMessage('')
     const result = await authClient.updateUser({ name: fields.name })
     if (result.error) {
-      setNameError(result.error.message || 'Unable to update your name.')
+      setNameError(errorMessage(result.error, 'storefront:unableToUpdateYourName'))
       return
     }
     await refetch()
-    setNameMessage('Name updated.')
+    setNameMessage(msg('storefront:nameUpdated'))
   }
 
   async function savePassword(fields: PasswordFields) {
@@ -70,11 +79,11 @@ export function AccountProfile({ tone }: { tone: 'store' | 'admin' }) {
       revokeOtherSessions: true,
     })
     if (result.error) {
-      setPasswordError(result.error.message || 'Unable to change your password.')
+      setPasswordError(errorMessage(result.error, 'storefront:unableToChangeYourPassword'))
       return
     }
     passwordForm.reset()
-    setPasswordMessage('Password changed.')
+    setPasswordMessage(msg('storefront:passwordChanged'))
   }
 
   if (!user) return null
@@ -82,84 +91,100 @@ export function AccountProfile({ tone }: { tone: 'store' | 'admin' }) {
     <>
       <dl className="mt-8 space-y-4 text-sm">
         <div>
-          <dt className={labelClass}>Email</dt>
-          <dd className="mt-1">{user.email}</dd>
+          <dt className={labelClass}>{t('storefront:email')}</dt>
+          <dd className="mt-1">
+            <bdi dir="ltr">{localized(user.email)}</bdi>
+          </dd>
         </div>
         <div>
-          <dt className={labelClass}>Member since</dt>
-          <dd className="mt-1">{new Date(user.createdAt).toLocaleDateString()}</dd>
+          <dt className={labelClass}>{t('storefront:memberSince')}</dt>
+          <dd className="mt-1">{localized(formatDate(new Date(user.createdAt)))}</dd>
         </div>
       </dl>
-      <form noValidate onSubmit={nameForm.handleSubmit(saveName)} className="mt-10 max-w-md space-y-5">
+      <form
+        noValidate
+        onSubmit={nameForm.handleSubmit(saveName)}
+        className="mt-10 max-w-md space-y-5"
+      >
         <FormField
           id="profile-name"
-          label="Full name"
+          label={t('storefront:fullName')}
           autoComplete="name"
           required
           maxLength={120}
           {...nameForm.register('name')}
-          error={nameForm.formState.errors.name?.message}
+          error={localized(nameForm.formState.errors.name?.message)}
         />
         {nameError && (
           <Alert role="alert" variant="destructive" className={alertClass}>
-            <AlertDescription>{nameError}</AlertDescription>
+            <AlertDescription>{localized(nameError)}</AlertDescription>
           </Alert>
         )}
         {nameMessage && (
           <Alert role="status">
-            <AlertDescription>{nameMessage}</AlertDescription>
+            <AlertDescription>{localized(nameMessage)}</AlertDescription>
           </Alert>
         )}
         <Button type="submit" disabled={nameForm.formState.isSubmitting}>
-          {nameForm.formState.isSubmitting ? 'Saving…' : 'Save name'}
+          {localized(
+            nameForm.formState.isSubmitting ? t('storefront:saving') : t('storefront:saveName'),
+          )}
         </Button>
       </form>
-      <form noValidate onSubmit={passwordForm.handleSubmit(savePassword)} className="mt-12 max-w-md space-y-5">
+      <form
+        noValidate
+        onSubmit={passwordForm.handleSubmit(savePassword)}
+        className="mt-12 max-w-md space-y-5"
+      >
         <h2 className={tone === 'store' ? 'font-serif text-3xl' : 'text-lg font-semibold'}>
-          Change password
+          {t('storefront:changePassword')}
         </h2>
         <FormField
           id="profile-current-password"
-          label="Current password"
+          label={t('storefront:currentPassword')}
           type="password"
           autoComplete="current-password"
           required
           disabled={passwordForm.formState.isSubmitting}
           {...passwordForm.register('currentPassword')}
-          error={passwordForm.formState.errors.currentPassword?.message}
+          error={localized(passwordForm.formState.errors.currentPassword?.message)}
         />
         <FormField
           id="profile-new-password"
-          label="New password"
+          label={t('storefront:newPassword')}
           type="password"
           autoComplete="new-password"
           required
           disabled={passwordForm.formState.isSubmitting}
           {...passwordForm.register('newPassword')}
-          error={passwordForm.formState.errors.newPassword?.message}
+          error={localized(passwordForm.formState.errors.newPassword?.message)}
         />
         <FormField
           id="profile-confirm-password"
-          label="Confirm new password"
+          label={t('storefront:confirmNewPassword')}
           type="password"
           autoComplete="new-password"
           required
           disabled={passwordForm.formState.isSubmitting}
           {...passwordForm.register('confirmPassword')}
-          error={passwordForm.formState.errors.confirmPassword?.message}
+          error={localized(passwordForm.formState.errors.confirmPassword?.message)}
         />
         {passwordError && (
           <Alert role="alert" variant="destructive" className={alertClass}>
-            <AlertDescription>{passwordError}</AlertDescription>
+            <AlertDescription>{localized(passwordError)}</AlertDescription>
           </Alert>
         )}
         {passwordMessage && (
           <Alert role="status">
-            <AlertDescription>{passwordMessage}</AlertDescription>
+            <AlertDescription>{localized(passwordMessage)}</AlertDescription>
           </Alert>
         )}
         <Button type="submit" disabled={passwordForm.formState.isSubmitting}>
-          {passwordForm.formState.isSubmitting ? 'Changing…' : 'Change password'}
+          {localized(
+            passwordForm.formState.isSubmitting
+              ? t('storefront:changing')
+              : t('storefront:changePassword'),
+          )}
         </Button>
       </form>
     </>

@@ -89,7 +89,7 @@ it('preserves books added while payment was open', async () => {
 it('never trusts a success query hint when the server says Pending', async () => {
   useCartStore.setState({ items: [item] })
   mount('PENDING')
-  await screen.findByText('Payment pending · USD')
+  await screen.findByText((_, element) => element?.tagName === 'P' && element.textContent === 'Payment pending · USD')
   expect(screen.queryByRole('heading', { name: 'Payment confirmed' })).toBeNull()
   expect(screen.getByRole('button', { name: 'Resume payment' })).toBeTruthy()
   expect(useCartStore.getState().items).toEqual([item])
@@ -106,7 +106,7 @@ it('retires only the matching server-confirmed expired attempt and preserves the
   const previous = checkoutAttempt('return-reader', [item], testReviewedCheckout, '7').requestKey
   const other = checkoutAttempt('other-reader', [item], testReviewedCheckout, '7').requestKey
   mount('EXPIRED')
-  await screen.findByText('Payment expired · USD')
+  await screen.findByText((_, element) => element?.tagName === 'P' && element.textContent === 'Payment expired · USD')
   expect(useCartStore.getState().items).toEqual([item])
   expect(checkoutAttempt('return-reader', [item], testReviewedCheckout).requestKey).not.toBe(
     previous,
@@ -116,6 +116,6 @@ it('retires only the matching server-confirmed expired attempt and preserves the
 it('does not retire a saved attempt for a different order on expiry', async () => {
   const previous = checkoutAttempt('return-reader', [item], testReviewedCheckout, '8').requestKey
   mount('EXPIRED')
-  await screen.findByText('Payment expired · USD')
+  await screen.findByText((_, element) => element?.tagName === 'P' && element.textContent === 'Payment expired · USD')
   expect(checkoutAttempt('return-reader', [item], testReviewedCheckout).requestKey).toBe(previous)
 })

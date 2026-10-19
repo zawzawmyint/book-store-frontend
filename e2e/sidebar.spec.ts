@@ -24,7 +24,7 @@ test('desktop sidebar collapses, preserves navigation and search, and restores i
   await page.getByRole('button', { name: 'Close dialog', exact: true }).focus()
   await page.keyboard.press('Control+b')
   await expect(sidebar).toHaveAttribute('data-state', 'collapsed')
-  await page.getByRole('combobox').press('Escape')
+  await page.getByRole('combobox', { name: 'Search books and orders' }).press('Escape')
   await page.reload()
   await expect(sidebar).toHaveAttribute('data-state', 'collapsed')
   await page.screenshot({ path: 'test-results/admin-sidebar-collapsed.png' })

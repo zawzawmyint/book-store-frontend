@@ -1,23 +1,33 @@
 'use client'
+import { localized, t, useI18n } from '../../../lib/i18n'
 
 import * as React from 'react'
 import { cn } from '../../../lib/utils'
 import { XIcon } from 'lucide-react'
 import { Dialog as SheetPrimitive } from 'radix-ui'
+import { LanguageSwitcher } from '../LanguageSwitcher'
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
+  useI18n()
+
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
 }
 
 function SheetTrigger({ ...props }: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
+  useI18n()
+
   return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />
 }
 
 function SheetClose({ ...props }: React.ComponentProps<typeof SheetPrimitive.Close>) {
+  useI18n()
+
   return <SheetPrimitive.Close data-slot="sheet-close" {...props} />
 }
 
 function SheetPortal({ ...props }: React.ComponentProps<typeof SheetPrimitive.Portal>) {
+  useI18n()
+
   return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />
 }
 
@@ -25,6 +35,8 @@ function SheetOverlay({
   className,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Overlay>) {
+  useI18n()
+
   return (
     <SheetPrimitive.Overlay
       data-slot="sheet-overlay"
@@ -47,13 +59,15 @@ function SheetContent({
   side?: 'top' | 'right' | 'bottom' | 'left'
   showCloseButton?: boolean
 }) {
+  useI18n()
+
   return (
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          'fixed z-50 flex flex-col gap-4 bg-background shadow-lg transition ease-in-out data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:animate-in data-[state=open]:duration-500',
+          'fixed z-50 flex flex-col gap-4 overflow-y-auto bg-background shadow-lg transition ease-in-out data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:animate-in data-[state=open]:duration-500',
           side === 'right' &&
             'inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm',
           side === 'left' &&
@@ -66,11 +80,14 @@ function SheetContent({
         )}
         {...props}
       >
-        {children}
+        <div className="flex justify-end px-4 pt-3 pe-12">
+          <LanguageSwitcher />
+        </div>
+        {localized(children)}
         {showCloseButton && (
-          <SheetPrimitive.Close className="absolute top-4 right-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-sidebar-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-sidebar-accent">
+          <SheetPrimitive.Close className="absolute top-4 end-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-sidebar-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-sidebar-accent">
             <XIcon className="size-4" />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t('common:close')}</span>
           </SheetPrimitive.Close>
         )}
       </SheetPrimitive.Content>
@@ -79,6 +96,8 @@ function SheetContent({
 }
 
 function SheetHeader({ className, ...props }: React.ComponentProps<'div'>) {
+  useI18n()
+
   return (
     <div
       data-slot="sheet-header"
@@ -89,6 +108,8 @@ function SheetHeader({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 function SheetFooter({ className, ...props }: React.ComponentProps<'div'>) {
+  useI18n()
+
   return (
     <div
       data-slot="sheet-footer"
@@ -99,13 +120,12 @@ function SheetFooter({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 function SheetTitle({ className, ...props }: React.ComponentProps<typeof SheetPrimitive.Title>) {
+  useI18n()
+
   return (
     <SheetPrimitive.Title
       data-slot="sheet-title"
-      className={cn(
-        'font-semibold text-sidebar-foreground',
-        className,
-      )}
+      className={cn('font-semibold text-sidebar-foreground', className)}
       {...props}
     />
   )
@@ -115,6 +135,8 @@ function SheetDescription({
   className,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Description>) {
+  useI18n()
+
   return (
     <SheetPrimitive.Description
       data-slot="sheet-description"

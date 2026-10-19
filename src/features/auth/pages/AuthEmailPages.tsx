@@ -1,3 +1,4 @@
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -15,46 +16,57 @@ const emailSchema = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .pipe(z.email('Enter a valid email address.').max(254, 'Use 254 characters or fewer.')),
+    .pipe(
+      z
+        .email(msg('storefront:enterAValidEmailAddress'))
+        .max(254, msg('storefront:use254CharactersOrFewer')),
+    ),
 })
 const passwordSchema = z
   .object({
     password: z
       .string()
-      .min(8, 'Use at least 8 characters.')
-      .max(128, 'Use 128 characters or fewer.'),
+      .min(8, msg('storefront:useAtLeast8Characters'))
+      .max(128, msg('storefront:use128CharactersOrFewer')),
     confirmation: z.string(),
   })
   .refine((fields) => fields.password === fields.confirmation, {
-    message: 'Passwords must match.',
+    message: msg('storefront:passwordsMustMatch'),
     path: ['confirmation'],
   })
-const acceptedMessage =
-  'If this address is eligible, an email has been requested. Check your inbox and spam folder.'
+const acceptedMessage = msg('storefront:ifThisAddressIsEligibleAnEmailHasBeenRequestedCheck')
 
 function EmailShell({ title, children }: { title: string; children: React.ReactNode }) {
+  useI18n()
+
   return (
     <PageContainer className="mx-auto max-w-xl py-16 sm:py-24">
-      <p className="eyebrow mb-3">Your account</p>
-      <h1 className="font-serif text-4xl sm:text-5xl">{title}</h1>
-      <div className="mt-6 space-y-5 text-sm leading-6">{children}</div>
+      <p className="eyebrow mb-3">{t('storefront:yourAccount')}</p>
+      <h1 className="font-serif text-4xl sm:text-5xl">
+        <bdi dir="auto">{localized(title)}</bdi>
+      </h1>
+      <div className="mt-6 space-y-5 text-sm leading-6">{localized(children)}</div>
     </PageContainer>
   )
 }
 function Feedback({ error, message }: { error: string; message: string }) {
+  useI18n()
+
   return (
     <>
       {error && (
         <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{localized(error)}</AlertDescription>
         </Alert>
       )}
-      {message && <p role="status">{message}</p>}
+      {message && <p role="status">{localized(message)}</p>}
     </>
   )
 }
 
 function EmailRequestPage({ recovery }: { recovery: boolean }) {
+  useI18n()
+
   const [params] = useSearchParams()
   const returnTo = safeReturnTo(params.get('returnTo'))
   const [error, setError] = useState('')
@@ -100,80 +112,100 @@ function EmailRequestPage({ recovery }: { recovery: boolean }) {
       if (result.error) {
         if (result.error.status === 429) {
           setCooldown(retryAfter)
-          setError('Too many requests. Wait before trying again.')
-        } else setError('Unable to request an email. Please try again.')
+          setError(msg('storefront:tooManyRequestsWaitBeforeTryingAgain'))
+        } else setError(msg('storefront:unableToRequestAnEmailPleaseTryAgain'))
         return
       }
       setMessage(acceptedMessage)
       if (!recovery) setCooldown(60)
     } catch {
-      setError('Unable to connect. Check your connection and try again.')
+      setError(msg('storefront:unableToConnectCheckYourConnectionAndTryAgain'))
     }
   }
   return (
-    <EmailShell title={recovery ? 'Forgot password?' : 'Check your email'}>
+    <EmailShell
+      title={localized(recovery ? t('storefront:forgotPassword') : t('storefront:checkYourEmail'))}
+    >
       <p>
-        {recovery
-          ? 'Request a link to choose a new password.'
-          : 'Use the verification link before signing in. Links expire after one hour. You can request another email below.'}
+        {localized(
+          recovery
+            ? t('storefront:requestALinkToChooseANewPassword')
+            : t('storefront:useTheVerificationLinkBeforeSigningInLinksExpireAfterOne'),
+        )}
       </p>
       <form noValidate onSubmit={handleSubmit(submit)} className="space-y-5">
         <FormField
           id="email-request"
-          label="Email address"
+          label={t('storefront:emailAddress')}
           type="email"
           autoComplete="email"
           required
           maxLength={254}
           {...register('email')}
-          error={errors.email?.message}
+          error={localized(errors.email?.message)}
         />
-        <Feedback error={error} message={message} />
+        <Feedback error={localized(error)} message={message} />
         <Button type="submit" disabled={isSubmitting || cooldown > 0} className="w-full">
-          {isSubmitting
-            ? 'Please wait…'
-            : cooldown > 0
-              ? `Resend in ${cooldown}s`
-              : recovery
-                ? 'Request reset link'
-                : 'Resend verification email'}
+          {localized(
+            isSubmitting
+              ? t('storefront:pleaseWait')
+              : cooldown > 0
+                ? t('storefront:resendInValueS', { value0: cooldown })
+                : recovery
+                  ? t('storefront:requestResetLink')
+                  : t('storefront:resendVerificationEmail'),
+          )}
         </Button>
       </form>
       <Link className="text-primary underline" to={signInPath(returnTo)}>
-        Sign in
+        {t('storefront:signIn')}
       </Link>
     </EmailShell>
   )
 }
 export function CheckEmailPage() {
+  useI18n()
+
   return <EmailRequestPage recovery={false} />
 }
 export function ForgotPasswordPage() {
+  useI18n()
+
   return <EmailRequestPage recovery />
 }
 
 export function VerificationResultPage() {
+  useI18n()
+
   const [params] = useSearchParams()
   const returnTo = safeReturnTo(params.get('returnTo'))
   const failed = params.has('error')
   return (
-    <EmailShell title={failed ? 'Verification link unavailable' : 'Email verification'}>
+    <EmailShell
+      title={localized(
+        failed ? t('storefront:verificationLinkUnavailable') : t('storefront:emailVerification'),
+      )}
+    >
       <p>
-        {failed
-          ? 'This link is invalid or expired. Request a new verification email to continue.'
-          : 'Sign in to check your account and continue. If your email still needs verification, you can request a new link there.'}
+        {localized(
+          failed
+            ? t('storefront:thisLinkIsInvalidOrExpiredRequestANewVerificationEmail')
+            : t('storefront:signInToCheckYourAccountAndContinueIfYourEmail'),
+        )}
       </p>
       <Link
         className="text-primary underline"
         to={failed ? authEmailPath('/check-email', returnTo) : signInPath(returnTo)}
       >
-        {failed ? 'Request a verification email' : 'Sign in'}
+        {localized(failed ? t('storefront:requestAVerificationEmail') : t('storefront:signIn'))}
       </Link>
     </EmailShell>
   )
 }
 
 export function ResetPasswordPage() {
+  useI18n()
+
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const returnTo = safeReturnTo(params.get('returnTo'))
@@ -191,61 +223,68 @@ export function ResetPasswordPage() {
     try {
       const result = await authClient.resetPassword({ newPassword: password, token: token ?? '' })
       if (result.error) {
-        if (result.error.status === 429) setError('Too many requests. Wait before trying again.')
+        if (result.error.status === 429)
+          setError(msg('storefront:tooManyRequestsWaitBeforeTryingAgain'))
         else if (result.error.status >= 500)
-          setError('Unable to reset your password. Please try again.')
+          setError(msg('storefront:unableToResetYourPasswordPleaseTryAgain'))
         else setInvalid(true)
         return
       }
       setDone(true)
       navigate(authEmailPath('/reset-password', returnTo), { replace: true })
     } catch {
-      setError('Unable to connect. Check your connection and try again.')
+      setError(msg('storefront:unableToConnectCheckYourConnectionAndTryAgain'))
     }
   }
   return (
     <EmailShell
-      title={done ? 'Password reset' : invalid ? 'Reset link unavailable' : 'Choose a new password'}
+      title={localized(
+        done
+          ? t('storefront:passwordReset')
+          : invalid
+            ? t('storefront:resetLinkUnavailable')
+            : t('storefront:chooseANewPassword'),
+      )}
     >
       {done ? (
         <>
-          <p>Your password has been updated. Sign in with your new password.</p>
+          <p>{t('storefront:yourPasswordHasBeenUpdatedSignInWithYourNewPassword')}</p>
           <Link className="text-primary underline" to={signInPath(returnTo)}>
-            Sign in
+            {t('storefront:signIn')}
           </Link>
         </>
       ) : invalid ? (
         <>
-          <p>This reset link is invalid, expired, or already used.</p>
+          <p>{t('storefront:thisResetLinkIsInvalidExpiredOrAlreadyUsed')}</p>
           <Link className="text-primary underline" to={authEmailPath('/forgot-password', returnTo)}>
-            Request a new reset link
+            {t('storefront:requestANewResetLink')}
           </Link>
         </>
       ) : (
         <form noValidate onSubmit={handleSubmit(submit)} className="space-y-5">
           <FormField
             id="reset-password"
-            label="New password"
+            label={t('storefront:newPassword')}
             type="password"
             autoComplete="new-password"
             required
             maxLength={128}
             {...register('password')}
-            error={errors.password?.message}
+            error={localized(errors.password?.message)}
           />
           <FormField
             id="reset-confirmation"
-            label="Confirm new password"
+            label={t('storefront:confirmNewPassword')}
             type="password"
             autoComplete="new-password"
             required
             maxLength={128}
             {...register('confirmation')}
-            error={errors.confirmation?.message}
+            error={localized(errors.confirmation?.message)}
           />
-          <Feedback error={error} message="" />
+          <Feedback error={localized(error)} message="" />
           <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? 'Please wait…' : 'Reset password'}
+            {localized(isSubmitting ? t('storefront:pleaseWait') : t('storefront:resetPassword'))}
           </Button>
         </form>
       )}

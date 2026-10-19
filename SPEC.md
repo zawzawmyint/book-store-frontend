@@ -1,5 +1,7 @@
 # The Quiet Shelf storefront specification
 
+> **Proposed localization:** [Storefront and admin localization](specs/localization/SPEC.md) delivers English, Arabic, Thai, and Simplified Chinese interface translation, locale-aware USD/date formatting, browser-local language selection, and Arabic RTL using i18next/react-i18next. The implementation is delivered, while final acceptance remains pending actual 200% zoom, broad visual/native-language review, and a coordinated PostgreSQL browser run. See the [implementation plan](docs/superpowers/plans/2026-10-19-localization.md).
+
 > **Implemented book cover uploads:** [Book covers](specs/book-cover-uploads/SPEC.md) documents the staff cover editor, real-image presentation, guest lookup, and existing-cover fallback.
 
 > **Proposed UI improvement:** [Bag and checkout UI](specs/bag-checkout-ui/SPEC.md) documents the delivered bag and checkout presentation changes: clearer line prices, responsive delivery/review layouts, synchronized summaries, touch controls, and compact legacy-bag recovery. Unit, lint, build, SQLite, and PostgreSQL verification completed; the feature remains **Proposed** because actual 200% browser-zoom validation could not be performed.
@@ -36,6 +38,35 @@
 > **Implemented shared loading UI:** [Shared book loading indicator](specs/loading-ui/SPEC.md) supplies contextual, motion-aware loading status across storefront and workspace states without changing request or session behavior.
 
 ## Purpose and current scope
+
+### Delivered pending acceptance: storefront and workspace localization
+
+The storefront and Staff/Admin workspace bundle `i18next` 26.5.2 and
+`react-i18next` 17.1.0 with `common`, `storefront`, and `admin` JSON namespaces
+for `en`, `ar`, `th`, and `zh-Hans`. `src/lib/i18n` initializes before React,
+validates the browser-local `book-store-language` preference, falls back to English,
+updates document language/direction/title, and keeps blocked storage usable in memory.
+The headers expose a 44px icon-only language control with a translated accessible
+name and self-identifying native-language dropdown options; the same control is also
+available within shared dialog/sheet content.
+
+Changing language updates application-owned copy, validation/errors, navigation,
+activity/status labels, charts, and display formatting without changing routes,
+queries, canonical API values, persisted cart/checkout records, authorization, or
+transaction identity. Dates use browser-local time and the Gregorian calendar; money
+remains USD; dashboard totals retain exact cents. Arabic sets RTL direction, uses
+logical layout and correctly directed portals, moves workspace navigation to the
+right, and preserves mixed-script content direction. Persisted catalog and customer
+content, backend emails, and hosted Stripe Checkout remain outside this frontend
+scope.
+
+Automated evidence includes 314 frontend tests in 58 files, clean lint, a production
+build (with the existing Vite chunk-size warning), and all 79 SQLite Chromium
+journeys passing in 7.9 minutes. The sibling backend's PostgreSQL browser command
+currently times out during its pre-browser compiled SQLite readiness smoke, so it has
+not supplied PostgreSQL parity evidence.
+Actual 200% browser zoom, comprehensive visual review, and native semantic review are
+also outstanding; therefore the linked feature specification remains Proposed.
 
 ### Implemented: collapsible workspace sidebar
 

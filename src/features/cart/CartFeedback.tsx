@@ -1,16 +1,19 @@
+import { localized, message as msg, t, useI18n } from '../../lib/i18n'
 import { useCartStore } from './cart-store'
 import { Button } from '../../app/components/ui/button'
 
 export function CartFeedback() {
+  useI18n()
+
   const state = useCartStore()
   const failed = state.status === 'error' || state.status === 'conflict'
   const announcement =
     state.status === 'loading'
-      ? 'Loading your bag…'
+      ? msg('storefront:loadingYourBag')
       : state.status === 'saving'
-        ? 'Saving your bag…'
+        ? msg('storefront:savingYourBag')
         : state.status === 'merging'
-          ? 'Merging your guest bag…'
+          ? msg('storefront:mergingYourGuestBag')
           : !failed
             ? state.message
             : ''
@@ -27,8 +30,8 @@ export function CartFeedback() {
   const routine =
     state.status === 'loading' ||
     state.status === 'saving' ||
-    announcement === 'Bag saved.' ||
-    announcement === 'Your bag is up to date.'
+    announcement === msg('storefront:bagSaved') ||
+    announcement === msg('storefront:yourBagIsUpToDate')
   const actionable =
     failed ||
     !!state.validationMessage ||
@@ -40,55 +43,57 @@ export function CartFeedback() {
   if (!actionable)
     return announcement ? (
       <p className="sr-only" role="status" aria-live="polite">
-        {announcement}
+        {localized(announcement)}
       </p>
     ) : null
   return (
     <div className="space-y-3 py-4">
       {announcement && (
         <p className={routine ? 'sr-only' : undefined} role="status" aria-live="polite">
-          {announcement}
+          {localized(announcement)}
         </p>
       )}
       {failed && (
         <div role="alert">
-          <p>{state.message}</p>
+          <p>{localized(state.message)}</p>
           <Button className="mt-3" onClick={() => void state.retry()}>
-            {state.retryKind === 'merge'
-              ? 'Retry merge'
-              : state.retryKind === 'save'
-                ? 'Retry save'
-                : 'Retry loading bag'}
+            {localized(
+              state.retryKind === 'merge'
+                ? t('storefront:retryMerge')
+                : state.retryKind === 'save'
+                  ? t('storefront:retrySave')
+                  : t('storefront:retryLoadingBag'),
+            )}
           </Button>
         </div>
       )}
-      {state.validationMessage && <p role="alert">{state.validationMessage}</p>}
-      {state.storageWarning && <p role="status">{state.storageWarning}</p>}
+      {state.validationMessage && <p role="alert">{localized(state.validationMessage)}</p>}
+      {state.storageWarning && <p role="status">{localized(state.storageWarning)}</p>}
       {state.legacyUnreadable && (
         <div role="alert">
-          <p>This browser's saved bag could not be read. Recovery is unavailable.</p>
+          <p>{t('storefront:thisBrowserSSavedBagCouldNotBeReadRecoveryIs')}</p>
           <Button variant="outline" onClick={state.discardLegacy}>
-            Start a fresh guest bag
+            {t('storefront:startAFreshGuestBag')}
           </Button>
         </div>
       )}
       {state.legacyItems.length > 0 && (
         <section
           className="border border-border bg-muted/40 p-4 text-sm"
-          aria-label="Saved browser bag"
+          aria-label={t('storefront:savedBrowserBag')}
         >
-          <h2 className="font-semibold">An older bag was found on this browser</h2>
+          <h2 className="font-semibold">{t('storefront:anOlderBagWasFoundOnThisBrowser')}</h2>
           <p className="mt-1 text-muted-foreground">
-            It may belong to someone else. Add only books you recognize to your account.
+            {t('storefront:itMayBelongToSomeoneElseAddOnlyBooksYouRecognize')}
           </p>
           <details className="mt-2">
             <summary className="w-fit cursor-pointer py-2 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring">
-              View saved books
+              {t('storefront:viewSavedBooks')}
             </summary>
             <ul className="my-2 space-y-1">
               {state.legacyItems.map((item) => (
                 <li key={item.id}>
-                  {item.quantity} × {item.title}
+                  {localized(item.quantity)} × <bdi dir="auto">{localized(item.title)}</bdi>
                 </li>
               ))}
             </ul>
@@ -101,13 +106,13 @@ export function CartFeedback() {
                 disabled={state.status !== 'ready'}
                 onClick={() => void state.importLegacy()}
               >
-                Add saved bag to my account
+                {t('storefront:addSavedBagToMyAccount')}
               </Button>
             ) : (
-              <p>Sign in to choose whether to import this saved bag.</p>
+              <p>{t('storefront:signInToChooseWhetherToImportThisSavedBag')}</p>
             )}
             <Button variant="ghost" className="min-h-11 px-3 py-2" onClick={state.discardLegacy}>
-              Discard saved bag
+              {t('storefront:discardSavedBag')}
             </Button>
           </div>
         </section>
@@ -116,11 +121,19 @@ export function CartFeedback() {
         <ul role="status" aria-live="polite" className="text-sm">
           {state.notices.map((notice, index) => (
             <li key={`${notice.bookId}:${index}`}>
-              {notice.reason === 'UNAVAILABLE'
-                ? `Book ${notice.bookId} could not be added because it is unavailable.`
-                : notice.reason === 'QUANTITY_LIMIT'
-                  ? `Book ${notice.bookId} was limited to available stock or ten copies.`
-                  : `Book ${notice.bookId} could not be added because your bag has twenty books.`}
+              {localized(
+                notice.reason === 'UNAVAILABLE'
+                  ? t('storefront:bookValueCouldNotBeAddedBecauseItIsUnavailable', {
+                      value0: notice.bookId,
+                    })
+                  : notice.reason === 'QUANTITY_LIMIT'
+                    ? t('storefront:bookValueWasLimitedToAvailableStockOrTenCopies', {
+                        value0: notice.bookId,
+                      })
+                    : t('storefront:bookValueCouldNotBeAddedBecauseYourBagHasTwenty', {
+                        value0: notice.bookId,
+                      }),
+              )}
             </li>
           ))}
         </ul>

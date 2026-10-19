@@ -1,4 +1,16 @@
 import { expect, it } from 'vitest'
+import { localize, setLanguage } from '../../lib/i18n'
+import { bookSaveNotice } from './book-form'
+
+it('restores only known serializable book-save notice kinds after reload', async () => {
+  const saved = JSON.parse(JSON.stringify({ kind: 'book-updated' }))
+  expect(localize(bookSaveNotice(saved))).toBe('Book updated.')
+  await setLanguage('zh-Hans')
+  expect(localize(bookSaveNotice(saved))).not.toContain('@i18n/')
+  expect(bookSaveNotice({ kind: 'common:adminRole' })).toBe('')
+  expect(bookSaveNotice('Book updated.')).toBe('')
+  await setLanguage('en')
+})
 
 it('parses prices exactly and rejects invalid admin values', async () => {
   const module = await import('./book-form').catch(() => null)

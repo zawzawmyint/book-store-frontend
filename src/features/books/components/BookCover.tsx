@@ -1,3 +1,4 @@
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { useState } from 'react'
 
 export type CoverImage = { url: string; width: number; height: number }
@@ -36,6 +37,8 @@ export function BookCover({
   decorative?: boolean
   eager?: boolean
 }) {
+  useI18n()
+
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
   if (cover && failedUrl !== cover.url)
     return (
@@ -49,7 +52,9 @@ export function BookCover({
       >
         <img
           src={cover.url}
-          alt={decorative || compact ? '' : `Cover of ${title}`}
+          alt={localized(
+            decorative || compact ? '' : t('storefront:coverOfValue', { value0: title }),
+          )}
           width={cover.width}
           height={cover.height}
           loading={large || eager ? 'eager' : 'lazy'}
@@ -71,7 +76,7 @@ export function BookCover({
       >
         <span className="absolute inset-y-0 left-0 w-1 bg-black/15" />
         <span className="border-y border-current/40 py-1 font-cover text-lg">
-          {title.charAt(0)}
+          {localized(title.charAt(0))}
         </span>
       </div>
     )
@@ -80,26 +85,28 @@ export function BookCover({
       className={`book-cover @container relative flex aspect-[0.72] w-full flex-col overflow-hidden rounded-[3px] px-[12%] py-[12%] text-center shadow-[6px_8px_16px_rgba(43,35,28,.19)] ${large ? 'max-w-[310px]' : ''}`}
       style={{ backgroundColor: background, color: accent }}
       aria-hidden={decorative || undefined}
-      aria-label={decorative ? undefined : `Cover design for ${title}`}
+      aria-label={localized(
+        decorative ? undefined : t('storefront:coverDesignForValue', { value0: title }),
+      )}
       role={decorative ? undefined : 'img'}
     >
       <span className="absolute inset-y-0 left-0 w-[5%] bg-black/15" />
       <span className="hidden text-[9px] font-semibold uppercase tracking-[.32em] opacity-75 @min-[140px]:block sm:text-[10px]">
-        The Library Edit
+        {t('storefront:theLibraryEdit')}
       </span>
       <div className="my-auto border-y border-current/40 py-3 @min-[180px]:py-6">
         <span
           className="line-clamp-4 break-words font-cover text-[clamp(1.1rem,2.7vw,2rem)] leading-[1.05] tracking-tight"
           style={{ fontSize: large ? 'clamp(1.5rem, 3vw, 2.7rem)' : undefined }}
         >
-          {title}
+          <bdi dir="auto">{localized(title)}</bdi>
         </span>
       </div>
       <span
-        title={author}
+        title={localized(author)}
         className="line-clamp-3 break-words text-[10px] font-medium uppercase tracking-[.18em] sm:text-[11px]"
       >
-        {author}
+        <bdi dir="auto">{localized(author)}</bdi>
       </span>
     </div>
   )

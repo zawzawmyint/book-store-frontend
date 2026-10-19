@@ -1,3 +1,4 @@
+import { message as msg } from '../../lib/i18n'
 export type CoverResult = {
   bookId: string
   cover: { url: string; width: number; height: number } | null
@@ -35,7 +36,7 @@ async function changeCover(id: string, revision: number, file?: File): Promise<C
   if (!response.ok)
     throw new CoverRequestError(
       result.error?.code ?? 'COVER_UNAVAILABLE',
-      result.error?.message ?? 'Unable to save the cover. Please try again.',
+      result.error?.message ?? msg('admin:unableToSaveTheCoverPleaseTryAgain'),
     )
   return result
 }

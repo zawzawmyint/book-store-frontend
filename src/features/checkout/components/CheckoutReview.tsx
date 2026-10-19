@@ -1,3 +1,4 @@
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { Link } from 'react-router-dom'
 import type { QuoteCheckoutQuery } from '../../../generated/graphql'
 import type { DeliveryAddress } from '../delivery-address'
@@ -20,16 +21,20 @@ export function CheckoutReview({
   onEditAddress,
   onContinuePayment,
 }: CheckoutReviewProps) {
+  useI18n()
+
   return (
-    <section className="space-y-6" aria-label="Reviewed order">
-      <h2 className="font-serif text-2xl">Review your order</h2>
+    <section className="space-y-6" aria-label={t('storefront:reviewedOrder')}>
+      <h2 className="font-serif text-2xl">{t('storefront:reviewYourOrder')}</h2>
       <CheckoutDestination address={address} />
       <CheckoutTotals amounts={quote} />
       <p className="text-xs leading-5 text-muted-foreground">
-        Review is not a reservation or delivery date guarantee.
+        {t('storefront:reviewIsNotAReservationOrDeliveryDateGuarantee')}
       </p>
       <Button className="min-h-11 w-full" disabled={paymentLoading} onClick={onContinuePayment}>
-        {paymentLoading ? 'Opening payment…' : 'Continue to payment'}
+        {localized(
+          paymentLoading ? t('storefront:openingPayment') : t('storefront:continueToPayment'),
+        )}
       </Button>
       <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
         <Button
@@ -38,11 +43,11 @@ export function CheckoutReview({
           disabled={paymentLoading}
           onClick={onEditAddress}
         >
-          Edit address
+          {t('storefront:editAddress')}
         </Button>
         {paymentLoading ? (
           <Button className="min-h-11 px-3 text-sm" variant="ghost" disabled>
-            Edit bag
+            {t('storefront:editBag')}
           </Button>
         ) : (
           <Button
@@ -50,7 +55,7 @@ export function CheckoutReview({
             asChild
             variant="ghost"
           >
-            <Link to="/cart">Edit bag</Link>
+            <Link to="/cart">{t('storefront:editBag')}</Link>
           </Button>
         )}
       </div>

@@ -280,7 +280,9 @@ it('retains form, cart and exact key after network failure', async () => {
   const { user } = mount(new Error('Disconnected'))
   await fill(user)
   await user.click(screen.getByRole('button', { name: 'Continue to payment' }))
-  await screen.findByText(/Disconnected/)
+  await screen.findByText(
+    /Payment setup could not be confirmed. Retry this exact attempt or check Orders./,
+  )
   expect(useCartStore.getState().items).toEqual([item])
   expect(screen.getByRole('button', { name: 'Retry payment setup' })).toBeTruthy()
   expect(JSON.parse(sessionStorage.getItem('book-store-checkout:ada')!).deliveryAddress).toEqual(
@@ -323,7 +325,7 @@ it('retains an attempted key when a BAD_USER_INPUT response may follow reservati
   const { user } = mount(undefined, undefined, 0, 'BAD_USER_INPUT')
   await fill(user)
   await user.click(screen.getByRole('button', { name: 'Continue to payment' }))
-  await screen.findByText('Price changed')
+  await screen.findByText('Please check the entered details and try again.')
   expect(screen.getByRole('button', { name: 'Retry payment setup' })).toBeTruthy()
   expect(JSON.parse(sessionStorage.getItem('book-store-checkout:ada')!).deliveryAddress).toEqual(
     address,

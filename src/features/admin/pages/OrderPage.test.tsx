@@ -193,7 +193,7 @@ it('blocks acceptance of pending new orders and permits paid orders', async () =
       },
     },
   ])
-  await screen.findByText('Payment pending · USD')
+  await screen.findByText((_, element) => element?.tagName === 'P' && element.textContent === 'Payment pending · USD')
   expect(screen.queryByRole('button', { name: 'Accept and prepare' })).toBeNull()
   expect(screen.getByRole('button', { name: 'Cancel request' })).toBeTruthy()
 })

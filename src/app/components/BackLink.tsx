@@ -1,3 +1,4 @@
+import { localized } from '../../lib/i18n'
 import type { ReactNode } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -15,7 +16,7 @@ export function BackLink({
   return (
     <Button asChild variant="link" className="back-link no-underline">
       <Link to={to} state={state}>
-        <ArrowLeft size={16} /> {children}
+        <ArrowLeft size={16} /> {localized(children)}
       </Link>
     </Button>
   )

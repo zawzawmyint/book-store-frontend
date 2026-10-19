@@ -1,3 +1,4 @@
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { AdminPageTable } from '../components/AdminPageTable'
 import { AdminFilterToolbar } from '../components/AdminFilterToolbar'
 import { AdminPageHeader } from '../components/AdminPageHeader'
@@ -22,12 +23,15 @@ import { Badge } from '../../../app/components/ui/badge'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { useAdminAccess, useAdminQueryError } from '../admin-access'
 import { useAdminPagination, useAdminPageCorrection } from '../use-admin-pagination'
+import { bookSaveNotice } from '../book-form'
 import { AdminFeedback } from '../components/AdminFeedback'
 import { StockDialog } from '../components/StockDialog'
 import { ArchiveBookDialog } from '../components/ArchiveBookDialog'
 import { BookRowActions } from '../components/BookRowActions'
 
 export function BooksPage() {
+  useI18n()
+
   const { params, page, limit, offset, changePage, changeParams } = useAdminPagination()
   const search = (params.get('search') ?? '').slice(0, 100)
   const filter =
@@ -55,7 +59,9 @@ export function BooksPage() {
     book: AdminBookFieldsFragment
     opener?: HTMLButtonElement | null
   }>()
-  const [notice, setNotice] = useState((location.state as { notice?: string } | null)?.notice ?? '')
+  const [notice, setNotice] = useState(() =>
+    bookSaveNotice((location.state as { notice?: unknown } | null)?.notice),
+  )
   const books = data?.adminBooks
   useAdminPageCorrection({ total: books?.total, loading })
   function saved(message: string) {
@@ -66,29 +72,29 @@ export function BooksPage() {
   return (
     <section>
       <AdminPageHeader
-        title="Manage books"
-        description="Manage your catalog, inventory, and book availability."
+        title={t('admin:manageBooks')}
+        description={t('admin:manageYourCatalogInventoryAndBookAvailability')}
         actions={
           <Button asChild>
             <Link to="new" state={{ returnTo: `/admin/books?${params}` }}>
-              Add book
+              {t('admin:addBook')}
             </Link>
           </Button>
         }
       />
       {notice && (
         <Alert role="status" className="my-4">
-          <AlertDescription>{notice}</AlertDescription>
+          <AlertDescription>{localized(notice)}</AlertDescription>
         </Alert>
       )}
       <AdminFilterToolbar
         search={search}
         onSearch={(value) => changeParams({ search: value, page: '' })}
-        searchLabel="Search books"
-        searchPlaceholder="Title, author, or genre"
+        searchLabel={t('admin:searchBooks')}
+        searchPlaceholder={t('admin:titleAuthorOrGenre')}
       >
         <div className="admin-toolbar-field">
-          <Label htmlFor="admin-catalog-state">Catalog state</Label>
+          <Label htmlFor="admin-catalog-state">{t('admin:catalogState')}</Label>
           <Select
             value={filter}
             onValueChange={(value) => changeParams({ filter: value, page: '' })}
@@ -97,9 +103,9 @@ export function BooksPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="admin-workspace">
-              <SelectItem value="ACTIVE">Active</SelectItem>
-              <SelectItem value="ARCHIVED">Archived</SelectItem>
-              <SelectItem value="ALL">All</SelectItem>
+              <SelectItem value="ACTIVE">{t('admin:active')}</SelectItem>
+              <SelectItem value="ARCHIVED">{t('admin:archived')}</SelectItem>
+              <SelectItem value="ALL">{t('admin:all')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -111,24 +117,24 @@ export function BooksPage() {
               changeParams({ low: checked === true ? 'true' : '', page: '' })
             }
           />
-          <Label htmlFor="admin-low-stock">Low stock only (5 or fewer)</Label>
+          <Label htmlFor="admin-low-stock">{t('admin:lowStockOnly5OrFewer')}</Label>
         </div>
       </AdminFilterToolbar>
-      <AdminFeedback loading={loading} error={error} retry={refetch} />
+      <AdminFeedback loading={loading} error={localized(error)} retry={refetch} />
       {!loading && !error && books && (
         <AdminPageTable
           columns={[
-            { label: 'Book' },
-            { label: 'Genre' },
-            { label: 'Price', numeric: true },
-            { label: 'Stock', numeric: true },
-            { label: 'State' },
-            { label: 'Actions' },
+            { label: t('common:labelBook') },
+            { label: t('common:labelGenre') },
+            { label: t('common:labelPrice'), numeric: true },
+            { label: t('common:labelStock'), numeric: true },
+            { label: t('common:labelState') },
+            { label: t('common:labelActions') },
           ]}
           items={books.items}
           rowKey={(book) => book.id}
-          label="books"
-          emptyMessage="No matching books."
+          label={t('admin:books2')}
+          emptyMessage={t('admin:noMatchingBooks')}
           page={page}
           total={books.total}
           onPageChange={changePage}
@@ -137,26 +143,39 @@ export function BooksPage() {
             <>
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <BookCover cover={book.cover} decorative id={book.id} title={book.title} author={book.author} compact />
+                  <BookCover
+                    cover={book.cover}
+                    decorative
+                    id={book.id}
+                    title={localized(book.title)}
+                    author={book.author}
+                    compact
+                  />
                   <div>
-                    <strong className="font-medium">{book.title}</strong>
-                    <p className="mt-1 text-muted-foreground">{book.author}</p>
+                    <strong className="font-medium">
+                      <bdi dir="auto">{localized(book.title)}</bdi>
+                    </strong>
+                    <p className="mt-1 text-muted-foreground">
+                      <bdi dir="auto">{localized(book.author)}</bdi>
+                    </p>
                   </div>
                 </div>
               </TableCell>
-              <TableCell>{book.genre}</TableCell>
-              <TableCell className="admin-numeric">{money(book.priceCents)}</TableCell>
+              <TableCell>
+                <bdi dir="auto">{localized(book.genre)}</bdi>
+              </TableCell>
+              <TableCell className="admin-numeric">{localized(money(book.priceCents))}</TableCell>
               <TableCell className="admin-numeric">
-                {book.stock}
+                {localized(book.stock)}
                 {book.stock <= 5 && (
-                  <Badge variant="destructive" className="ml-2">
-                    Low stock
+                  <Badge variant="destructive" className="ms-2">
+                    {t('admin:lowStock')}
                   </Badge>
                 )}
               </TableCell>
               <TableCell>
                 <Badge variant={book.archived ? 'secondary' : 'default'}>
-                  {book.archived ? 'Archived' : 'Active'}
+                  {localized(book.archived ? t('admin:archived') : t('admin:active'))}
                 </Badge>
               </TableCell>
               <TableCell>

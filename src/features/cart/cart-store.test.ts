@@ -1,3 +1,4 @@
+import { localize } from '../../lib/i18n'
 // @vitest-environment jsdom
 import { beforeEach, expect, it, vi } from 'vitest'
 import { createCartStore, type CartTransport, type ServerCart } from './cart-store'
@@ -40,7 +41,7 @@ it('confirms one complete guest increment and rejects limits with feedback', asy
   expect(await result).toBe(true)
   expect(await store.getState().add(book, 8)).toBe(false)
   expect(store.getState().items[0].quantity).toBe(3)
-  expect(store.getState().validationMessage).not.toBe('')
+  expect(localize(store.getState().validationMessage)).not.toBe('')
   expect(await store.getState().add({ ...book, stock: 4 }, 2)).toBe(false)
   expect(store.getState().items[0].quantity).toBe(3)
   for (const quantity of [0, -1, 1.5, NaN, Infinity])
@@ -73,7 +74,9 @@ it.each([false, true])(
     await store.getState().refresh()
     expect(await store.getState().add(book, 1)).toBe(false)
     expect(api.set).not.toHaveBeenCalled()
-    expect(store.getState().validationMessage).toContain(available ? 'stock' : 'unavailable')
+    expect(localize(store.getState().validationMessage)).toContain(
+      available ? 'stock' : 'unavailable',
+    )
     expect(store.getState().items[0].quantity).toBe(2)
   },
 )
@@ -107,7 +110,8 @@ it.each([3, 2])(
     expect(api.set).toHaveBeenCalledOnce()
     expect(api.merge).toHaveBeenCalledOnce()
     expect(store.getState().items[0].quantity).toBe(5)
-    if (acceptedQuantity === 2) expect(store.getState().validationMessage).toContain('adjusted')
+    if (acceptedQuantity === 2)
+      expect(localize(store.getState().validationMessage)).toContain('adjusted')
   },
 )
 it.each(['offline', 'conflict', 'validation', 'adjusted'])(
@@ -367,7 +371,7 @@ it('keeps guest actions usable and reports when persistence is unavailable', () 
     const store = createCartStore()
     store.getState().add(book)
     expect(store.getState().items[0].quantity).toBe(1)
-    expect(store.getState().storageWarning).toContain('reload')
+    expect(localize(store.getState().storageWarning)).toContain('reload')
   } finally {
     vi.restoreAllMocks()
   }
@@ -417,7 +421,7 @@ it('warns after reloading an unconfirmed ordinary edit without replaying it', as
   const reloaded = createCartStore()
   const next = transport()
   await reloaded.getState().identify('A', next)
-  expect(reloaded.getState().message).toContain('may not have been saved')
+  expect(localize(reloaded.getState().message)).toContain('may not have been saved')
   expect(next.set).not.toHaveBeenCalled()
 })
 
@@ -425,7 +429,7 @@ it('keeps legacy book selections when their old quantity exceeds the new ten-cop
   localStorage.setItem(CART_STORAGE_KEY, JSON.stringify([{ ...book, stock: 20, quantity: 12 }]))
   const store = createCartStore()
   expect(store.getState().legacyItems[0]).toMatchObject({ id: '1', quantity: 10 })
-  expect(store.getState().storageWarning).toContain('ten copies')
+  expect(localize(store.getState().storageWarning)).toContain('ten copies')
 })
 
 it('queues guest edits behind the same ownership lock used to claim merges', async () => {
@@ -507,7 +511,7 @@ it('allows repair after a definite stock validation rejection without replaying 
   store.getState().add(book)
   await vi.waitFor(() => expect(store.getState().status).toBe('ready'))
   expect(store.getState().items[0].available).toBe(false)
-  expect(store.getState().validationMessage).toContain('Stock changed')
+  expect(localize(store.getState().validationMessage)).toContain('Please check the entered details')
   api.set = vi.fn(async () => cart('2'))
   store.getState().update('1', 0)
   await vi.waitFor(() => expect(store.getState().items).toEqual([]))

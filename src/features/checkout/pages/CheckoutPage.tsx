@@ -1,3 +1,5 @@
+import { errorMessage } from '../../../lib/i18n/errors'
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { CombinedGraphQLErrors } from '@apollo/client'
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
@@ -48,6 +50,8 @@ type ReviewedQuote = {
 }
 
 export function CheckoutPage() {
+  useI18n()
+
   const { data: session, refetch: refreshSession } = authClient.useSession()
   return (
     <DeliveryCheckout
@@ -60,6 +64,8 @@ export function CheckoutPage() {
   )
 }
 function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessionProps) {
+  useI18n()
+
   const items = useCartStore((state) => state.items)
   const cartState = useCartStore()
   const ready = checkoutCartReady(cartState)
@@ -126,7 +132,7 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
   async function reviewOrder(address: DeliveryAddress) {
     if (submissionPending.current || reviewing || !ready) return
     if (!deliveryOptionsQuery.data?.deliveryOptions.countryCodes.includes(address.countryCode)) {
-      form.setError('countryCode', { message: 'Choose a supported country.' })
+      form.setError('countryCode', { message: msg('storefront:chooseASupportedCountry') })
       return
     }
     const requestGeneration = ++quoteGeneration.current
@@ -150,11 +156,16 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
         !checkoutCartReady(useCartStore.getState())
       )
         return
-      if (!result.data?.quoteCheckout) throw new Error('Quote unavailable. Please review again.')
+      if (!result.data?.quoteCheckout)
+        throw new Error(msg('storefront:quoteUnavailablePleaseReviewAgain'))
       setQuote({ value: result.data.quoteCheckout, address, snapshot: lineSnapshot })
     } catch (error) {
       if (isMounted.current && requestGeneration === quoteGeneration.current)
-        setMessage(error instanceof Error ? error.message : 'Quote unavailable. Please try again.')
+        setMessage(
+          errorMessage(error, 'storefront:quoteUnavailablePleaseTryAgain', {
+            BAD_USER_INPUT: 'storefront:quoteValidationFailed',
+          }),
+        )
     } finally {
       if (isMounted.current) setReviewing(false)
     }
@@ -190,13 +201,13 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
       const outcome = result.data?.createCheckout
       if (!outcome)
         throw new Error(
-          'Payment setup could not be confirmed. Check Orders before beginning another attempt.',
+          msg('storefront:paymentSetupCouldNotBeConfirmedCheckOrdersBeforeBeginningAnother'),
         )
       checkoutAttempt(userId, current.lines, current, outcome.order.id)
       retireUnpaidAttempt(userId, outcome.order)
       if (outcome.checkoutUrl) {
         if (!safeCheckoutUrl(outcome.checkoutUrl))
-          throw new Error('Payment link unavailable. Check Orders to recover this attempt.')
+          throw new Error(msg('storefront:paymentLinkUnavailableCheckOrdersToRecoverThisAttempt'))
         window.location.assign(outcome.checkoutUrl)
       } else navigate(`/checkout/return/${outcome.order.id}`)
     } catch (error) {
@@ -220,17 +231,17 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
           form.reset(current.deliveryAddress)
           setMessage(
             code === 'CART_CONFLICT'
-              ? 'Your bag changed elsewhere. Review the current bag and order again.'
-              : 'Prices or delivery settings changed. Review order again and explicitly confirm the new total.',
+              ? msg('storefront:yourBagChangedElsewhereReviewTheCurrentBagAndOrderAgain')
+              : msg(
+                  'storefront:pricesOrDeliverySettingsChangedReviewOrderAgainAndExplicitlyConfirm',
+                ),
           )
           if (code === 'CART_CONFLICT') await useCartStore.getState().refresh()
           return
         }
       }
       setMessage(
-        error instanceof Error
-          ? error.message
-          : 'Payment setup could not be confirmed. Retry this exact attempt or check Orders.',
+        errorMessage(error, 'storefront:paymentSetupCouldNotBeConfirmedRetryThisExactAttemptOr'),
       )
     } finally {
       submissionPending.current = false
@@ -239,58 +250,58 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
   if (!ready && !attempt && cartState.status !== 'guest')
     return (
       <PageContainer className="py-24">
-        <h1 className="font-serif text-4xl">Your bag needs attention</h1>
-        <p className="mt-4">
-          Wait for your bag to load and save, and correct unavailable selections before checkout.
-        </p>
+        <h1 className="font-serif text-4xl">{t('storefront:yourBagNeedsAttention')}</h1>
+        <p className="mt-4">{t('storefront:waitForYourBagToLoadAndSaveAndCorrectUnavailable')}</p>
         <Link to="/cart" className="mt-4 block underline">
-          Back to bag
+          {t('storefront:backToBag')}
         </Link>
       </PageContainer>
     )
   if (!items.length && !attempt)
     return (
       <PageContainer className="py-24 text-center">
-        <h1 className="font-serif text-4xl">Your bag is empty</h1>
-        <Link to="/books">Browse books</Link>
+        <h1 className="font-serif text-4xl">{t('storefront:yourBagIsEmpty')}</h1>
+        <Link to="/books">{t('storefront:browseBooks')}</Link>
       </PageContainer>
     )
   return (
     <PageContainer className="checkout-shell py-12 sm:py-20">
-      <BackLink to="/cart">Back to bag</BackLink>
+      <BackLink to="/cart">{t('storefront:backToBag')}</BackLink>
       <div className="mt-7 border-b border-border pb-7">
-        <p className="eyebrow mb-3">One step closer to a good book</p>
-        <h1 className="font-serif text-5xl">Checkout</h1>
+        <p className="eyebrow mb-3">{t('storefront:oneStepCloserToAGoodBook')}</p>
+        <h1 className="font-serif text-5xl">{t('storefront:checkout')}</h1>
         <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
-          Enter a delivery address, review your total, then continue to Stripe test payment.
+          {t('storefront:enterADeliveryAddressReviewYourTotalThenContinueToStripe')}
         </p>
         <p className="mt-3 break-words text-sm">
-          {name} · {email}
+          <bdi dir="auto">{localized(name)}</bdi> · <bdi dir="ltr">{localized(email)}</bdi>
         </p>
       </div>
-      <nav aria-label="Checkout progress" className="py-6">
+      <nav aria-label={t('storefront:checkoutProgress')} className="py-6">
         <ol className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
-          {['Delivery', 'Review', 'Payment'].map((step, index) => {
-            const current = index === (attempt ? 2 : validQuote ? 1 : 0)
-            return (
-              <li
-                key={step}
-                aria-current={current ? 'step' : undefined}
-                className={`flex items-center gap-2 ${current ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
-              >
-                <span
-                  aria-hidden="true"
-                  className={`flex h-7 w-7 items-center justify-center rounded-full border ${current ? 'border-primary bg-primary text-primary-foreground' : 'border-border'}`}
+          {[t('storefront:delivery'), t('storefront:review'), t('storefront:payment')].map(
+            (step, index) => {
+              const current = index === (attempt ? 2 : validQuote ? 1 : 0)
+              return (
+                <li
+                  key={step}
+                  aria-current={current ? 'step' : undefined}
+                  className={`flex items-center gap-2 ${current ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
                 >
-                  {index + 1}
-                </span>
-                {step}
-                {step === 'Payment' && (
-                  <span className="sr-only"> through Stripe test checkout</span>
-                )}
-              </li>
-            )
-          })}
+                  <span
+                    aria-hidden="true"
+                    className={`flex h-7 w-7 items-center justify-center rounded-full border ${current ? 'border-primary bg-primary text-primary-foreground' : 'border-border'}`}
+                  >
+                    {localized(index + 1)}
+                  </span>
+                  {localized(step)}
+                  {index === 2 && (
+                    <span className="sr-only">{t('storefront:throughStripeTestCheckout')}</span>
+                  )}
+                </li>
+              )
+            },
+          )}
         </ol>
       </nav>
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
@@ -312,16 +323,13 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
         <div className="min-w-0 lg:col-start-1 lg:row-start-1">
           {message && (
             <p role="alert" className="mt-5 text-destructive">
-              {message}
+              {localized(message)}
             </p>
           )}
           {attempt ? (
-            <section className="space-y-5" aria-label="Interrupted checkout">
-              <h2 className="font-serif text-2xl">Your saved payment attempt</h2>
-              <p>
-                Your previous payment setup may have created an order. Retry its exact saved
-                destination and amount, or inspect Orders before beginning another attempt.
-              </p>
+            <section className="space-y-5" aria-label={t('storefront:interruptedCheckout')}>
+              <h2 className="font-serif text-2xl">{t('storefront:yourSavedPaymentAttempt')}</h2>
+              <p>{t('storefront:yourPreviousPaymentSetupMayHaveCreatedAnOrderRetryIts')}</p>
               <CheckoutDestination address={attempt.deliveryAddress} />
               <CheckoutTotals
                 amounts={{
@@ -335,10 +343,14 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
                 disabled={creatingPayment}
                 onClick={() => void submitPayment()}
               >
-                {creatingPayment ? 'Opening payment…' : 'Retry payment setup'}
+                {localized(
+                  creatingPayment
+                    ? t('storefront:openingPayment')
+                    : t('storefront:retryPaymentSetup'),
+                )}
               </Button>
               <Link className="block underline" to="/account/orders">
-                Inspect Orders
+                {t('storefront:inspectOrders')}
               </Link>
               <Button
                 variant="ghost"
@@ -348,12 +360,10 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
                   clearCheckoutAttempts(userId)
                   setAttempt(undefined)
                   invalidateQuote()
-                  setMessage(
-                    'Review a new order only after checking Orders for your earlier attempt.',
-                  )
+                  setMessage(msg('storefront:reviewANewOrderOnlyAfterCheckingOrdersForYourEarlier'))
                 }}
               >
-                Begin another attempt after checking Orders
+                {t('storefront:beginAnotherAttemptAfterCheckingOrders')}
               </Button>
             </section>
           ) : validQuote ? (
@@ -378,10 +388,10 @@ function DeliveryCheckout({ userId, name, email, refreshSession }: CheckoutSessi
             />
           )}
           <p className="mt-5 text-xs text-muted-foreground">
-            Card details are handled by Stripe in test mode.
+            {t('storefront:cardDetailsAreHandledByStripeInTestMode')}
           </p>
           <Link className="mt-4 block underline" to="/account/orders">
-            Recover an interrupted payment in Orders
+            {t('storefront:recoverAnInterruptedPaymentInOrders')}
           </Link>
         </div>
       </div>

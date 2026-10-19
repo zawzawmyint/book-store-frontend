@@ -6,9 +6,11 @@ import './index.css'
 import App from './app/App.tsx'
 import { client } from './lib/apollo-client.ts'
 import { initializeTheme } from './lib/theme.ts'
+import { initializeLocalization } from './lib/i18n'
 
 initializeDeliveryBrowserData()
 initializeTheme()
+initializeLocalization()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,3 +1,5 @@
+import { errorMessage } from '../../../lib/i18n/errors'
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { BookCoverEditor, type CoverChange } from '../components/BookCoverEditor'
 import { AdminPageHeader } from '../components/AdminPageHeader'
 import { useRef, useState } from 'react'
@@ -18,7 +20,7 @@ import { Label } from '../../../app/components/ui/label'
 import { Textarea } from '../../../app/components/ui/textarea'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { Badge } from '../../../app/components/ui/badge'
-import { bookFormSchema, initialStockSchema, parsePriceCents } from '../book-form'
+import { bookFormSchema, initialStockSchema, parsePriceCents, bookSaveNotice } from '../book-form'
 import { useAdminAccess, useAdminQueryError } from '../admin-access'
 import { refreshCatalog } from '../admin-data'
 import { AdminFeedback } from '../components/AdminFeedback'
@@ -28,6 +30,8 @@ const schema = bookFormSchema.extend({ initialStock: initialStockSchema })
 type Values = z.infer<typeof schema>
 
 export function BookFormPage() {
+  useI18n()
+
   const { id } = useParams()
   const valid = !id || (/^[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id)))
   const { data, previousData, loading, error, refetch } = useQuery(AdminBookDocument, {
@@ -42,18 +46,20 @@ export function BookFormPage() {
   if (!valid || (id && !loading && !error && !currentBook))
     return (
       <>
-        <h2 className="font-serif text-3xl">Book not found</h2>
+        <h2 className="font-serif text-3xl">{t('admin:bookNotFound')}</h2>
         <Link to="/admin/books" className="underline">
-          Back to books
+          {t('admin:backToBooks')}
         </Link>
       </>
     )
   if ((loading || error) && !currentBook)
-    return <AdminFeedback loading={loading} error={error} retry={refetch} />
+    return <AdminFeedback loading={loading} error={localized(error)} retry={refetch} />
   return <BookEditor key={id ?? 'new'} book={currentBook ?? undefined} />
 }
 
 function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
+  useI18n()
+
   const client = useApolloClient()
   const navigate = useNavigate()
   const location = useLocation()
@@ -107,7 +113,7 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
       variables: { id },
       fetchPolicy: 'network-only',
     })
-    if (!result.data?.adminBook) throw new Error('Book was not found. Reload the page.')
+    if (!result.data?.adminBook) throw new Error(msg('admin:bookWasNotFoundReloadThePage'))
     setSavedCover({
       cover: result.data.adminBook.cover ?? null,
       coverRevision: result.data.adminBook.coverRevision,
@@ -137,15 +143,13 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
         })
         targetId = result.data?.createBook.id
         if (!targetId)
-          throw new Error(
-            'Unable to confirm the saved book. Check the catalog before creating again.',
-          )
+          throw new Error(msg('admin:unableToConfirmTheSavedBookCheckTheCatalogBeforeCreating'))
         setSavedId(targetId)
       }
       savedDetails.current = details
     } catch (failure) {
       handleError(failure)
-      setError(failure instanceof Error ? failure.message : 'Unable to save book')
+      setError(errorMessage(failure, 'admin:unableToSaveBook'))
       saving.current = false
       setBusy(false)
       return
@@ -161,7 +165,7 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
       }
       navigate(returnTo, {
         replace: !book,
-        state: { notice: book ? 'Book updated.' : 'Book created.' },
+        state: { notice: { kind: book ? 'book-updated' : 'book-created' } },
       })
     } catch (failure) {
       const code = failure instanceof CoverRequestError ? failure.code : undefined
@@ -178,15 +182,16 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
         }
       }
       setError(
-        `Book details saved, but the cover was not saved. ${
-          code === 'COVER_CONFLICT'
-            ? 'The cover changed elsewhere. Review the latest cover before saving again.'
-            : !code
-              ? 'The cover result could not be confirmed. Review the current cover before saving again.'
-              : failure instanceof Error
-                ? failure.message
-                : 'Please try again.'
-        }`,
+        msg('admin:bookDetailsSavedButTheCoverWasNotSavedValue', {
+          value0:
+            code === 'COVER_CONFLICT'
+              ? msg('common:conflict')
+              : !code
+                ? msg('admin:theCoverResultCouldNotBeConfirmedReviewTheCurrentCover')
+                : failure instanceof Error
+                  ? errorMessage(failure, 'admin:unableToSaveBook')
+                  : msg('common:requestFailed'),
+        }),
       )
     } finally {
       void refreshCatalog(client).catch(() => {})
@@ -204,19 +209,19 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
           if (busy) event.preventDefault()
         }}
       >
-        ← Back to books
+        {t('admin:backToBooks2')}
       </Link>
       <AdminPageHeader
-        title={savedId ? 'Edit book' : 'Add book'}
-        description={
+        title={localized(savedId ? t('admin:editBook') : t('admin:addBook'))}
+        description={localized(
           savedId
-            ? 'Update book details. Use the catalog to adjust stock.'
-            : 'Add book details and set the opening inventory.'
-        }
+            ? t('admin:updateBookDetailsUseTheCatalogToAdjustStock')
+            : t('admin:addBookDetailsAndSetTheOpeningInventory'),
+        )}
       />
       {book?.archived && (
         <Badge variant="secondary" className="mt-3">
-          Archived
+          {t('admin:archived')}
         </Badge>
       )}
       <form
@@ -229,7 +234,7 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
         <fieldset disabled={busy} className="grid min-w-0 gap-5 sm:grid-cols-2">
           <BookCoverEditor
             id={savedId ?? '0'}
-            title={title}
+            title={localized(title)}
             author={author}
             cover={savedCover.cover}
             change={coverChange}
@@ -241,13 +246,19 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
             <FormField
               key={field}
               id={field}
-              label={field[0].toUpperCase() + field.slice(1)}
-              error={errors[field]?.message}
+              label={t(
+                field === 'title'
+                  ? 'admin:title'
+                  : field === 'author'
+                    ? 'admin:author'
+                    : 'admin:genre',
+              )}
+              error={localized(errors[field]?.message)}
               {...register(field)}
             />
           ))}
           <div className="sm:col-span-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{t('admin:description')}</Label>
             <Textarea
               id="description"
               aria-invalid={!!errors.description}
@@ -258,29 +269,32 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
             />
             {errors.description && (
               <p id="description-error" className="mt-1 text-sm text-destructive">
-                {errors.description.message}
+                {localized(errors.description.message)}
               </p>
             )}
           </div>
           <FormField
             id="price"
-            label="Price (USD)"
+            label={t('admin:priceUsd')}
             inputMode="decimal"
-            error={errors.price?.message}
+            error={localized(errors.price?.message)}
             {...register('price')}
           />
+          <p className="text-xs text-muted-foreground sm:col-span-2">
+            {t('common:priceInputHint')}
+          </p>
           {!savedId && (
             <FormField
               id="initialStock"
-              label="Initial stock"
+              label={t('admin:initialStock')}
               inputMode="numeric"
-              error={errors.initialStock?.message}
+              error={localized(errors.initialStock?.message)}
               {...register('initialStock')}
             />
           )}
           {error && (
             <Alert role="alert" variant="destructive" className="sm:col-span-2">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{localized(error)}</AlertDescription>
             </Alert>
           )}
           {needsReload && (
@@ -292,19 +306,17 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
                 void reloadCover(savedId!)
                   .catch((failure) => {
                     handleError(failure)
-                    setError(
-                      'Book details saved. Unable to reload the cover. Try again before saving.',
-                    )
+                    setError(msg('admin:bookDetailsSavedUnableToReloadTheCoverTryAgainBefore'))
                   })
                   .finally(() => setBusy(false))
               }}
             >
-              Reload cover
+              {t('admin:reloadCover')}
             </Button>
           )}
           <div className="flex gap-3 border-t border-border pt-5 sm:col-span-2">
             <Button type="submit" disabled={busy || invalidCover || needsReload}>
-              {busy ? 'Saving…' : 'Save book'}
+              {localized(busy ? t('admin:saving') : t('admin:saveBook'))}
             </Button>
             <Button
               type="button"
@@ -312,14 +324,14 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
               disabled={busy}
               onClick={() => navigate(returnTo)}
             >
-              Cancel
+              {t('admin:cancel')}
             </Button>
           </div>
         </fieldset>
       </form>
       {location.state?.notice && (
         <p role="status" className="mt-4">
-          {location.state.notice}
+          {localized(bookSaveNotice(location.state.notice))}
         </p>
       )}
     </section>

@@ -10,6 +10,8 @@ Implemented feature: [Book cover uploads](specs/book-cover-uploads/SPEC.md) adds
 
 Proposed feature: [Bag and checkout UI](specs/bag-checkout-ui/SPEC.md) documents delivered presentation changes with completed automated verification; actual 200% browser-zoom validation remains pending.
 
+Proposed feature: [Storefront and admin localization](specs/localization/SPEC.md) delivers bundled English, Arabic, Thai, and Simplified Chinese UI resources through i18next/react-i18next. It includes browser-local language selection, locale-aware USD/date/number presentation, and Arabic RTL across storefront and workspace routes. Acceptance remains open for actual 200% browser zoom, broad visual/native-language review, and the coordinated PostgreSQL browser suite.
+
 A React + TypeScript + Tailwind bookstore storefront using shadcn/ui primitives, Zustand, React Hook Form, and Zod. This folder is its own Git repository. The backend lives in the sibling `backend` repository and should be started first.
 
 See [SPEC.md](SPEC.md) for storefront behavior, [bag and checkout UI](specs/bag-checkout-ui/SPEC.md) for the in-progress presentation verification, [book details](specs/book-details-upgrade/SPEC.md) for purchase, quantity, and related-book behavior, [the catalog upgrade](specs/catalog-upgrade/SPEC.md) for catalog filters and browsing continuity, [the storefront homepage](specs/storefront-homepage/SPEC.md) for curated discovery, [specs/account-carts/SPEC.md](specs/account-carts/SPEC.md) for account and guest bag ownership, [specs/order-workflow/SPEC.md](specs/order-workflow/SPEC.md) for request processing, [specs/icons-typography/SPEC.md](specs/icons-typography/SPEC.md) for icon actions and typography, [specs/appearance/SPEC.md](specs/appearance/SPEC.md) for Light/Dark appearance, [specs/authentication/SPEC.md](specs/authentication/SPEC.md) for sign-in, [specs/demo-login/SPEC.md](specs/demo-login/SPEC.md) for optional local demo controls, [specs/profile/SPEC.md](specs/profile/SPEC.md) for the account profile, [specs/staff/SPEC.md](specs/staff/SPEC.md) for workspace roles, [specs/users/SPEC.md](specs/users/SPEC.md) for user-directory compatibility, and [specs/activity/SPEC.md](specs/activity/SPEC.md) for Admin activity history.
@@ -34,6 +36,16 @@ bun run dev
 ```
 
 Open `http://localhost:5173`. Vite uses port 5173 strictly and stops if it is occupied, keeping the storefront URL aligned with the backend's trusted origin. Vite forwards `/graphql` and `/api/auth` to the local backend. Set `VITE_API_TARGET` if the local API uses another port. Deploy both paths through the same storefront origin so session cookies work reliably.
+
+## Localization
+
+The shared language control is an icon-only, 44px target in both storefront and workspace headers. Its accessible label is translated; its dropdown retains the self-identifying options **English**, **العربية**, **ไทย**, and **简体中文**. The same control is available inside shared dialog/sheet content, so a focused overlay can switch language without closing or resetting it.
+
+Language choice is stored per browser origin under `book-store-language`; it is independent of sign-in and survives logout. The supported IDs are `en`, `ar`, `th`, and `zh-Hans`; English is the startup and missing-key fallback. A blocked browser storage API leaves switching usable in memory for the current page.
+
+Resources live in `src/lib/i18n/locales/<language>/` as `common.json`, `storefront.json`, and `admin.json`. Add semantic keys to English first, then keep every language namespace/key and interpolation parameter set aligned. Use i18next `count` keys for quantities; Arabic requires its supported plural forms. Resolve copy at render time or keep transient `message()` descriptors for feedback that must update after a language switch. Do not translate persisted catalog/customer content, canonical enum values, identifiers, routes, query strings, payloads, or server prose.
+
+Use `src/lib/format.ts` for display-only money, numbers, dates, and datetimes. It formats USD with the selected locale, uses browser-local time and a Gregorian calendar, and retains the exact BigInt dashboard-money path. Arabic uses RTL document direction and logical layout; keep arbitrary content direction-aware and canonical email/ID/tracking values legible. The feature specification records product boundaries and remaining acceptance work.
 
 ## Local demo login
 
@@ -74,7 +86,7 @@ src/
     auth/                     Sign-in, sign-up, and route guard
     account/                  Order history and profile
     checkout/                 Hosted payment page, return handling, and receipt
-  lib/                        Apollo client and formatting
+  lib/                        Apollo client, localization, and formatting
   generated/                  Generated GraphQL TypeScript documents
   index.css                   Shared visual classes and base styles
   operations.graphql          Queries and mutation used by the UI
@@ -99,7 +111,9 @@ and merge claims when available; a browser without Web Locks uses the supported
 best-effort storage fallback. Invalid saved items are filtered out; unavailable browser
 storage leaves guest shopping usable in memory, but does not promise recovery after the
 page closes. Appearance uses the separate `book-store-theme` key, defaults to Dark,
-and retains an in-memory choice if browser storage is unavailable.
+and retains an in-memory choice if browser storage is unavailable. Localization uses
+the separate `book-store-language` key and follows the same best-effort behavior; it
+does not change account, cart, checkout, or server state.
 
 Apollo Client owns catalog and order history queries and mutation state. React Hook Form owns account form values and validation; Better Auth owns the session. A session boundary hides routed content while the session changes and clears Apollo data before a different account is shown. The backend keeps books, stock, and orders through Drizzle using SQLite in development/test and PostgreSQL in production, with transactions enforcing consistency.
 

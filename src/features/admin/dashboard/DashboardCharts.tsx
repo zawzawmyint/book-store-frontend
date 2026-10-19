@@ -1,3 +1,5 @@
+import { formatNumber, formatDate } from '../../../lib/format'
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { Area, Bar, BarChart, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from 'recharts'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -10,17 +12,32 @@ import type { DashboardFinanceQuery, WorkspaceDashboardQuery } from '../../../ge
 import { exactMoney, plotAmount } from './dashboard-format'
 
 const paymentsConfig = {
-  captured: { label: 'Captured payments', theme: { light: '#166534', dark: '#86efac' } },
-  refunded: { label: 'Successful refunds', theme: { light: '#9a3412', dark: '#fdba74' } },
+  captured: {
+    get label() {
+      return t('admin:capturedPayments')
+    },
+    theme: { light: '#166534', dark: '#86efac' },
+  },
+  refunded: {
+    get label() {
+      return t('admin:successfulRefunds')
+    },
+    theme: { light: '#9a3412', dark: '#fdba74' },
+  },
 } satisfies ChartConfig
 const fulfillmentConfig = {
-  count: { label: 'Paid orders', theme: { light: '#166534', dark: '#86efac' } },
+  count: {
+    get label() {
+      return t('admin:paidOrders')
+    },
+    theme: { light: '#166534', dark: '#86efac' },
+  },
 } satisfies ChartConfig
 const labels: Record<string, string> = {
-  SUBMITTED: 'Awaiting preparation',
-  PREPARING: 'Preparing',
-  SHIPPED: 'Shipped',
-  DELIVERED: 'Delivered',
+  SUBMITTED: msg('admin:awaitingPreparation'),
+  PREPARING: msg('admin:preparing'),
+  SHIPPED: msg('admin:shipped'),
+  DELIVERED: msg('admin:delivered'),
 }
 
 export function FulfillmentChart({
@@ -28,13 +45,15 @@ export function FulfillmentChart({
 }: {
   counts: WorkspaceDashboardQuery['workspaceDashboard']['fulfillment']
 }) {
+  useI18n()
+
   const navigate = useNavigate()
-  const data = counts.map((row) => ({ ...row, label: labels[row.status] }))
+  const data = counts.map((row) => ({ ...row, label: localized(labels[row.status]) }))
   return (
     <ChartContainer
       config={fulfillmentConfig}
       className="h-[220px] w-full aspect-auto"
-      aria-label="Current paid orders by fulfillment status"
+      aria-label={t('admin:currentPaidOrdersByFulfillmentStatus')}
     >
       <BarChart accessibilityLayer data={data} layout="vertical" margin={{ left: 0, right: 20 }}>
         <CartesianGrid horizontal={false} />
@@ -62,6 +81,8 @@ export function PaymentsChart({
 }: {
   days: DashboardFinanceQuery['adminDashboardFinance']['days']
 }) {
+  useI18n()
+
   const chartDays = days.map((day) => ({
     ...day,
     captured: plotAmount(day.capturedCents),
@@ -70,14 +91,13 @@ export function PaymentsChart({
   if (chartDays.some((day) => day.captured === null || day.refunded === null))
     return (
       <p className="py-8 text-sm text-muted-foreground">
-        These amounts exceed the chart's numeric range. Exact values are available in the summary
-        and daily table.
+        {t('admin:theseAmountsExceedTheChartSNumericRangeExactValuesAre')}
       </p>
     )
   if (!days.some((day) => BigInt(day.capturedCents) !== 0n || BigInt(day.refundedCents) !== 0n))
     return (
       <p className="py-8 text-sm text-muted-foreground">
-        No recorded payments or successful refunds in this period.
+        {t('admin:noRecordedPaymentsOrSuccessfulRefundsInThisPeriod')}
       </p>
     )
   return (
@@ -85,13 +105,13 @@ export function PaymentsChart({
       <ChartContainer
         config={paymentsConfig}
         className="h-[240px] w-full aspect-auto"
-        aria-label="Daily captured payments and successful refunds"
+        aria-label={t('admin:dailyCapturedPaymentsAndSuccessfulRefunds')}
       >
         <ComposedChart accessibilityLayer data={chartDays} margin={{ left: 8, right: 12 }}>
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey="date"
-            tickFormatter={(value) => String(value).slice(5)}
+            tickFormatter={(value) => formatDate(String(value) + 'T12:00:00')}
             minTickGap={25}
             axisLine={false}
             tickLine={false}
@@ -99,7 +119,11 @@ export function PaymentsChart({
           <YAxis
             width={65}
             tickFormatter={(value) =>
-              `$${Number(value).toLocaleString('en-US', { notation: 'compact' })}`
+              formatNumber(Number(value), {
+                notation: 'compact',
+                style: 'currency',
+                currency: 'USD',
+              })
             }
             axisLine={false}
             tickLine={false}
@@ -109,10 +133,14 @@ export function PaymentsChart({
               const day = props.payload?.[0]?.payload as (typeof chartDays)[number] | undefined
               return props.active && day ? (
                 <div className="rounded-lg border border-border bg-background p-3 text-xs shadow-lg">
-                  <p className="mb-2 font-medium">{day.date}</p>
-                  <p>Captured payments: {exactMoney(day.capturedCents)}</p>
-                  <p>Successful refunds: {exactMoney(day.refundedCents)}</p>
-                  <p>Paid orders: {day.paidOrderCount}</p>
+                  <p className="mb-2 font-medium">{formatDate(day.date + 'T12:00:00')}</p>
+                  <p>
+                    {t('admin:capturedPaymentsValue', { value0: exactMoney(day.capturedCents) })}
+                  </p>
+                  <p>
+                    {t('admin:successfulRefundsValue', { value0: exactMoney(day.refundedCents) })}
+                  </p>
+                  <p>{t('admin:paidOrdersValue', { value0: day.paidOrderCount })}</p>
                 </div>
               ) : null
             }}
@@ -138,7 +166,7 @@ export function PaymentsChart({
         </ComposedChart>
       </ChartContainer>
       <p className="mt-2 text-xs text-muted-foreground">
-        Solid filled line: captured payments · Dashed line: successful refunds
+        {t('admin:solidFilledLineCapturedPaymentsDashedLineSuccessfulRefunds')}
       </p>
     </>
   )

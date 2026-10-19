@@ -1,3 +1,4 @@
+import { message as msg, useI18n } from '../../../lib/i18n'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApolloClient } from '@apollo/client/react'
 import type { OperationVariables, TypedDocumentNode } from '@apollo/client'
@@ -10,6 +11,8 @@ export function useDashboardQuery<TData, TVariables extends OperationVariables>(
   variables: TVariables,
   refreshKey: number,
 ) {
+  useI18n()
+
   const client = useApolloClient()
   const { handleError } = useAdminAccess()
   const [state, setState] = useState<{ data?: TData; loading: boolean; error?: Error }>({
@@ -39,7 +42,8 @@ export function useDashboardQuery<TData, TVariables extends OperationVariables>(
           setState((previous) => ({
             data: accessErrorCode(failure) ? undefined : previous.data,
             loading: false,
-            error: failure instanceof Error ? failure : new Error('Unable to load dashboard'),
+            error:
+              failure instanceof Error ? failure : new Error(msg('admin:unableToLoadDashboard')),
           }))
         })
         .finally(() => {

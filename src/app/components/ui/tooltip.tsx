@@ -1,3 +1,4 @@
+import { localized } from '../../../lib/i18n'
 import * as React from 'react'
 import { cn } from '../../../lib/utils'
 import { Tooltip as TooltipPrimitive } from 'radix-ui'
@@ -40,7 +41,7 @@ function TooltipContent({
         )}
         {...props}
       >
-        {children}
+        {localized(children)}
         <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px] bg-surface fill-surface" />
       </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>

@@ -1,3 +1,4 @@
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { useQuery } from '@apollo/client/react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { AdminActivityDocument } from '../../../generated/graphql'
@@ -10,6 +11,8 @@ import { booksReturnTo, validBookId } from '../activity-data'
 import { useAdminQueryError } from '../admin-access'
 
 export function BookHistoryPage() {
+  useI18n()
+
   const { id = '' } = useParams()
   const { params, page, limit, offset, changePage } = useAdminPagination()
   const location = useLocation()
@@ -33,18 +36,21 @@ export function BookHistoryPage() {
   return (
     <section>
       <Link className="admin-back-link" to={returnTo}>
-        Back to books
+        {t('admin:backToBooks')}
       </Link>
       <AdminPageHeader
-        title="Book history"
-        description={`Recorded changes for ${events?.items[0]?.targetName ?? `book #${id}`}. Times use your local timezone (${Intl.DateTimeFormat().resolvedOptions().timeZone}).`}
+        title={t('admin:bookHistory')}
+        description={t('admin:recordedChangesForValueTimesUseYourLocalTimezoneValue', {
+          value0: events?.items[0]?.targetName ?? t('admin:bookIdentifier', { value0: id }),
+          value1: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        })}
       />
       {invalid ? (
         <Alert role="alert" variant="destructive">
-          <AlertDescription>Enter a valid book ID.</AlertDescription>
+          <AlertDescription>{t('admin:enterAValidBookId')}</AlertDescription>
         </Alert>
       ) : (
-        <AdminFeedback loading={loading} error={error} retry={refetch} />
+        <AdminFeedback loading={loading} error={localized(error)} retry={refetch} />
       )}
       {!invalid && !loading && !error && events && (
         <ActivityTable

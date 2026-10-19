@@ -128,14 +128,14 @@ test('Staff dashboard never requests financial aggregates and supports stock adj
   await expect(page.getByRole('heading', { name: 'Recorded payments', exact: true })).toHaveCount(0)
   const alerts = page.getByRole('region', { name: 'Stock alerts' })
   const row = alerts.locator('li').filter({ has: page.getByText(book.title, { exact: true }) })
-  const before = Number(await row.getByTestId('stock-count').textContent())
+  const before = Number(await row.getByTestId('stock-count').getAttribute('data-count'))
   await row.getByRole('button', { name: 'Adjust stock', exact: true }).click()
   await page.getByLabel('Quantity change').fill('1')
   await page.getByRole('button', { name: 'Apply adjustment', exact: true }).click()
   await expect(
     page.getByRole('status').filter({ hasText: `Stock updated to ${before + 1}` }),
   ).toBeVisible()
-  await expect(row.getByTestId('stock-count')).toHaveText(String(before + 1))
+  await expect(row.getByTestId('stock-count')).toHaveAttribute('data-count', String(before + 1))
   if (originalStock !== 2)
     await gql(`mutation { adjustBookStock(id: "1", delta: ${originalStock - 2}) { stock } }`)
   expect(financeRequests).toEqual([])

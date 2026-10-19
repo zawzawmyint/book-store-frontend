@@ -67,7 +67,7 @@ test('staff changes appear once in admin activity and book history with safe det
   await page.getByLabel('New role').selectOption('STAFF')
   await page.getByRole('button', { name: 'Confirm role change' }).click()
   await expect(
-    page.getByText('Directory Reader 3 is now a staff member.', { exact: true }),
+    page.getByText('Directory Reader 3 now has the Staff role.', { exact: true }),
   ).toBeVisible()
   const context = await browser.newContext({ extraHTTPHeaders: { 'X-Real-IP': '192.0.2.247' } })
   const staff = await context.newPage()

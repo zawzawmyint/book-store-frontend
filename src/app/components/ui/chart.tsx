@@ -1,3 +1,5 @@
+import { formatNumber } from '../../../lib/format'
+import { localized, useI18n } from '../../../lib/i18n'
 import * as React from 'react'
 import { cn } from '../../../lib/utils'
 import * as RechartsPrimitive from 'recharts'
@@ -27,6 +29,8 @@ type ChartContextProps = {
 const ChartContext = React.createContext<ChartContextProps | null>(null)
 
 function useChart() {
+  useI18n()
+
   const context = React.useContext(ChartContext)
 
   if (!context) {
@@ -51,6 +55,8 @@ function ChartContainer({
     height: number
   }
 }) {
+  useI18n()
+
   const uniqueId = React.useId()
   const chartId = `chart-${id ?? uniqueId.replace(/:/g, '')}`
 
@@ -67,7 +73,7 @@ function ChartContainer({
       >
         <ChartStyle id={chartId} config={config} />
         <RechartsPrimitive.ResponsiveContainer initialDimension={initialDimension}>
-          {children}
+          {localized(children)}
         </RechartsPrimitive.ResponsiveContainer>
       </div>
     </ChartContext.Provider>
@@ -130,6 +136,8 @@ function ChartTooltipContent({
     RechartsPrimitive.DefaultTooltipContentProps<TooltipValueType, TooltipNameType>,
     'accessibilityLayer'
   >) {
+  useI18n()
+
   const { config } = useChart()
 
   const tooltipLabel = React.useMemo(() => {
@@ -145,7 +153,9 @@ function ChartTooltipContent({
 
     if (labelFormatter) {
       return (
-        <div className={cn('font-medium', labelClassName)}>{labelFormatter(value, payload)}</div>
+        <div className={cn('font-medium', labelClassName)}>
+          {localized(labelFormatter(value, payload))}
+        </div>
       )
     }
 
@@ -153,7 +163,7 @@ function ChartTooltipContent({
       return null
     }
 
-    return <div className={cn('font-medium', labelClassName)}>{value}</div>
+    return <div className={cn('font-medium', labelClassName)}>{localized(value)}</div>
   }, [label, labelFormatter, payload, hideLabel, labelClassName, config, labelKey])
 
   if (!active || !payload?.length) {
@@ -169,7 +179,7 @@ function ChartTooltipContent({
         className,
       )}
     >
-      {!nestLabel ? tooltipLabel : null}
+      {localized(!nestLabel ? tooltipLabel : null)}
       <div className="grid gap-1.5">
         {payload
           .filter((item) => item.type !== 'none')
@@ -221,16 +231,18 @@ function ChartTooltipContent({
                       )}
                     >
                       <div className="grid gap-1.5">
-                        {nestLabel ? tooltipLabel : null}
+                        {localized(nestLabel ? tooltipLabel : null)}
                         <span className="text-muted-foreground">
-                          {itemConfig?.label ?? item.name}
+                          {localized(itemConfig?.label ?? item.name)}
                         </span>
                       </div>
                       {item.value != null && (
                         <span className="font-mono font-medium text-foreground tabular-nums">
-                          {typeof item.value === 'number'
-                            ? item.value.toLocaleString()
-                            : String(item.value)}
+                          {localized(
+                            typeof item.value === 'number'
+                              ? formatNumber(item.value)
+                              : String(item.value),
+                          )}
                         </span>
                       )}
                     </div>
@@ -256,6 +268,8 @@ function ChartLegendContent({
   hideIcon?: boolean
   nameKey?: string
 } & RechartsPrimitive.DefaultLegendContentProps) {
+  useI18n()
+
   const { config } = useChart()
 
   if (!payload?.length) {
@@ -293,7 +307,7 @@ function ChartLegendContent({
                   }}
                 />
               )}
-              {itemConfig?.label}
+              {localized(itemConfig?.label)}
             </div>
           )
         })}

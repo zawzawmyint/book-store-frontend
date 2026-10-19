@@ -1,3 +1,4 @@
+import { message as msg, t, useI18n } from '../../lib/i18n'
 import { useEffect, useRef } from 'react'
 import { CombinedGraphQLErrors } from '@apollo/client'
 import { useApolloClient } from '@apollo/client/react'
@@ -19,6 +20,8 @@ export function CartSession({
   owner: string | null
   children: React.ReactNode
 }) {
+  useI18n()
+
   const client = useApolloClient()
   const location = useLocation()
   const { refetch } = authClient.useSession()
@@ -57,7 +60,7 @@ export function CartSession({
           void useCartStore.getState().identify(undefined)
           void refreshSession.current({ query: { disableCookieCache: true } })
         }
-        throw new Error('Your session changed. Sign in again to load your account bag.')
+        throw new Error(msg('storefront:yourSessionChangedSignInAgainToLoadYourAccountBag'))
       }
     }
     void useCartStore.getState().identify(owner, {
@@ -69,7 +72,7 @@ export function CartSession({
             fetchPolicy: 'no-cache',
             context,
           })
-          if (!result.data?.myCart) throw new Error('Bag unavailable')
+          if (!result.data?.myCart) throw new Error(msg('storefront:bagUnavailable'))
           return result.data.myCart
         })
       },
@@ -82,7 +85,7 @@ export function CartSession({
             fetchPolicy: 'no-cache',
             context,
           })
-          if (!result.data?.setCartItem) throw new Error('Save unavailable')
+          if (!result.data?.setCartItem) throw new Error(msg('storefront:saveUnavailable'))
           return result.data.setCartItem
         })
       },
@@ -95,7 +98,7 @@ export function CartSession({
             fetchPolicy: 'no-cache',
             context,
           })
-          if (!result.data?.mergeGuestCart) throw new Error('Merge unavailable')
+          if (!result.data?.mergeGuestCart) throw new Error(msg('storefront:mergeUnavailable'))
           return result.data.mergeGuestCart
         })
       },
@@ -124,6 +127,6 @@ export function CartSession({
   return visibleOwner === owner ? (
     children
   ) : (
-    <BookLoader label="Loading your bag…" className="py-24" />
+    <BookLoader label={t('storefront:loadingYourBag')} className="py-24" />
   )
 }

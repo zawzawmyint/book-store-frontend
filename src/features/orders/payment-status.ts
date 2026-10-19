@@ -1,8 +1,9 @@
+import { message as msg } from '../../lib/i18n'
 export const paymentLabels = {
-  PENDING: 'Payment pending',
-  PAID: 'Paid',
-  EXPIRED: 'Payment expired',
-  REFUND_PENDING: 'Refund pending',
-  REFUNDED: 'Refunded',
-  REFUND_FAILED: 'Refund failed',
+  PENDING: msg('storefront:paymentPending'),
+  PAID: msg('storefront:paid'),
+  EXPIRED: msg('storefront:paymentExpired'),
+  REFUND_PENDING: msg('storefront:refundPending'),
+  REFUNDED: msg('storefront:refunded'),
+  REFUND_FAILED: msg('storefront:refundFailed'),
 } as const

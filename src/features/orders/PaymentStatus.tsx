@@ -1,4 +1,5 @@
-import { serverDate } from '../../lib/format'
+import { formatDateTime, serverDate } from '../../lib/format'
+import { localized, t, useI18n } from '../../lib/i18n'
 import { paymentLabels } from './payment-status'
 type Payment = {
   status: keyof typeof paymentLabels
@@ -8,17 +9,32 @@ type Payment = {
   refundedAt?: string | null
 }
 export function PaymentStatus({ payment }: { payment: Payment }) {
+  useI18n()
+
   return (
     <div className="space-y-1 text-sm">
       <p className="font-semibold">
-        {paymentLabels[payment.status]} · {payment.currency.toUpperCase()}
+        {localized(paymentLabels[payment.status])} ·{' '}
+        <bdi dir="ltr">{payment.currency.toUpperCase()}</bdi>
       </p>
-      {payment.paidAt && <p>Paid {serverDate(payment.paidAt).toLocaleString()}</p>}
-      {payment.refundedAt && <p>Refunded {serverDate(payment.refundedAt).toLocaleString()}</p>}
-      {payment.status === 'PENDING' && payment.expiresAt && (
-        <p>Payment window ends {serverDate(payment.expiresAt).toLocaleString()}</p>
+      {payment.paidAt && (
+        <p>{t('storefront:paidValue', { value0: formatDateTime(serverDate(payment.paidAt)) })}</p>
       )}
-      {payment.status === 'REFUND_FAILED' && <p>Staff needs to resolve this refund.</p>}
+      {payment.refundedAt && (
+        <p>
+          {t('storefront:refundedValue', {
+            value0: formatDateTime(serverDate(payment.refundedAt)),
+          })}
+        </p>
+      )}
+      {payment.status === 'PENDING' && payment.expiresAt && (
+        <p>
+          {t('storefront:paymentWindowEndsValue', {
+            value0: formatDateTime(serverDate(payment.expiresAt)),
+          })}
+        </p>
+      )}
+      {payment.status === 'REFUND_FAILED' && <p>{t('storefront:staffNeedsToResolveThisRefund')}</p>}
     </div>
   )
 }

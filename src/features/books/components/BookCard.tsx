@@ -1,3 +1,4 @@
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { ArrowUpRight, Plus } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { MouseEvent } from 'react'
@@ -19,6 +20,8 @@ export function BookCard({
   book: NonNullable<BookQuery['book']>
   catalogContext?: unknown
 }) {
+  useI18n()
+
   const add = useCartStore((state) => state.add)
   const blocked = useCartStore(cartBlocked)
   const quantity = useCartStore(
@@ -73,10 +76,16 @@ export function BookCard({
           to={`/books/${book.id}`}
           onClick={openBook}
           className="block rounded-sm bg-cover-panel p-5 transition-colors hover:bg-secondary sm:p-7"
-          aria-label={`View ${book.title}`}
+          aria-label={t('storefront:viewValue', { value0: book.title })}
         >
           <div className="mx-auto max-w-[215px] transition-transform duration-300 group-hover:-translate-y-1 group-hover:rotate-[-1deg] motion-reduce:transform-none motion-reduce:transition-none">
-            <BookCover cover={book.cover} decorative id={book.id} title={book.title} author={book.author} />
+            <BookCover
+              cover={book.cover}
+              decorative
+              id={book.id}
+              title={localized(book.title)}
+              author={book.author}
+            />
           </div>
         </Link>
         <CardContent className="flex flex-1 flex-col px-0 pb-0 pt-4">
@@ -85,26 +94,28 @@ export function BookCard({
               variant="outline"
               className="border-0 px-0 py-0 text-[10px] uppercase tracking-[.2em] text-copper"
             >
-              {book.genre}
+              <bdi dir="auto">{localized(book.genre)}</bdi>
             </Badge>
             <ArrowUpRight size={15} className="text-copper" />
           </div>
           <Link
             to={`/books/${book.id}`}
             onClick={openBook}
-            title={book.title}
+            title={localized(book.title)}
             className="line-clamp-2 min-h-[2.5em] break-words font-serif text-[22px] leading-tight text-foreground hover:underline"
           >
-            {book.title}
+            <bdi dir="auto">{localized(book.title)}</bdi>
           </Link>
-          <p className="mt-1 break-words text-sm text-muted-foreground">{book.author}</p>
+          <p className="mt-1 break-words text-sm text-muted-foreground">
+            <bdi dir="auto">{localized(book.author)}</bdi>
+          </p>
           <p className="mb-4 mt-2 text-xs text-muted-foreground">
-            {book.stock ? 'In stock' : 'Sold out'}
+            {localized(book.stock ? t('storefront:inStock') : t('storefront:soldOut'))}
           </p>
           <Separator className="mt-auto bg-border" />
           <div className="flex flex-wrap items-center justify-between gap-x-2 pt-1">
             <strong className="text-sm font-semibold text-foreground">
-              {money(book.priceCents)}
+              {localized(money(book.priceCents))}
             </strong>
             <Button
               type="button"
@@ -114,18 +125,24 @@ export function BookCard({
               className="min-h-11 gap-1 px-0 text-xs font-bold text-primary hover:bg-transparent hover:text-primary disabled:cursor-not-allowed disabled:text-muted-foreground"
             >
               <Plus size={15} />{' '}
-              {book.stock ? (limitReached ? 'Maximum in bag' : 'Add to bag') : 'Sold out'}
+              {localized(
+                book.stock
+                  ? limitReached
+                    ? t('storefront:maximumInBag')
+                    : t('storefront:addToBag')
+                  : t('storefront:soldOut'),
+              )}
             </Button>
           </div>
           <div className="min-h-6 text-xs text-primary" role="status" aria-live="polite">
             {added && (
               <>
-                Added ·{' '}
+                {t('storefront:added')}
                 <Link
                   to="/cart"
                   className="inline-flex min-h-11 items-center font-semibold underline"
                 >
-                  View bag
+                  {t('storefront:viewBag')}
                 </Link>
               </>
             )}

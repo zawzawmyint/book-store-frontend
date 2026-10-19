@@ -1,3 +1,4 @@
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { useId, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import type { CartItem } from '../../cart/cart'
@@ -11,21 +12,27 @@ export type CheckoutAmounts = {
 }
 
 export function CheckoutTotals({ amounts }: { amounts: CheckoutAmounts }) {
+  useI18n()
+
   return (
     <dl className="space-y-3 text-sm">
       <div className="flex justify-between gap-4">
-        <dt>Books subtotal</dt>
-        <dd>{money(amounts.subtotalCents)}</dd>
+        <dt>{t('storefront:booksSubtotal')}</dt>
+        <dd>{localized(money(amounts.subtotalCents))}</dd>
       </div>
       <div className="flex justify-between gap-4">
-        <dt>Delivery</dt>
+        <dt>{t('storefront:delivery')}</dt>
         <dd>
-          {amounts.deliveryFeeCents === 0 ? 'Free delivery' : money(amounts.deliveryFeeCents)}
+          {localized(
+            amounts.deliveryFeeCents === 0
+              ? t('storefront:freeDelivery')
+              : money(amounts.deliveryFeeCents),
+          )}
         </dd>
       </div>
       <div className="flex justify-between gap-4 border-t border-border pt-4 text-lg font-semibold">
-        <dt>Total</dt>
-        <dd>{money(amounts.totalCents)}</dd>
+        <dt>{t('storefront:total')}</dt>
+        <dd>{localized(money(amounts.totalCents))}</dd>
       </div>
     </dl>
   )
@@ -40,33 +47,35 @@ export function CheckoutSummary({
   amounts?: CheckoutAmounts
   savedAttempt?: boolean
 }) {
+  useI18n()
+
   const [expanded, setExpanded] = useState(false)
   const id = useId()
   const status = savedAttempt
-    ? 'Saved payment attempt'
+    ? msg('storefront:savedPaymentAttempt')
     : amounts
-      ? 'Reviewed total'
-      : 'Estimated books subtotal'
+      ? msg('storefront:reviewedTotal')
+      : msg('storefront:estimatedBooksSubtotal')
   return (
     <aside
-      aria-label="Your order"
+      aria-label={t('storefront:yourOrder')}
       className="h-fit min-w-0 bg-muted p-5 sm:p-7 lg:col-start-2 lg:row-start-1"
     >
-      <h2 className="hidden font-serif text-2xl lg:block">Your order</h2>
+      <h2 className="hidden font-serif text-2xl lg:block">{t('storefront:yourOrder')}</h2>
       <button
         type="button"
-        className="flex min-h-11 w-full items-center justify-between gap-4 text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring lg:hidden"
+        className="flex min-h-11 w-full items-center justify-between gap-4 text-start focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring lg:hidden"
         aria-expanded={expanded}
         aria-controls={id}
         onClick={() => setExpanded(!expanded)}
       >
-        <span className="font-serif text-xl">Your order</span>
+        <span className="font-serif text-xl">{t('storefront:yourOrder')}</span>
         <ChevronDown aria-hidden="true" size={18} className={expanded ? 'rotate-180' : ''} />
       </button>
       <p className="mt-2 flex flex-wrap justify-between gap-2 text-sm text-muted-foreground">
-        <span>{status}</span>
+        <span>{localized(status)}</span>
         <strong className="text-foreground lg:hidden">
-          {money(amounts?.totalCents ?? cartTotal(items))}
+          {localized(money(amounts?.totalCents ?? cartTotal(items)))}
         </strong>
       </p>
       <div id={id} className={expanded ? 'mt-6' : 'mt-6 hidden lg:block'}>
@@ -75,10 +84,15 @@ export function CheckoutSummary({
             {items.map((item) => (
               <li key={item.id} className="flex justify-between gap-4 text-sm">
                 <span className="min-w-0 break-words">
-                  {item.quantity} × <span className="font-serif">{item.title}</span>
+                  {localized(item.quantity)} ×{' '}
+                  <span className="font-serif">
+                    <bdi dir="auto">{localized(item.title)}</bdi>
+                  </span>
                 </span>
                 {!amounts && (
-                  <span className="shrink-0">{money(item.priceCents * item.quantity)}</span>
+                  <span className="shrink-0">
+                    {localized(money(item.priceCents * item.quantity))}
+                  </span>
                 )}
               </li>
             ))}
@@ -89,21 +103,23 @@ export function CheckoutSummary({
         ) : (
           <dl className="space-y-4 text-sm">
             <div className="flex justify-between gap-4 font-semibold">
-              <dt>Books subtotal</dt>
-              <dd>{money(cartTotal(items))}</dd>
+              <dt>{t('storefront:booksSubtotal')}</dt>
+              <dd>{localized(money(cartTotal(items)))}</dd>
             </div>
             <div className="flex flex-wrap justify-between gap-2 text-muted-foreground">
-              <dt>Delivery</dt>
-              <dd>Calculated at review</dd>
+              <dt>{t('storefront:delivery')}</dt>
+              <dd>{t('storefront:calculatedAtReview')}</dd>
             </div>
           </dl>
         )}
         <p className="mt-5 text-xs leading-5 text-muted-foreground">
-          {savedAttempt
-            ? 'These amounts belong to your saved attempt. Check Orders before starting another.'
-            : amounts
-              ? 'Server-reviewed amounts. Stock is reserved only when payment setup succeeds.'
-              : 'Book prices and availability are confirmed when you review your order.'}
+          {localized(
+            savedAttempt
+              ? t('storefront:theseAmountsBelongToYourSavedAttemptCheckOrdersBeforeStarting')
+              : amounts
+                ? t('storefront:serverReviewedAmountsStockIsReservedOnlyWhenPaymentSetupSucceeds')
+                : t('storefront:bookPricesAndAvailabilityAreConfirmedWhenYouReviewYourOrder'),
+          )}
         </p>
       </div>
     </aside>

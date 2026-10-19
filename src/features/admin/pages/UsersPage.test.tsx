@@ -95,7 +95,7 @@ it('assigns staff explicitly and prevents saving an unchanged role', async () =>
   await user.selectOptions(screen.getByLabelText('New role'), 'STAFF')
   expect(screen.getByText(/User management and archive\/restore remain admin-only/)).toBeTruthy()
   await user.click(screen.getByRole('button', { name: 'Confirm role change' }))
-  expect(await screen.findByText('Ada Reader is now a staff member.')).toBeTruthy()
+  expect(await screen.findByText('Ada Reader now has the Staff role.')).toBeTruthy()
 })
 function renderPage(entry: string, mocks: unknown[]) {
   return renderWithTooltip(
@@ -129,7 +129,9 @@ it('shows the matching account and announces copy success or failure', async () 
     '/admin/users/ada',
   )
   expect(screen.getByText('Customer')).toBeTruthy()
-  expect(screen.getByText(new Date(ada.createdAt).toLocaleDateString())).toBeTruthy()
+  expect(
+    screen.getByText(new Date(ada.createdAt).toLocaleDateString('en-US', { calendar: 'gregory' })),
+  ).toBeTruthy()
   writeText.mockResolvedValueOnce(undefined)
   await user.click(screen.getByRole('button', { name: 'Copy user ID for Ada Reader' }))
   expect(writeText).toHaveBeenCalledWith('ada')
@@ -169,10 +171,12 @@ it('requires confirmation before granting admin and keeps the dialog on a reject
   await user.click(screen.getByRole('button', { name: 'Change role' }))
   await user.selectOptions(screen.getByLabelText('New role'), 'ADMIN')
   await user.click(screen.getByRole('button', { name: 'Confirm role change' }))
-  expect((await screen.findByRole('alert')).textContent).toContain('User was not found')
+  expect((await screen.findByRole('alert')).textContent).toContain(
+    'Please check the entered details and try again.',
+  )
   expect(screen.getByRole('button', { name: 'Confirm role change' })).toBeTruthy()
   await user.click(screen.getByRole('button', { name: 'Confirm role change' }))
-  expect(await screen.findByText('Ada Reader is now an admin.')).toBeTruthy()
+  expect(await screen.findByText('Ada Reader now has the Admin role.')).toBeTruthy()
 })
 
 it('warns before revoking the signed-in admin and does not confirm a lost response automatically', async () => {
@@ -216,7 +220,9 @@ it('shows a retryable directory error', async () => {
       error: new Error('Unable to load users'),
     },
   ])
-  expect((await screen.findByRole('alert')).textContent).toContain('Unable to load users')
+  expect((await screen.findByRole('alert')).textContent).toContain(
+    'Unable to complete this request. Please try again.',
+  )
   expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy()
   expect(screen.queryByText('Ada Reader')).toBeNull()
 })
