@@ -28,6 +28,7 @@ vi.stubGlobal(
 )
 const book = (id: string, title: string, stock = 5) => ({
   __typename: 'Book' as const,
+  cover: null,
   id,
   title,
   author: 'API Author',

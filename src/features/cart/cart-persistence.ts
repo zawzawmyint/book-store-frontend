@@ -223,7 +223,7 @@ export function cartPersistence() {
     synchronize,
     warning: () => warning,
     saveGuest: (value: GuestCart) => {
-      guest = value
+      guest = { ...value, items: validatedItems(value.items) }
       return write(CART_STORAGE_KEY, guest)
     },
     discardLegacy: (rotateIdentity = true) => {

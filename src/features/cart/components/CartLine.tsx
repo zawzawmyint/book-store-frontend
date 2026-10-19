@@ -9,15 +9,17 @@ export function CartLine({
   item,
   update,
   disabled = false,
+  cover,
 }: {
   item: CartItem
   update: (id: string, quantity: number) => void
   disabled?: boolean
+  cover?: import('../../books/components/BookCover').CoverImage | null
 }) {
   return (
     <div className="flex gap-5 py-7 first:pt-0 sm:gap-8">
       <Link to={`/books/${item.id}`} className="w-24 shrink-0 bg-cover-panel p-2 sm:w-32 sm:p-3">
-        <BookCover id={item.id} title={item.title} author={item.author} />
+        <BookCover cover={cover} decorative id={item.id} title={item.title} author={item.author} />
       </Link>
       <div className="flex min-w-0 flex-1 flex-col">
         <p className="eyebrow text-[10px]">{item.genre}</p>

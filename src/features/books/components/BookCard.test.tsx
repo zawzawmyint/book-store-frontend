@@ -8,6 +8,8 @@ import { BookCard } from './BookCard'
 import { useCartStore, type ServerCart } from '../../cart/cart-store'
 
 const book = {
+  cover: null,
+  coverRevision: 0,
   id: '1',
   title: 'A story',
   author: 'Author',

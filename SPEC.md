@@ -1,5 +1,7 @@
 # The Quiet Shelf storefront specification
 
+> **Implemented book cover uploads:** [Book covers](specs/book-cover-uploads/SPEC.md) documents the staff cover editor, real-image presentation, guest lookup, and existing-cover fallback.
+
 > **Proposed UI improvement:** [Bag and checkout UI](specs/bag-checkout-ui/SPEC.md) documents the delivered bag and checkout presentation changes: clearer line prices, responsive delivery/review layouts, synchronized summaries, touch controls, and compact legacy-bag recovery. Unit, lint, build, SQLite, and PostgreSQL verification completed; the feature remains **Proposed** because actual 200% browser-zoom validation could not be performed.
 
 > **Implemented logout destination:** Successful explicit logout from the storefront or Staff/Admin workspace goes to `/sign-in` with history replacement, hides the account bag, and clears private cached data. Failed logout retains its existing recovery behavior. No authentication API changes were needed. Focused logout coverage passed **2/2** tests; the final frontend suite passed **194** tests in **39** files, lint and build, and all **58** SQLite Chromium journeys in **4.9 minutes**, including exact storefront and workspace `/sign-in` assertions.

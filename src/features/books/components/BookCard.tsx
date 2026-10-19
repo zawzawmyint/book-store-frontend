@@ -76,7 +76,7 @@ export function BookCard({
           aria-label={`View ${book.title}`}
         >
           <div className="mx-auto max-w-[215px] transition-transform duration-300 group-hover:-translate-y-1 group-hover:rotate-[-1deg] motion-reduce:transform-none motion-reduce:transition-none">
-            <BookCover id={book.id} title={book.title} author={book.author} />
+            <BookCover cover={book.cover} decorative id={book.id} title={book.title} author={book.author} />
           </div>
         </Link>
         <CardContent className="flex flex-1 flex-col px-0 pb-0 pt-4">

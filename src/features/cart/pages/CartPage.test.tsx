@@ -1,12 +1,16 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render as testingRender, screen } from '@testing-library/react'
+import { ApolloProvider } from '@apollo/client/react'
+import { client } from '../../../lib/apollo-client'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { CartPage } from './CartPage'
 import { useCartStore } from '../cart-store'
 
+const render = (ui: React.ReactNode) =>
+  testingRender(<ApolloProvider client={client}>{ui}</ApolloProvider>)
 const item = {
   id: '1',
   title: 'The Great Gatsby',

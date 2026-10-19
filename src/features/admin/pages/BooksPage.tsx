@@ -137,7 +137,7 @@ export function BooksPage() {
             <>
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <BookCover id={book.id} title={book.title} author={book.author} compact />
+                  <BookCover cover={book.cover} decorative id={book.id} title={book.title} author={book.author} compact />
                   <div>
                     <strong className="font-medium">{book.title}</strong>
                     <p className="mt-1 text-muted-foreground">{book.author}</p>

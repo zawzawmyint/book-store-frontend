@@ -1,3 +1,6 @@
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { BrowserPaymentProvider } from './payment-provider.js'
 import { createApp } from '../../backend/src/app.js'
 import { openDatabase } from '../../backend/src/database/runtime.js'
@@ -24,7 +27,9 @@ const inbox: EmailMessage[] = []
 const frontendOrigin = process.env.E2E_FRONTEND_ORIGIN ?? 'http://localhost:4173'
 if (!['http://localhost:4173', 'http://127.0.0.1:4173'].includes(frontendOrigin))
   throw new Error('Invalid isolated browser frontend origin')
+const mediaRoot = await mkdtemp(join(tmpdir(), 'book-cover-e2e-'))
 const options = {
+  covers: { directory: mediaRoot, publicBaseUrl: 'http://localhost:4173/media/' },
   emailSender: {
     async send(message: EmailMessage) {
       inbox.push(message)
@@ -168,6 +173,7 @@ const shutdown = () =>
         await app.locals.close()
       } finally {
         await database.close()
+        await rm(mediaRoot, { recursive: true, force: true })
       }
     })()
   })

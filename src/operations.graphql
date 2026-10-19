@@ -67,6 +67,11 @@ query DashboardFinance($period: DashboardPeriod!) {
 }
 
 fragment HomepageBook on Book {
+  cover {
+    url
+    width
+    height
+  }
   id
   title
   author
@@ -114,6 +119,11 @@ query Books(
   ) {
     total
     items {
+      cover {
+        url
+        width
+        height
+      }
       id
       title
       author
@@ -128,6 +138,11 @@ query Books(
 
 query Book($id: ID!) {
   book(id: $id) {
+    cover {
+      url
+      width
+      height
+    }
     id
     title
     author
@@ -141,6 +156,11 @@ query Book($id: ID!) {
 query RelatedBooks($genre: String!) {
   books(genre: $genre, limit: 5, offset: 0) {
     items {
+      cover {
+        url
+        width
+        height
+      }
       id
       title
       author
@@ -185,6 +205,12 @@ query Viewer {
   }
 }
 fragment AdminBookFields on AdminBook {
+  cover {
+    url
+    width
+    height
+  }
+  coverRevision
   id
   title
   author
@@ -561,6 +587,11 @@ query QuoteCheckout($input: QuoteCheckoutInput!) {
 fragment AccountCartFields on AccountCart {
   revision
   items {
+    cover {
+      url
+      width
+      height
+    }
     bookId
     quantity
     lineVersion
@@ -589,5 +620,16 @@ mutation SetCartItem($input: SetCartItemInput!) {
 mutation MergeGuestCart($input: MergeGuestCartInput!) {
   mergeGuestCart(input: $input) {
     ...AccountCartFields
+  }
+}
+
+query BookCovers($ids: [ID!]!) {
+  bookCovers(ids: $ids) {
+    id
+    cover {
+      url
+      width
+      height
+    }
   }
 }

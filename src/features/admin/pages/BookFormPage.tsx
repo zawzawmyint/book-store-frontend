@@ -1,3 +1,4 @@
+import { BookCoverEditor } from '../components/BookCoverEditor'
 import { AdminPageHeader } from '../components/AdminPageHeader'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -32,6 +33,7 @@ export function BookFormPage() {
     variables: { id: id ?? '' },
     skip: !id || !valid,
     fetchPolicy: 'no-cache',
+    notifyOnNetworkStatusChange: false,
   })
   useAdminQueryError(error)
   if (!valid || (id && !loading && !error && !data?.adminBook))
@@ -73,6 +75,7 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
     },
   })
   async function save(values: Values) {
+    let createdId: string | undefined
     setError('')
     const input = {
       title: values.title,
@@ -83,17 +86,24 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
     }
     try {
       if (book) await update({ variables: { id: book.id, input } })
-      else
-        await create({
+      else {
+        const result = await create({
           variables: { input: { details: input, stock: Number(values.initialStock) } },
         })
+        createdId = result.data?.createBook.id
+      }
     } catch (failure) {
       handleError(failure)
       setError(failure instanceof Error ? failure.message : 'Unable to save book')
       return
     }
     void refreshCatalog(client).catch(() => {})
-    navigate(returnTo, { state: { notice: book ? 'Book updated.' : 'Book created.' } })
+    if (createdId)
+      navigate(`/admin/books/${createdId}/edit`, {
+        replace: true,
+        state: { returnTo, notice: 'Book created. You can now add a cover.' },
+      })
+    else navigate(returnTo, { state: { notice: 'Book updated.' } })
   }
   return (
     <section className="max-w-3xl">
@@ -169,6 +179,16 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
           </Button>
         </div>
       </form>
+      {location.state?.notice && (
+        <p role="status" className="mt-4">
+          {location.state.notice}
+        </p>
+      )}
+      {book ? (
+        <BookCoverEditor book={book} />
+      ) : (
+        <p className="mt-8 text-sm text-muted-foreground">Save the book before adding a cover.</p>
+      )}
     </section>
   )
 }

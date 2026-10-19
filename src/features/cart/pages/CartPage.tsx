@@ -1,3 +1,4 @@
+import { useCartCovers } from '../use-cart-covers'
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { cartBlocked, checkoutCartReady, useCartStore } from '../cart-store'
@@ -13,6 +14,7 @@ export function CartPage() {
   const items = useCartStore((state) => state.items)
   const update = useCartStore((state) => state.update)
   const state = useCartStore()
+  const covers = useCartCovers(items, state.owner)
   const blocked = cartBlocked(state)
   const count = cartCount(items)
   const total = cartTotal(items)
@@ -57,7 +59,13 @@ export function CartPage() {
         <div className="grid gap-10 pt-9 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-16">
           <div className="divide-y divide-border">
             {items.map((item) => (
-              <CartLine key={item.id} item={item} update={update} disabled={blocked} />
+              <CartLine
+                cover={covers.get(item.id)}
+                key={item.id}
+                item={item}
+                update={update}
+                disabled={blocked}
+              />
             ))}
           </div>
           <SummaryPanel title="Order summary">

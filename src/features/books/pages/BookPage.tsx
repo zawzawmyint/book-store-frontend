@@ -288,7 +288,7 @@ export function BookPage() {
         <div className="mt-8 grid items-start gap-8 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-12 lg:gap-20">
           <Card className="grid place-items-center border-0 bg-cover-panel p-6 md:p-8">
             <div className="w-full max-w-[190px] md:max-w-[280px]">
-              <BookCover id={book.id} title={book.title} author={book.author} large />
+              <BookCover cover={book.cover} id={book.id} title={book.title} author={book.author} large />
             </div>
           </Card>
           <PurchaseSummary key={`${book.id}:${location.key}`} book={book} />

@@ -101,3 +101,7 @@ Show who changed what and when, using the [backend activity contract](../../../b
 **Open decisions**
 
 - None. Staff access to their own history and a dedicated book-detail tab system remain separate future decisions.
+
+## Cover activity addition (verification pending)
+
+The generated `COVER` changed-field value is displayed as **Cover** in Admin activity and book history. Values remain safe plain text managed keys; the UI does not turn them into images or links. This addition depends on the coordinated backend cover transaction and remains verification-pending with the cover feature.

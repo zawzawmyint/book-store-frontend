@@ -194,7 +194,10 @@ test('admin manages catalog, stock, archive/restore and saved order requests', a
   await expect(page.getByText(/Enter a price from \$0 to \$10,000/)).toBeVisible()
   await page.getByLabel('Price (USD)').fill('12.34')
   await page.getByRole('button', { name: 'Save book' }).click()
-  await expect(page.getByText('Book created.', { exact: true })).toBeVisible()
+  await expect(
+    page.getByText('Book created. You can now add a cover.', { exact: true }),
+  ).toBeVisible()
+  await page.getByRole('link', { name: /Back to books/ }).click()
   await page.getByLabel('Search books').fill('Admin journey book')
   await page.getByRole('button', { name: 'Search', exact: true }).click()
   let row = page.getByRole('row').filter({ hasText: 'Admin journey book' })
@@ -296,6 +299,7 @@ test('archived books in an existing cart fail checkout while keeping the cart', 
     .getByRole('form', { name: 'Book purchase' })
     .getByRole('button', { name: 'Add to bag', exact: true })
     .click()
+  await expect(page.getByText('Added 1 to your bag', { exact: true })).toBeVisible()
   await page.evaluate(async (bookId) => {
     const response = await fetch('/graphql', {
       method: 'POST',
@@ -575,7 +579,10 @@ test('admin assigns staff, staff maintains catalog and loses access on demotion'
     await staff.getByLabel('Price (USD)').fill('10.00')
     await staff.getByLabel('Initial stock').fill('3')
     await staff.getByRole('button', { name: 'Save book' }).click()
-    await expect(staff.getByText('Book created.', { exact: true })).toBeVisible()
+    await expect(
+      staff.getByText('Book created. You can now add a cover.', { exact: true }),
+    ).toBeVisible()
+    await staff.getByRole('link', { name: /Back to books/ }).click()
     await staff.getByLabel('Search books').fill('Staff journey book')
     await staff.getByRole('button', { name: 'Search', exact: true }).click()
     const row = staff.getByRole('row').filter({ hasText: 'Staff journey book' })

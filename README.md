@@ -6,6 +6,8 @@ Implemented feature: [Auth email verification and recovery](specs/auth-email/SPE
 
 Implemented feature: [Book details](specs/book-details-upgrade/SPEC.md) adds responsive purchase details, confirmed multi-copy bag additions, and related-book discovery.
 
+Implemented feature: [Book cover uploads](specs/book-cover-uploads/SPEC.md) adds the saved-book cover editor, image rendering, and guest-bag lookups.
+
 Proposed feature: [Bag and checkout UI](specs/bag-checkout-ui/SPEC.md) documents delivered presentation changes with completed automated verification; actual 200% browser-zoom validation remains pending.
 
 A React + TypeScript + Tailwind bookstore storefront using shadcn/ui primitives, Zustand, React Hook Form, and Zod. This folder is its own Git repository. The backend lives in the sibling `backend` repository and should be started first.
@@ -170,6 +172,6 @@ It creates a disposable local PostgreSQL 17.10 database, starts the same fronten
 harness, and rejects arbitrary database URLs. It never uses a development or production
 database.
 
-The design uses locally rendered book covers, so browsing does not depend on a remote image service.
+Book covers use optional API-hosted immutable WebP images with the existing generated design as a fallback. During development Vite proxies `/api/books` and `/media` to `VITE_API_TARGET`. `VITE_API_URL` is optional for direct REST cover requests, but when set it must use the storefront hostname because the auth cookie is host-only; deploy a same-origin proxy when the API has another hostname.
 
 The interface uses self-hosted Lora and Source Sans 3 web fonts from `public/fonts/`, with their OFL license files retained alongside the font assets.

@@ -49,7 +49,7 @@ export function HomeHero({
               aria-label={`Featured book: ${book.title}`}
               className="block w-full max-w-[190px] -rotate-6 transition-transform hover:rotate-0 motion-reduce:transition-none"
             >
-              <BookCover id={book.id} title={book.title} author={book.author} />
+              <BookCover cover={book.cover} decorative eager id={book.id} title={book.title} author={book.author} />
             </Link>
             <div className="min-w-0">
               <p className="eyebrow mb-3">On our reading table</p>

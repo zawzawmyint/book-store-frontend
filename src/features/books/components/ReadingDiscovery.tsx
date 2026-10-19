@@ -86,7 +86,7 @@ export function AuthorDiscovery({ book }: { book?: HomepageBook }) {
           aria-label={`Start with ${book.title}`}
           className="hidden w-28 rotate-3 md:block"
         >
-          <BookCover id={book.id} title={book.title} author={book.author} />
+          <BookCover cover={book.cover} decorative id={book.id} title={book.title} author={book.author} />
         </Link>
       </div>
     </section>
