@@ -6,7 +6,7 @@ Implemented feature: [Auth email verification and recovery](specs/auth-email/SPE
 
 Implemented feature: [Book details](specs/book-details-upgrade/SPEC.md) adds responsive purchase details, confirmed multi-copy bag additions, and related-book discovery.
 
-Implemented feature: [Book cover uploads](specs/book-cover-uploads/SPEC.md) adds the saved-book cover editor, image rendering, and guest-bag lookups.
+Implemented feature: [Book cover uploads](specs/book-cover-uploads/SPEC.md) adds a unified optional cover field to the book form, image rendering, and guest-bag lookups.
 
 Proposed feature: [Bag and checkout UI](specs/bag-checkout-ui/SPEC.md) documents delivered presentation changes with completed automated verification; actual 200% browser-zoom validation remains pending.
 

@@ -20,19 +20,18 @@ test('staff cover upload persists across catalog, detail and bag, and supports r
   await page.getByLabel('Description', { exact: true }).fill('A book with original cover artwork.')
   await page.getByLabel('Price (USD)').fill('12.34')
   await page.getByLabel('Initial stock').fill('4')
-  await page.getByRole('button', { name: 'Save book', exact: true }).click()
-  await expect(page).toHaveURL(/\/admin\/books\/\d+\/edit$/)
-  await expect(page.getByText('Book created. You can now add a cover.')).toBeVisible()
-  const editUrl = page.url(),
-    id = /books\/(\d+)/.exec(editUrl)![1]
-  await page.getByLabel('Title', { exact: true }).fill('Unsaved title remains')
   await page
     .getByLabel('Choose cover image')
     .setInputFiles(resolve('../backend/seed-assets/covers/the-great-gatsby.webp'))
   await expect(page.getByAltText('Selected cover for Cover journey book')).toBeVisible()
-  await page.getByRole('button', { name: 'Upload cover', exact: true }).click()
-  await expect(page.getByRole('status').filter({ hasText: 'Cover saved.' })).toBeVisible()
-  await expect(page.getByLabel('Title', { exact: true })).toHaveValue('Unsaved title remains')
+  await expect(page.getByRole('button', { name: 'Upload cover', exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Save book', exact: true }).click()
+  await expect(page.getByText('Book created.', { exact: true })).toBeVisible()
+  await page.getByLabel('Search books').fill('Cover journey book')
+  await page.getByRole('button', { name: 'Search', exact: true }).click()
+  await page.getByRole('link', { name: 'Edit Cover journey book', exact: true }).click()
+  const editUrl = page.url(),
+    id = /books\/(\d+)/.exec(editUrl)![1]
   const firstUrl = await page.getByAltText('Cover of Cover journey book').getAttribute('src')
   await page.reload()
   await expect(page.getByAltText('Cover of Cover journey book')).toHaveAttribute('src', firstUrl!)
@@ -73,10 +72,20 @@ test('staff cover upload persists across catalog, detail and bag, and supports r
     await page
       .getByLabel('Choose cover image')
       .setInputFiles(resolve('../backend/seed-assets/covers/the-secret-garden.webp'))
-    await page.getByRole('button', { name: 'Replace cover', exact: true }).click()
+    await page
+      .getByLabel('Description', { exact: true })
+      .fill('Updated details and cover together.')
+    await page.getByRole('button', { name: 'Save book', exact: true }).click()
     await expect(page.getByRole('alert')).toContainText('changed elsewhere')
-    await page.getByRole('button', { name: 'Replace cover', exact: true }).click()
-    await expect(page.getByRole('status').filter({ hasText: 'Cover saved.' })).toBeVisible()
+    await expect(page.getByLabel('Description', { exact: true })).toHaveValue(
+      'Updated details and cover together.',
+    )
+    await page.getByRole('button', { name: 'Save book', exact: true }).click()
+    await expect(page.getByText('Book updated.', { exact: true })).toBeVisible()
+    await page.goto(editUrl)
+    await expect(page.getByLabel('Description', { exact: true })).toHaveValue(
+      'Updated details and cover together.',
+    )
     await expect(page.getByAltText('Cover of Cover journey book')).not.toHaveAttribute(
       'src',
       firstUrl!,
@@ -84,12 +93,14 @@ test('staff cover upload persists across catalog, detail and bag, and supports r
     await page.setViewportSize({ width: 390, height: 844 })
     await page.screenshot({ path: 'test-results/book-cover-mobile.png', fullPage: true })
     await page.getByRole('button', { name: 'Remove cover', exact: true }).click()
-    await page.getByRole('button', { name: 'Keep cover', exact: true }).click()
+    await expect(
+      page.getByRole('status').filter({ hasText: 'will be removed when you save' }),
+    ).toBeVisible()
+    await page.getByRole('button', { name: 'Undo removal', exact: true }).click()
     await expect(page.getByRole('button', { name: 'Remove cover', exact: true })).toBeFocused()
     await page.getByRole('button', { name: 'Remove cover', exact: true }).click()
-    await page.getByRole('button', { name: 'Confirm remove', exact: true }).click()
-    await expect(page.getByRole('status').filter({ hasText: 'Cover removed.' })).toBeVisible()
-    await expect(page.getByLabel('Choose cover image')).toBeFocused()
+    await page.getByRole('button', { name: 'Save book', exact: true }).click()
+    await expect(page.getByText('Book updated.', { exact: true })).toBeVisible()
     await store.goto(`/books/${id}`)
     await expect(
       store.getByRole('img', { name: 'Cover design for Cover journey book' }),
@@ -117,7 +128,9 @@ test('staff cover upload persists across catalog, detail and bag, and supports r
       await zoomPage.getByLabel('Email address').fill('admin-e2e@example.com')
       await zoomPage.getByLabel('Password').fill('bookstore-admin-test-123')
       await zoomPage.getByRole('button', { name: 'Sign in', exact: true }).click()
-      await expect(zoomPage.getByRole('heading', { name: 'Book cover', exact: true })).toBeVisible()
+      await expect(
+        zoomPage.getByRole('heading', { name: 'Cover image (optional)', exact: true }),
+      ).toBeVisible()
       const metrics = await zoomPage.evaluate(() => ({
         scale: devicePixelRatio,
         width: innerWidth,
