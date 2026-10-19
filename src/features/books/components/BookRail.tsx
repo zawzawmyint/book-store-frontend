@@ -125,8 +125,8 @@ export function BookRail({
             <div className="flex gap-2">
               <Button
                 type="button"
-                variant="outline"
-                className="size-11"
+                variant="secondary"
+                className="size-11 rounded-full"
                 aria-label={`Show previous ${label}`}
                 disabled={edges.start}
                 onClick={() => move(-1)}
@@ -135,8 +135,8 @@ export function BookRail({
               </Button>
               <Button
                 type="button"
-                variant="outline"
-                className="size-11"
+                variant="secondary"
+                className="size-11 rounded-full"
                 aria-label={`Show next ${label}`}
                 disabled={edges.end}
                 onClick={() => move(1)}

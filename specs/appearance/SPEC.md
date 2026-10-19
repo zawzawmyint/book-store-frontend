@@ -35,7 +35,30 @@ The [icons and typography specification](../icons-typography/SPEC.md) defines th
 
 ## Visual coverage
 
-- Light retains the existing cream/forest-green storefront and neutral workspace, including the dark green workspace sidebar.
+### Softer storefront surfaces — Status: Implemented
+
+- Light and Dark use softer decorative border and cover-panel tokens across the
+  storefront. The workspace retains its distinct palette with softer workspace borders,
+  unoutlined cards, and transparent table/toolbar outer frames.
+- Homepage genre and reading-mood cards are unoutlined rounded surfaces with their
+  existing hover feedback. Secondary carousel controls and the recommendation action
+  are filled and unoutlined. The desktop header and mobile-menu theme switches have
+  transparent borders; their focus treatment remains unchanged.
+- Form and other control boundaries, focus indicators, status colors, text, images,
+  routes, data, and shopping behavior are unchanged. No new gradients were added
+  outside the homepage hero.
+- `bun run test` passed **285/285** tests across 52 files; `bun run lint` and
+  `bun run build` passed. The build retained its existing over-500 kB bundle warning.
+- Browser inspection covered desktop Light home, catalog, book detail, bag, checkout
+  delivery, and profile; desktop Dark home, reading moods, catalog, book detail, bag,
+  checkout delivery, and profile; and 375px Light/Dark representative views. At 375px,
+  the Fantasy genre-card focus indicator remained fully visible and home/catalog had no
+  horizontal overflow; at 320px Dark, the homepage had `scrollWidth = innerWidth = 320`.
+  The inspected browser console had no errors. Evidence is retained outside this
+  repository in `../../.delivery-work/border-audit/`.
+
+- Light retains the cream/forest-green storefront and uses a muted sage-gray workspace,
+  including the dark green workspace sidebar.
 - Dark uses dark neutral/forest backgrounds, light text, and readable green accents. Distinguish page backgrounds, panels, fields, borders, table rows, and interactive states.
 - Cover catalog, book details, cart, authentication, checkout, account pages, not-found screens, and all workspace pages, including Activity and expanded history details.
 - Menus, dialogs, selects, tooltips, mobile navigation, and native form controls use the selected theme even when displayed outside the main page container. Workspace overlays retain the workspace palette.

@@ -8,6 +8,7 @@ import {
 } from '../delivery-address'
 import { money } from '../../../lib/format'
 import { Button } from '../../../app/components/ui/button'
+import { BookLoader } from '../../../app/components/BookLoader'
 import { Input } from '../../../app/components/ui/input'
 import { Label } from '../../../app/components/ui/label'
 
@@ -77,7 +78,7 @@ export function DeliveryAddressForm({
           Where should we send your next chapter?
         </p>
       </div>
-      {optionsLoading && <p role="status">Loading delivery options…</p>}
+      {optionsLoading && <BookLoader compact label="Loading delivery options…" />}
       {optionsError && (
         <p role="alert">
           {optionsError.message}

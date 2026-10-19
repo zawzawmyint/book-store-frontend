@@ -6,6 +6,7 @@ import { useApolloClient, useQuery } from '@apollo/client/react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { MyOrderDocument } from '../../../generated/graphql'
 import { PageContainer } from '../../../app/components/PageContainer'
+import { BookLoader } from '../../../app/components/BookLoader'
 import { Button } from '../../../app/components/ui/button'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { Card, CardContent, CardHeader } from '../../../app/components/ui/card'
@@ -47,9 +48,7 @@ export function OrderPage() {
         Back to your orders
       </Link>
       {loading && (
-        <p role="status" className="mt-8">
-          Loading order request…
-        </p>
+        <BookLoader label="Loading order request…" className="mt-8" />
       )}
       {error && (
         <Alert role="alert" variant="destructive" className="mt-8">

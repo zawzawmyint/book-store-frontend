@@ -48,7 +48,7 @@
   --input: #fbfaf6;
   --foreground: #26342e;
   --muted-foreground: #586357;
-  --border: #d8d5ca;
+  --border: #e5e2d9;
   --control: #7a8275;
   --primary: #2b5843;
   --primary-hover: #1e4331;
@@ -56,7 +56,7 @@
   --secondary: #e6e0d3;
   --copper: #845b38;
   --hero: #e7e9df;
-  --cover-panel: #e9e5dd;
+  --cover-panel: #efede6;
   --ring: #32734f;
   --destructive: #a14134;
   --destructive-hover: #842f25;
@@ -95,6 +95,57 @@
 }
 .page-shell.message-shell {
   max-width: 720px;
+}
+
+.storefront-layout .icon-action[role='switch'],
+.storefront-menu .icon-action[role='switch'] {
+  border-color: transparent;
+}
+
+.book-loading-icon {
+  animation: book-fade 1.8s ease-in-out infinite;
+}
+
+@keyframes book-fade {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-loading-icon {
+    animation: none;
+  }
+}
+
+/* Broad, static washes keep the featured book open to the page, without a frame. */
+.home-hero {
+  --hero-sage-haze: rgb(111 164 128 / 32%);
+  --hero-amber-haze: rgb(196 157 108 / 4%);
+  background:
+    linear-gradient(to top, var(--background), transparent 28%),
+    radial-gradient(ellipse 48% 72% at 74% 44%, var(--hero-sage-haze), transparent 100%),
+    radial-gradient(ellipse 30% 60% at 92% 30%, var(--hero-amber-haze), transparent 100%),
+    linear-gradient(to bottom, var(--surface), var(--background));
+}
+
+.dark .home-hero {
+  --hero-sage-haze: rgb(130 169 136 / 12%);
+  --hero-amber-haze: rgb(195 150 91 / 7%);
+}
+
+@media (max-width: 767px) {
+  .home-hero {
+    background:
+      linear-gradient(to top, var(--background), transparent 28%),
+      radial-gradient(ellipse 85% 40% at 42% 76%, var(--hero-sage-haze), transparent 100%),
+      radial-gradient(ellipse 65% 35% at 95% 68%, var(--hero-amber-haze), transparent 100%),
+      linear-gradient(to bottom, var(--surface), var(--background));
+  }
 }
 
 .back-link {
@@ -188,7 +239,7 @@ button:disabled {
   --input: #17221c;
   --foreground: #edf1e9;
   --muted-foreground: #b7c3b6;
-  --border: #3b4e41;
+  --border: #29392f;
   --control: #829784;
   --primary: #a3d4ae;
   --primary-hover: #bee7c7;
@@ -196,7 +247,7 @@ button:disabled {
   --secondary: #304438;
   --copper: #e1b78d;
   --hero: #1e3026;
-  --cover-panel: #27372d;
+  --cover-panel: #202e26;
   --ring: #a3d4ae;
   --destructive: #ffa99a;
   --destructive-hover: #ffc5bb;
@@ -251,18 +302,19 @@ button:disabled {
 /* Admin surfaces share primitives with the store, with a scoped workspace theme.
    Portaled menus, mobile navigation, and dialogs opt into this same scope. */
 .admin-workspace {
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --muted: #f1f5f9;
-  --input: #ffffff;
-  --foreground: #1e293b;
-  --muted-foreground: #526176;
-  --border: #e2e8f0;
-  --control: #748398;
+  --background: #e3ebe6;
+  --surface: #f0f4ef;
+  --muted: #d7e2d9;
+  --input: #f5f7f2;
+  --foreground: #213c30;
+  --muted-foreground: #41594c;
+  --border: #d4dfd6;
+  --control: #6d8273;
+  --admin-row-stripe: #e8efe8;
   --primary: #047857;
   --primary-hover: #065f46;
   --primary-foreground: #ffffff;
-  --secondary: #e2e8f0;
+  --secondary: #d6e2d8;
   --ring: #047857;
   --success: #047857;
   --sidebar: #12382e;
@@ -299,7 +351,7 @@ button:disabled {
   color: #ffffff;
 }
 .admin-navigation-shell .admin-nav-link[data-active='true'] {
-  border: 1px solid #527f63;
+  border: 1px solid transparent;
   background: #2b5942;
   color: #ffffff;
   box-shadow:
@@ -486,13 +538,13 @@ button:disabled {
   gap: 0.75rem;
   margin-bottom: 1.25rem;
   padding: 0.875rem;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: 0.5rem;
   background: var(--surface);
 }
 .admin-table-panel {
   overflow-x: auto;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: 0.5rem;
   background: var(--surface);
 }
@@ -511,6 +563,9 @@ button:disabled {
 }
 .admin-workspace [data-slot='table-row'] {
   border-color: var(--border);
+}
+.admin-workspace tbody [data-slot='table-row']:nth-child(even) {
+  background: var(--admin-row-stripe);
 }
 .admin-workspace tbody [data-slot='table-row']:hover {
   background: var(--background);
@@ -537,6 +592,11 @@ button:disabled {
   border-color: var(--border);
   border-radius: 0.5rem;
   background: var(--surface);
+}
+.admin-workspace [data-slot='card'] {
+  border-color: transparent;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 3%);
 }
 .admin-form-panel {
   border: 1px solid var(--border);
@@ -566,7 +626,7 @@ button:disabled {
   text-decoration: underline;
 }
 .admin-empty {
-  border: 1px dashed var(--control);
+  border: 1px solid var(--border);
   border-radius: 0.5rem;
   padding: 3rem 1rem;
   text-align: center;
@@ -587,13 +647,14 @@ button:disabled {
 }
 
 .dark .admin-workspace {
+  --admin-row-stripe: transparent;
   --background: #141c1b;
   --surface: #1d2927;
   --muted: #293835;
   --input: #17221f;
   --foreground: #edf3f1;
   --muted-foreground: #b6c8c2;
-  --border: #3e5350;
+  --border: #2a3b36;
   --control: #809c92;
   --primary: #9ee0b9;
   --primary-hover: #b8edcd;
@@ -640,10 +701,6 @@ button:disabled {
 }
 .dashboard-cue[data-tone='success'] {
   --cue-color: var(--dashboard-success);
-}
-.admin-workspace [data-slot='card'].dashboard-metric:not([data-tone='neutral']) {
-  border-color: color-mix(in srgb, var(--cue-color) 45%, var(--border));
-  border-top-color: var(--cue-color);
 }
 .dashboard-icon,
 .dashboard-status {

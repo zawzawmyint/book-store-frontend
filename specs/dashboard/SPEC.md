@@ -95,9 +95,10 @@ or request-handling behavior changed.
   No polling or websocket subscription in this slice. Returning from processing
   remounts/refetches the dashboard; successful stock edits refetch current operations.
 - A background refresh preserves the position of existing dashboard links and
-  controls. Its status is screen-reader-only, while a motion-safe spinner uses the
-  reserved inline update area beside the timestamp for both operations and finance.
-  Initial loading and error feedback remain visible in their existing states.
+  controls. Its existing screen-reader announcement remains in place while a compact,
+  motion-safe book indicator uses the reserved inline update area beside the timestamp
+  for both operations and finance. Initial loading and error feedback remain visible in
+  their existing states.
 - Keep the displayed period and data paired. Ignore superseded responses after
   rapid selection changes; show loading for the new period rather than old data
   under its label. Operational content remains usable if only finance fails.
@@ -152,6 +153,8 @@ and retain exact cards/table values. No truncation, overflow or misleading toolt
 - Finance categories use neutral identifying icons only: refunded or negative values
   do not alone imply urgency. Text carries every status meaning, preserving
   first-click navigation, compact charts, mobile wrapping, and non-color access.
+- Dashboard cards and chart panels use quiet unoutlined rounded surfaces. Status color
+  stays on the labeled badges and icons rather than metric-card outlines.
 
 The controlled `DashboardPage` integration test verifies nonzero operational and
 stock cues, then confirms they return to neutral after a refresh. Five dashboard

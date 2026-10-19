@@ -10,6 +10,7 @@ import { Button } from '../../../app/components/ui/button'
 import { Input } from '../../../app/components/ui/input'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { Skeleton } from '../../../app/components/ui/skeleton'
+import { BookLoader } from '../../../app/components/BookLoader'
 
 export function CatalogSection() {
   const catalog = useCatalog()
@@ -160,11 +161,14 @@ export function CatalogSection() {
             </Alert>
           )}
           {loading && (
-            <div className="grid grid-cols-1 gap-5 min-[375px]:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 6 }, (_, index) => (
-                <Skeleton key={index} className="h-96 rounded-none bg-muted" />
-              ))}
-            </div>
+            <>
+              <BookLoader label="Opening your shelf…" />
+              <div className="grid grid-cols-1 gap-5 min-[375px]:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: 6 }, (_, index) => (
+                  <Skeleton key={index} className="h-96 rounded-none bg-muted" />
+                ))}
+              </div>
+            </>
           )}
           {!loading && !error && books.length === 0 && (
             <div className="rounded-sm bg-muted px-6 py-20 text-center">

@@ -160,11 +160,13 @@ it('distinguishes loading from empty and keeps an empty homepage useful', async 
     delay: 20,
   })
   expect(
-    within(screen.getByRole('region', { name: 'Selected for your shelf' })).getByRole('status')
-      .textContent,
+    within(screen.getByRole('region', { name: 'Selected for your shelf' })).getByRole('status', {
+      name: 'Opening selected books…',
+    }).textContent,
   ).toMatch(/loading|opening/i)
   expect(screen.queryByText(/No selections/)).toBeNull()
   await screen.findByText(/No selections/)
+  expect(screen.queryByRole('status', { name: 'Opening selected books…' })).toBeNull()
   expect(screen.getByRole('link', { name: /Browse all books/ }).getAttribute('href')).toBe('/books')
   expect(screen.queryAllByRole('img')).toHaveLength(0)
 })

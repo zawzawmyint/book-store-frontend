@@ -1,6 +1,7 @@
 import { Button } from '../../../app/components/ui/button'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { Skeleton } from '../../../app/components/ui/skeleton'
+import { BookLoader } from '../../../app/components/BookLoader'
 import { ADMIN_PAGE_SIZE } from '../admin-data'
 
 export function AdminFeedback({
@@ -14,10 +15,10 @@ export function AdminFeedback({
 }) {
   if (loading)
     return (
-      <div role="status" aria-label="Loading" className="space-y-3 py-8">
+      <div className="space-y-3 py-8">
+        <BookLoader label="Loading workspace…" />
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-10 w-full" />
-        <span className="sr-only">Loading…</span>
       </div>
     )
   if (error)

@@ -11,6 +11,7 @@ import { Button } from '../../../app/components/ui/button'
 import { Card, CardContent, CardHeader } from '../../../app/components/ui/card'
 import { Separator } from '../../../app/components/ui/separator'
 import { Skeleton } from '../../../app/components/ui/skeleton'
+import { BookLoader } from '../../../app/components/BookLoader'
 import { signInPath } from '../../auth/return-to'
 
 const pageSize = 20
@@ -53,8 +54,8 @@ export function OrdersPage() {
         Your saved orders, payment state, and request progress.
       </p>
       {loading && (
-        <div role="status" aria-label="Loading your orders" className="mt-10 space-y-6">
-          <span className="sr-only">Loading your orders…</span>
+        <div className="mt-10 space-y-6">
+          <BookLoader label="Loading your orders…" />
           <Skeleton className="h-32 w-full bg-muted" />
           <Skeleton className="h-32 w-full bg-muted" />
         </div>

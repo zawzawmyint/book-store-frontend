@@ -9,6 +9,7 @@ import {
 } from '../../generated/graphql'
 import { authClient } from '../../lib/auth-client'
 import { useCartStore } from './cart-store'
+import { BookLoader } from '../../app/components/BookLoader'
 
 /** SessionBoundary hides the full layout before this owner-scoped bridge mounts. */
 export function CartSession({
@@ -123,8 +124,6 @@ export function CartSession({
   return visibleOwner === owner ? (
     children
   ) : (
-    <div role="status" className="py-24 text-center">
-      Loading your bag…
-    </div>
+    <BookLoader label="Loading your bag…" className="py-24" />
   )
 }

@@ -25,8 +25,8 @@ export function BookRecommendation({ book, note }: { book: HomepageBook; note: s
           <p className="mt-5 max-w-lg text-base leading-8 text-muted-foreground">{note}</p>
           <Button
             asChild
-            variant="outline"
-            className="mt-7 min-h-11 px-5 py-3 text-sm font-semibold"
+            variant="secondary"
+            className="mt-7 min-h-11 rounded-md px-5 py-3 text-sm font-semibold"
           >
             <Link to={`/books/${book.id}`}>
               Discover this book <ArrowRight size={16} aria-hidden="true" />

@@ -2,14 +2,46 @@
 
 > **Status:** Implemented. **Date:** 2026-10-02.
 
+## Softer workspace surfaces — Status: Implemented
+
+### Light-theme readability refinement — Status: Implemented
+
+- Light workspace uses a muted sage-gray canvas with brighter tinted panels, stronger
+  secondary text/table headings, and gentle alternating table-row shading. Dark keeps
+  its existing values and transparent row stripe.
+- Form boundaries, focus indicators, status semantics, layout, and workflows are
+  unchanged. Checked contrast ratios are 6.85:1 for muted text on a panel, 6.27:1 on
+  the canvas, and 3.71:1/3.40:1 for control borders on those respective surfaces.
+- `bun run test` passed **285/285** tests across 52 files; lint and build passed with
+  the existing over-500 kB bundle warning. Browser inspection covered Light desktop
+  dashboard, Books, and stock dialog; 375px Light dashboard/Books; and desktop Dark
+  dashboard/Books regression. Cancel restored dialog focus without a mutation, table
+  scrolling remained contained, and the inspected console had no errors. Evidence is
+  retained outside this repository in `../../.delivery-work/admin-sage-light/`.
+
+- Light and Dark workspace border tokens are softer. Dashboard cards and chart panels
+  are unoutlined rounded surfaces with a subtle shadow; table and toolbar outer frames
+  are transparent, while empty states retain a solid boundary.
+- Active sidebar links keep their mint inset and background with a transparent border.
+  Dashboard metric-card outlines no longer carry status color; the existing labeled
+  status badges and icons retain their warning, info, and success accents.
+- Form/control borders, focus indicators, errors, status meaning, routes, chart/data
+  behavior, permissions, and mutation/confirmation workflows are unchanged.
+- `bun run test` passed **285/285** tests across 52 files; lint and build passed with
+  the existing over-500 kB bundle warning. Browser inspection covered dashboard, Books,
+  and the stock dialog in desktop Light/Dark, plus 375px dashboard/Books in both themes
+  and Light sidebar navigation. Cancel restored dialog focus without a mutation; table
+  scrolling stayed within its panel. The inspected console had no errors. Evidence is
+  retained outside this repository in `../../.delivery-work/admin-softening/`.
+
 > **Role-model update (2026-10-05):** The original two-role access description below is historical. The implemented [Staff specification](../staff/SPEC.md) defines the current Customer/Staff/Admin permissions, Admin-only Users routes, and Staff workspace behavior.
 
 ## Implemented — dedicated admin workspace (2026-10-02)
 
 - Move the existing `/admin` routes outside the storefront layout. Keep authorization, redirects, API contracts, query parameters, and catalog/order workflows intact.
 - Use a full-height shadcn Sidebar, a compact sticky header with account/sign-out access, a Back to store link in the sidebar footer, and full-width page content. Desktop navigation stays visible during scrolling; below 1024px it uses the existing accessible Sheet and focus restoration.
-- Use neutral white/gray surfaces, sans-serif headings, compact controls, aligned tables, and consistent page headers. Scope styling to admin content and its portaled dialogs; preserve the storefront theme.
-- Add/edit forms and order details use readable white panels. Filters and table pagination remain accessible on narrow screens, with scrolling contained inside tables.
+- Use muted sage-gray workspace surfaces, sans-serif headings, compact controls, aligned tables, and consistent page headers. Scope styling to admin content and its portaled dialogs; preserve the storefront theme.
+- Add/edit forms and order details use readable tinted panels. Filters and table pagination remain accessible on narrow screens, with scrolling contained inside tables.
 - Acceptance: authorized admin pages contain no storefront banner, shopping navigation, or footer; Back to store reaches the storefront; account sign-out remains reachable after access revocation; existing admin and checkout journeys pass.
 - Validation: browser regression for shell separation and return navigation, existing responsive/access/privacy journeys, unit/component suite, lint, build, and visual inspection at desktop/mobile widths.
 

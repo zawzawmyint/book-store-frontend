@@ -12,6 +12,7 @@ import { ReadingMoods, AuthorDiscovery } from '../components/ReadingDiscovery'
 import { Button } from '../../../app/components/ui/button'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { Skeleton } from '../../../app/components/ui/skeleton'
+import { BookLoader } from '../../../app/components/BookLoader'
 
 export function HomePage() {
   const { search, hash } = useLocation()
@@ -95,7 +96,7 @@ function HomeContent() {
                 <Link
                   key={genre}
                   to={`/books?${new URLSearchParams({ genre })}`}
-                  className="group flex min-h-36 flex-col items-center justify-center gap-4 rounded-sm border border-border bg-surface px-3 py-5 text-center text-sm font-semibold transition-colors hover:bg-muted motion-reduce:transition-none"
+                  className="group flex min-h-36 flex-col items-center justify-center gap-4 rounded-xl bg-surface px-3 py-5 text-center text-sm font-semibold transition-colors hover:bg-muted motion-reduce:transition-none"
                 >
                   <Icon size={32} strokeWidth={1.2} className="text-primary" aria-hidden="true" />
                   <span>{genre}</span>
@@ -126,9 +127,7 @@ function HomeContent() {
             </div>
             {loading && !data ? (
               <>
-                <p className="sr-only" role="status">
-                  Opening selected books…
-                </p>
+                <BookLoader label="Opening selected books…" />
                 <div className="grid grid-cols-2 gap-5 lg:grid-cols-4" aria-hidden="true">
                   {[0, 1, 2, 3].map((id) => (
                     <Skeleton key={id} className="h-72 sm:h-96" />

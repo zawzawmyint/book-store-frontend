@@ -17,6 +17,7 @@ import { Badge } from '../../../app/components/ui/badge'
 import { Card } from '../../../app/components/ui/card'
 import { Separator } from '../../../app/components/ui/separator'
 import { Skeleton } from '../../../app/components/ui/skeleton'
+import { BookLoader } from '../../../app/components/BookLoader'
 
 type Book = NonNullable<BookQuery['book']>
 
@@ -236,10 +237,8 @@ export function BookPage() {
     return (
       <PageContainer className="py-9 sm:py-14">
         {back}
+        <BookLoader label="Opening this book…" />
         <div className="mt-9 grid gap-8 md:grid-cols-2">
-          <span className="sr-only" role="status">
-            Opening this book…
-          </span>
           <Skeleton className="mx-auto h-72 w-52 md:h-96 md:w-72" />
           <div className="space-y-6">
             <Skeleton className="h-4 w-28" />
