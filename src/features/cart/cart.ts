@@ -5,6 +5,7 @@ export type BookSummary = {
   genre: string
   priceCents: number
   stock: number
+  cover?: import('../books/components/BookCover').CoverImage | null
 }
 
 export type CartItem = BookSummary & { quantity: number; available?: boolean; lineVersion?: string }

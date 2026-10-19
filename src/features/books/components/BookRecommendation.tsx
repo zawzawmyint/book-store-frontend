@@ -13,7 +13,7 @@ export function BookRecommendation({ book, note }: { book: HomepageBook; note: s
           aria-label={`Discover ${book.title}`}
           className="mx-auto block w-full max-w-[235px] -rotate-3 transition-transform hover:rotate-0 motion-reduce:transition-none"
         >
-          <BookCover id={book.id} title={book.title} author={book.author} />
+          <BookCover cover={book.cover} decorative id={book.id} title={book.title} author={book.author} />
         </Link>
         <div>
           <p className="eyebrow mb-4">A bookseller’s recommendation</p>

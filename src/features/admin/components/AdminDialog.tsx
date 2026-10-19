@@ -14,12 +14,14 @@ export function AdminDialog({
   close,
   busy,
   returnFocusTo,
+  returnFocusFallback,
 }: {
   title: string
   children: React.ReactNode
   close: () => void
   busy?: boolean
   returnFocusTo?: HTMLElement | null
+  returnFocusFallback?: () => HTMLElement | null
 }) {
   const [opener] = useState<HTMLElement | null>(
     () =>
@@ -45,7 +47,8 @@ export function AdminDialog({
         }}
         onCloseAutoFocus={(event) => {
           event.preventDefault()
-          opener?.focus()
+          if (opener?.isConnected) opener.focus()
+          else returnFocusFallback?.()?.focus()
         }}
       >
         <DialogHeader>

@@ -12,6 +12,12 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    proxy: { '/graphql': apiTarget, '/api/auth': apiTarget, '/health': apiTarget },
+    proxy: {
+      '/graphql': apiTarget,
+      '/api/auth': apiTarget,
+      '/api/books': apiTarget,
+      '/media': apiTarget,
+      '/health': apiTarget,
+    },
   },
 })

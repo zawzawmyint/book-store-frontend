@@ -15,10 +15,22 @@ export async function refreshCatalog(client: ApolloClient) {
   client.cache.evict({ fieldName: 'books' })
   client.cache.evict({ fieldName: 'book' })
   client.cache.evict({ fieldName: 'genres' })
+  client.cache.evict({ fieldName: 'bookCovers' })
   client.cache.gc()
   await client.refetchQueries({
     include: Array.from(client.getObservableQueries().values())
-      .filter((query) => ['Books', 'Book'].includes(query.queryName ?? ''))
+      .filter((query) =>
+        [
+          'Books',
+          'Book',
+          'StorefrontHome',
+          'RelatedBooks',
+          'BookCovers',
+          'MyCart',
+          'AdminBook',
+          'AdminBooks',
+        ].includes(query.queryName ?? ''),
+      )
       .map((query) => query.query),
   })
 }

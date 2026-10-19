@@ -15,6 +15,7 @@ export const activityActions = {
   USER_PASSWORD_RESET: 'User password reset',
 } as const
 export const activityFields = {
+  COVER: 'Cover',
   ORDER_PAYMENT_STATUS: 'Payment status',
   ORDER_STATUS: 'Order status',
   TITLE: 'Title',

@@ -296,6 +296,7 @@ test('archived books in an existing cart fail checkout while keeping the cart', 
     .getByRole('form', { name: 'Book purchase' })
     .getByRole('button', { name: 'Add to bag', exact: true })
     .click()
+  await expect(page.getByText('Added 1 to your bag', { exact: true })).toBeVisible()
   await page.evaluate(async (bookId) => {
     const response = await fetch('/graphql', {
       method: 'POST',
