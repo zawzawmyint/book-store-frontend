@@ -33,6 +33,8 @@
 
 > **Implemented workspace search:** [Workspace search](specs/workspace-search/SPEC.md) adds the Staff/Admin Books and Orders dialog without changing storefront search, with verified SQLite/PostgreSQL browser coverage, code generation, lint, and build.
 
+> **Implemented shared loading UI:** [Shared book loading indicator](specs/loading-ui/SPEC.md) supplies contextual, motion-aware loading status across storefront and workspace states without changing request or session behavior.
+
 ## Purpose and current scope
 
 ### Implemented: collapsible workspace sidebar
@@ -74,6 +76,8 @@ It presents compact summary cards, then the dashboard graphics, then stock/refun
 and action alerts, with Recent orders last.
 Operational and inventory cards use icons with explicit text status cues so urgency
 does not depend on color alone.
+The workspace uses quieter borders and unoutlined cards while retaining distinct form,
+focus, and status treatments.
 
 Provide a browser storefront for finding books, maintaining a cart, and beginning an
 authenticated Stripe hosted Checkout payment through the separate GraphQL API. Checkout
@@ -82,6 +86,10 @@ collects a delivery address, requires a reviewed server quote, and displays deli
 ### Implemented: storefront homepage and dedicated catalog
 
 The curated homepage is defined by [the storefront homepage specification](specs/storefront-homepage/SPEC.md).
+Its featured banner is unframed, with static Light/Dark sage and amber washes that fade
+into the page background; mobile places the washes below the copy, behind the featured book.
+Storefront discovery surfaces use softer decorative borders and unoutlined rounded cards
+while preserving control, focus, and status treatments.
 The implemented [catalog-upgrade specification](specs/catalog-upgrade/SPEC.md) defines
 the `/books` filter, sorting, URL, return-context, and responsive-card contract. It
 uses an additive backend GraphQL contract and changes no database schema, persistence,

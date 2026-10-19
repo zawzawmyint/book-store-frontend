@@ -9,6 +9,7 @@ import { authEmailCallback, authEmailPath, safeReturnTo } from '../return-to'
 import { PageContainer } from '../../../app/components/PageContainer'
 import { FormField } from '../../../app/components/FormField'
 import { Button } from '../../../app/components/ui/button'
+import { BookLoader } from '../../../app/components/BookLoader'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 
 const schema = z.object({
@@ -117,9 +118,7 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
 
   if (sessionPending)
     return (
-      <div role="status" className="py-24 text-center">
-        Loading your account…
-      </div>
+      <BookLoader label="Loading your account…" className="py-24" />
     )
   if (session?.user.emailVerified === true) return <Navigate to={demoTarget ?? returnTo} replace />
   const isSignUp = mode === 'sign-up'

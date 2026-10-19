@@ -14,6 +14,7 @@ import { accessErrorCode } from '../../admin/admin-access'
 import { signInPath } from '../../auth/return-to'
 import { PageContainer } from '../../../app/components/PageContainer'
 import { Button } from '../../../app/components/ui/button'
+import { BookLoader } from '../../../app/components/BookLoader'
 import { PaymentStatus } from '../../orders/PaymentStatus'
 import { money } from '../../../lib/format'
 
@@ -138,7 +139,7 @@ function PaymentReturn({ orderId }: { orderId: string }) {
           {error}
         </p>
       )}
-      {valid && !order && loading && <p role="status">Confirming payment…</p>}
+      {valid && !order && loading && <BookLoader compact label="Confirming payment…" />}
       {order && (
         <div className="mt-6 max-w-xl space-y-5">
           <PaymentStatus payment={order.payment} />

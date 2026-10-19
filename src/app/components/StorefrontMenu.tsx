@@ -19,7 +19,7 @@ export function StorefrontMenu() {
           <Menu aria-hidden="true" />
         </IconAction>
       </DialogTrigger>
-      <DialogContent className="rounded-lg">
+      <DialogContent className="storefront-menu rounded-lg">
         <DialogTitle>Explore the store</DialogTitle>
         <DialogDescription className="mt-2">
           A good book is a good place to begin.

@@ -72,6 +72,48 @@ repeated search after navigation. This dialog is distinct from catalog-local
 
 ### Featured hero and genres
 
+#### Softer banner update — Status: Implemented
+
+Light-mode color refinement — **Status: Implemented**: the Light hero uses a stronger
+sage wash (`rgb(111 164 128 / 32%)`) behind the featured book and a subtler amber wash
+(`rgb(196 157 108 / 4%)`). The cream copy area, fade layers, mobile placement, and
+Dark wash values remain unchanged. Desktop Light, 375px Light, and desktop Dark
+regression screenshots were inspected; `bun run test` passed **285/285** tests across
+52 files, and lint and build passed with the existing over-500 kB bundle warning.
+Evidence is retained in `../../.delivery-work/sage-banner/`.
+
+- The featured-book enclosure and hero bottom border are removed at `/`, including the
+  desktop empty-book fallback. Existing copy, links, data, and responsive layout are
+  unchanged.
+- Static sage and warm-amber radial washes sit behind the featured-book area and fade
+  from the surface into the page background. Light and Dark use separate wash values;
+  at widths through 767px, the washes move below the copy, behind the featured book.
+  The update adds no image, animation, dependency, API, or route-contract change.
+- Frontend tests passed **285/285** across 52 files; `bun run lint` and `bun run build`
+  passed. The build retained its existing over-500 kB bundle warning.
+- Browser inspection at approximately 1465×803 (Light and Dark), 375×900 (Light and
+  Dark), and 320×1000 (Light and Dark) found no banner-content cropping or horizontal
+  overflow; the 320px page `scrollWidth` was 320. At 320px Light, the keyboard focus
+  ring on **Browse genres** was visible and its anchor navigated to `/#home-genres`.
+  The inspected browser console had no errors. Evidence is retained outside this
+  repository in `../../.delivery-work/soft-banner/`.
+
+#### Softer discovery surfaces — Status: Implemented
+
+- Homepage genre and reading-mood links use unoutlined rounded surfaces while retaining
+  their existing labels, destinations, hover feedback, and keyboard behavior. The
+  selected-book rail's secondary controls and the editorial recommendation action are
+  filled, unoutlined controls.
+- The visual refinement changes no homepage data, links, responsive layout, routes,
+  API contract, or shopping behavior. Shared form/control boundaries and focus
+  indicators retain their existing treatment.
+- The frontend suite passed **285/285** tests across 52 files; lint and build passed
+  with the existing over-500 kB bundle warning. Browser inspection covered desktop
+  Light/Dark discovery content and 375px representative views; the Fantasy genre-card
+  focus indicator remained fully visible, and the 375px homepage had no horizontal
+  overflow. At 320px Dark, homepage `scrollWidth` and `innerWidth` were both 320.
+  Evidence is retained in `../../.delivery-work/border-audit/`.
+
 The homepage has one H1 in a short editorial banner. It contains static discovery copy,
 a **Browse all books** action, and a **Browse genres** in-page anchor only when the API
 supplies usable genres. When a selected book is available, the banner also shows one

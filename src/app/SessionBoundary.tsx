@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useApolloClient } from '@apollo/client/react'
 import { authClient } from '../lib/auth-client'
 import { CartSession } from '../features/cart/CartSession'
+import { BookLoader } from './components/BookLoader'
 import { useCartStore } from '../features/cart/cart-store'
 
 /** Unmounts routed content until Apollo data is cleared for the current identity. */
@@ -30,9 +31,7 @@ export function SessionBoundary({ children }: { children: React.ReactNode }) {
 
   if (isPending || readyId !== userId) {
     return (
-      <div role="status" className="py-24 text-center">
-        Loading your account…
-      </div>
+      <BookLoader label="Loading your account…" className="py-24" />
     )
   }
   return <CartSession owner={userId}>{children}</CartSession>

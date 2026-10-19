@@ -7,6 +7,7 @@ import { Button } from '../../app/components/ui/button'
 import { Alert, AlertDescription } from '../../app/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '../../app/components/ui/card'
 import { Skeleton } from '../../app/components/ui/skeleton'
+import { BookLoader } from '../../app/components/BookLoader'
 import { AdminAccountMenu } from './components/AdminAccountMenu'
 import { ThemeSwitch } from '../../app/components/ThemeSwitch'
 
@@ -35,10 +36,10 @@ export function RequireWorkspaceAccess({ adminOnly = false }: { adminOnly?: bool
   if (isPending || (access.loading && !permitted))
     return (
       <AdminAccessScreen>
-        <div role="status" aria-label="Checking admin access" className="space-y-4">
+        <div className="space-y-4">
+          <BookLoader label="Checking admin access…" />
           <Skeleton className="h-8 w-2/3" />
           <Skeleton className="h-24 w-full" />
-          <span className="sr-only">Checking admin access…</span>
         </div>
       </AdminAccessScreen>
     )

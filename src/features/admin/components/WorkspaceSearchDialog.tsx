@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { BookOpenText, ClipboardList, Search } from 'lucide-react'
 import { Button } from '../../../app/components/ui/button'
 import { Input } from '../../../app/components/ui/input'
+import { BookLoader } from '../../../app/components/BookLoader'
 import {
   Dialog,
   DialogContent,
@@ -222,7 +223,7 @@ function WorkspaceSearchDialog({
                       {type}
                     </h3>
                     {state.loading && (
-                      <p className="text-sm text-muted-foreground">Searching {type}…</p>
+                      <BookLoader compact label={`Searching ${type}…`} />
                     )}
                     {state.error && (
                       <p role="alert" className="text-sm">

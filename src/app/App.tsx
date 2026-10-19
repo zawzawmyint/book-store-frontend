@@ -9,6 +9,7 @@ import { BookPage } from '../features/books/pages/BookPage'
 import { CartPage } from '../features/cart/pages/CartPage'
 import { CheckoutPage } from '../features/checkout/pages/CheckoutPage'
 import { PageContainer } from './components/PageContainer'
+import { BookLoader } from './components/BookLoader'
 import { RequireSession } from '../features/auth/RequireSession'
 import { AuthPage } from '../features/auth/pages/AuthPage'
 import {
@@ -75,7 +76,7 @@ export default function App() {
                   <Route
                     index
                     element={
-                      <Suspense fallback={<p role="status">Loading dashboard…</p>}>
+                      <Suspense fallback={<BookLoader label="Loading dashboard…" />}>
                         <DashboardPage />
                       </Suspense>
                     }

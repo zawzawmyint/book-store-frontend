@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { RefreshCw, type LucideIcon } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { BookLoadingIcon } from '../../../app/components/BookLoader'
 import type { DashboardOrderFieldsFragment } from '../../../generated/graphql'
 import { Card, CardContent, CardHeader } from '../../../app/components/ui/card'
 import {
@@ -127,11 +128,7 @@ export function UpdatedAt({ value, refreshing = false }: { value: string; refres
   return (
     <p className="relative pl-5 text-xs text-muted-foreground">
       {refreshing && (
-        <RefreshCw
-          size={12}
-          aria-hidden="true"
-          className="absolute left-0 top-0.5 motion-safe:animate-spin"
-        />
+        <BookLoadingIcon className="absolute left-0 top-0.5 size-3" />
       )}
       Last updated {serverDate(value).toLocaleString()}
     </p>

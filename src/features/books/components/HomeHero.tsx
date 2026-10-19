@@ -14,7 +14,7 @@ export function HomeHero({
 }) {
   const book = books[0]
   return (
-    <section className="overflow-hidden border-b border-border bg-surface">
+    <section className="home-hero overflow-hidden">
       <PageContainer className="grid items-center gap-8 py-10 sm:py-12 md:grid-cols-[1.2fr_1fr] md:gap-14 lg:py-14">
         <div className="max-w-xl">
           <p className="eyebrow mb-5">The Quiet Shelf · A place for stories</p>
@@ -43,7 +43,7 @@ export function HomeHero({
           </div>
         </div>
         {book ? (
-          <div className="relative grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-5 rounded-t-[100px] border border-border bg-background px-6 pb-7 pt-10 sm:gap-7 sm:px-8">
+          <div className="relative grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-5 px-6 pb-7 pt-10 sm:gap-7 sm:px-8">
             <Link
               to={`/books/${book.id}`}
               aria-label={`Featured book: ${book.title}`}
@@ -66,7 +66,7 @@ export function HomeHero({
             </div>
           </div>
         ) : (
-          <div className="hidden rounded-t-full border border-border px-12 py-20 text-center md:block">
+          <div className="hidden px-12 py-20 text-center md:block">
             <p className="font-serif text-3xl italic text-muted-foreground">
               There’s a whole world
               <br />
