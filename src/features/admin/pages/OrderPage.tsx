@@ -1,3 +1,5 @@
+import { formatDateTime, money, serverDate } from '../../../lib/format'
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { DeliveryDetails } from '../../orders/DeliveryDetails'
 import { RefundRetryDialog } from '../components/RefundRetryDialog'
 import { PaymentStatus } from '../../orders/PaymentStatus'
@@ -5,7 +7,6 @@ import { useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { useApolloClient, useQuery } from '@apollo/client/react'
 import { AdminOrderDocument } from '../../../generated/graphql'
-import { money, serverDate } from '../../../lib/format'
 import {
   Card,
   CardContent,
@@ -26,11 +27,15 @@ import { AdminFeedback } from '../components/AdminFeedback'
 import { dashboardReturnTo } from '../dashboard/dashboard-format'
 
 export function OrderPage() {
+  useI18n()
+
   const { id = '' } = useParams()
   return <OrderDetailPage key={id} id={id} />
 }
 
 function OrderDetailPage({ id }: { id: string }) {
+  useI18n()
+
   const client = useApolloClient()
   const access = useAdminAccess()
   const [current, setCurrent] = useState<AdminOrderDetailFragment>()
@@ -63,8 +68,8 @@ function OrderDetailPage({ id }: { id: string }) {
     setDraft('')
     setNotice(
       updated.status === 'CANCELLED' && updated.payment.status === 'REFUND_PENDING'
-        ? 'Order cancelled; refund pending'
-        : 'Request confirmed as ' + orderStatusLabels[updated.status] + '.',
+        ? msg('admin:orderCancelledRefundPending')
+        : msg('admin:requestConfirmedAs', { value0: orderStatusLabels[updated.status] }),
     )
     for (const fieldName of [
       'adminOrders',
@@ -82,24 +87,27 @@ function OrderDetailPage({ id }: { id: string }) {
   return (
     <section>
       <Link className="admin-back-link" to={returnTo}>
-        {dashboardReturn ? 'Back to dashboard' : 'Back to order requests'}
+        {localized(dashboardReturn ? t('admin:backToDashboard') : t('admin:backToOrderRequests'))}
       </Link>
       {notice && (
         <p role="status" className="mt-4">
-          {notice}
+          {localized(notice)}
         </p>
       )}
-      <AdminFeedback loading={loading} error={error} retry={refreshOrder} />
+      <AdminFeedback loading={loading} error={localized(error)} retry={refreshOrder} />
       {!loading && !error && (!valid || !order) && (
-        <h2 className="mt-6 font-serif text-3xl">Order request not found</h2>
+        <h2 className="mt-6 font-serif text-3xl">{t('admin:orderRequestNotFound')}</h2>
       )}
       {!loading && !error && order && (
         <Card className="mt-6 max-w-3xl">
           <CardHeader>
-            <CardTitle>Order request #{order.id}</CardTitle>
-            <CardDescription>{serverDate(order.createdAt).toLocaleString()}</CardDescription>
+            <CardTitle>{t('admin:orderRequestValue', { value0: order.id })}</CardTitle>
+            <CardDescription>
+              {localized(formatDateTime(serverDate(order.createdAt)))}
+            </CardDescription>
             <p>
-              {order.customerName} · {order.email}
+              <bdi dir="auto">{localized(order.customerName)}</bdi> ·{' '}
+              <bdi dir="ltr">{localized(order.email)}</bdi>
             </p>
             <OrderStatusBadge status={order.status} paymentStatus={order.payment.status} />
             <PaymentStatus payment={order.payment} />
@@ -109,10 +117,12 @@ function OrderDetailPage({ id }: { id: string }) {
               {order.items.map((line, index) => (
                 <li key={index} className="flex flex-wrap justify-between gap-3 pb-3">
                   <span>
-                    {line.quantity} × {line.title}
-                    <small className="block">{money(line.unitPriceCents)} each</small>
+                    {localized(line.quantity)} × <bdi dir="auto">{localized(line.title)}</bdi>
+                    <small className="block">
+                      {t('admin:valueEach', { value0: money(line.unitPriceCents) })}
+                    </small>
                   </span>
-                  <strong>{money(line.quantity * line.unitPriceCents)}</strong>
+                  <strong>{localized(money(line.quantity * line.unitPriceCents))}</strong>
                   <Separator />
                 </li>
               ))}
@@ -125,7 +135,7 @@ function OrderDetailPage({ id }: { id: string }) {
               !access.loading &&
               !access.expired && (
                 <Button className="mt-4" onClick={() => setRefundOpen(true)}>
-                  Retry refund
+                  {t('admin:retryRefund')}
                 </Button>
               )}
             {hasCapability(access.role, 'PROCESS_ORDERS') && !access.loading && !access.expired && (
@@ -140,7 +150,7 @@ function OrderDetailPage({ id }: { id: string }) {
                         setTarget('PREPARING')
                       }}
                     >
-                      Accept and prepare
+                      {t('admin:acceptAndPrepare')}
                     </Button>
                   )}
                 {order.status === 'PREPARING' &&
@@ -153,7 +163,7 @@ function OrderDetailPage({ id }: { id: string }) {
                         setTarget('SHIPPED')
                       }}
                     >
-                      Mark shipped
+                      {t('admin:markShipped')}
                     </Button>
                   )}
                 {order.status === 'SHIPPED' &&
@@ -166,7 +176,7 @@ function OrderDetailPage({ id }: { id: string }) {
                         setTarget('DELIVERED')
                       }}
                     >
-                      Confirm delivery
+                      {t('admin:confirmDelivery')}
                     </Button>
                   )}
                 {(order.status === 'SUBMITTED' || order.status === 'PREPARING') && (
@@ -178,7 +188,7 @@ function OrderDetailPage({ id }: { id: string }) {
                       setTarget('CANCELLED')
                     }}
                   >
-                    Cancel request
+                    {t('admin:cancelRequest')}
                   </Button>
                 )}
               </div>
@@ -213,9 +223,7 @@ function OrderDetailPage({ id }: { id: string }) {
             refreshed={(updated) => {
               setCurrent(updated)
               if (updated.status !== order.status)
-                setNotice(
-                  'The request changed. Review its current status and confirm a fresh action.',
-                )
+                setNotice(msg('admin:theRequestChangedReviewItsCurrentStatusAndConfirmAFresh'))
             }}
             refresh={refreshOrder}
           />

@@ -1,10 +1,20 @@
 import type { DashboardPeriod } from '../../../generated/graphql'
+import { locale, type Language } from '../../../lib/i18n'
 
-export function exactMoney(cents: string) {
+export function exactMoney(cents: string, language?: Language) {
   const value = BigInt(cents)
   const absolute = value < 0n ? -value : value
-  const dollars = (absolute / 100n).toLocaleString('en-US')
-  return `${value < 0n ? '-' : ''}$${dollars}.${String(absolute % 100n).padStart(2, '0')}`
+  const whole = absolute / 100n
+  const signed = value < 0n ? (whole === 0n ? -0 : -whole) : whole
+  const formatter = new Intl.NumberFormat(locale(language), { style: 'currency', currency: 'USD' })
+  const fraction = new Intl.NumberFormat(locale(language), {
+    useGrouping: false,
+    minimumIntegerDigits: 2,
+  }).format(absolute % 100n)
+  return formatter
+    .formatToParts(signed)
+    .map((part) => (part.type === 'fraction' ? fraction : part.value))
+    .join('')
 }
 
 export function plotAmount(cents: string) {

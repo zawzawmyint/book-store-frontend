@@ -1,3 +1,4 @@
+import { message as msg } from '../../lib/i18n'
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
@@ -19,8 +20,8 @@ beforeEach(() => {
 })
 
 it.each([
-  ['ready', 'Your bag is up to date.', 'Your bag is up to date.'],
-  ['ready', 'Bag saved.', 'Bag saved.'],
+  ['ready', msg('storefront:yourBagIsUpToDate'), 'Your bag is up to date.'],
+  ['ready', msg('storefront:bagSaved'), 'Bag saved.'],
   ['loading', '', 'Loading your bag…'],
   ['saving', '', 'Saving your bag…'],
 ] as const)(
@@ -66,7 +67,7 @@ it('discloses legacy items without importing or discarding them', async () => {
   expect(screen.getByText(/may belong to someone else/)).toBeTruthy()
   const disclosure = screen.getByText('View saved books')
   await userEvent.click(disclosure)
-  expect(screen.getByText('2 × Old book')).toBeTruthy()
+  expect(screen.getByRole('listitem').textContent).toBe('2 × Old book')
   expect(importLegacy).not.toHaveBeenCalled()
   expect(discardLegacy).not.toHaveBeenCalled()
   await userEvent.click(screen.getByRole('button', { name: 'Add saved bag to my account' }))
@@ -101,7 +102,7 @@ it('announces a passive workspace refresh without inserting visible layout conte
   useCartStore.setState({
     owner: 'staff',
     status: 'ready',
-    message: 'Your bag is up to date.',
+    message: msg('storefront:yourBagIsUpToDate'),
     notices: [],
     legacyItems: [],
     legacyUnreadable: false,
@@ -116,7 +117,7 @@ it('keeps adjusted guest merge notices visible in the workspace', () => {
   useCartStore.setState({
     owner: 'staff',
     status: 'ready',
-    message: 'Bag saved.',
+    message: msg('storefront:bagSaved'),
     notices: [{ bookId: '1', reason: 'UNAVAILABLE' }],
     legacyItems: [],
     legacyUnreadable: false,

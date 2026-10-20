@@ -1,3 +1,4 @@
+import { message as msg } from '../../lib/i18n'
 import { CART_STORAGE_KEY, type CartItem } from './cart'
 export const LEGACY_CART_KEY = 'book-store-cart-legacy-import'
 export const PENDING_MERGES_KEY = 'book-store-cart-pending-merges'
@@ -96,8 +97,7 @@ export function cartPersistence() {
   let memoryOnly = false
   const unavailable = () => {
     memoryOnly = true
-    warning =
-      'Browser storage is unavailable. Guest and merge recovery after reload is unavailable.'
+    warning = msg('storefront:browserStorageIsUnavailableGuestAndMergeRecoveryAfterReloadIs')
   }
   const read = (key: string): string | null => {
     try {
@@ -134,7 +134,7 @@ export function cartPersistence() {
             validLines(record.items),
         )
     } catch {
-      warning = 'Saved merge recovery is unavailable. Please check your account bag.'
+      warning = msg('storefront:savedMergeRecoveryIsUnavailablePleaseCheckYourAccountBag')
     }
   }
   refreshPending()
@@ -145,8 +145,7 @@ export function cartPersistence() {
       (value.length > 20 || value.some((item) => item?.quantity > 10)) &&
       !warning
     )
-      warning =
-        'Saved browser selections are limited to twenty titles and ten copies per book. Review the adjusted import before adding it to your account.'
+      warning = msg('storefront:savedBrowserSelectionsAreLimitedToTwentyTitlesAndTenCopies')
     return validatedItems(value, true)
   }
   let legacyUnreadable = read(UNREADABLE_CART_KEY) !== null

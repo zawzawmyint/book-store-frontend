@@ -1,3 +1,4 @@
+import { localized } from '../../lib/i18n'
 import type { ComponentProps } from 'react'
 import { Button } from './ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
@@ -21,7 +22,7 @@ export function IconAction({
         <Button
           type="button"
           variant={variant}
-          aria-label={label}
+          aria-label={localized(label)}
           className={cn(
             'icon-action min-h-11 min-w-11 shrink-0 rounded-md p-2.5 [&_svg]:size-5',
             className,
@@ -30,7 +31,7 @@ export function IconAction({
         />
       </TooltipTrigger>
       <TooltipContent className={workspace ? 'admin-workspace' : undefined} sideOffset={6}>
-        {tooltip}
+        {localized(tooltip)}
       </TooltipContent>
     </Tooltip>
   )

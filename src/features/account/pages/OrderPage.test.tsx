@@ -105,7 +105,11 @@ it('interprets persisted SQLite submission dates as UTC like timeline events', a
     items: [],
     history: [],
   })
-  expect(await screen.findByText(new Date('2026-10-07T06:20:00Z').toLocaleString())).toBeTruthy()
+  expect(
+    await screen.findByText(
+      new Date('2026-10-07T06:20:00Z').toLocaleString('en-US', { calendar: 'gregory' }),
+    ),
+  ).toBeTruthy()
 })
 
 it('refreshes an expired session and keeps the intended detail login URL', async () => {

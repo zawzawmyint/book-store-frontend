@@ -1,3 +1,4 @@
+import { localized } from '../../../lib/i18n'
 import type { ReactNode } from 'react'
 
 export function AdminPageHeader({
@@ -12,10 +13,12 @@ export function AdminPageHeader({
   return (
     <div className="admin-page-header">
       <div>
-        <h2>{title}</h2>
-        {description && <p>{description}</p>}
+        <h2>
+          <bdi dir="auto">{localized(title)}</bdi>
+        </h2>
+        {description && <p>{localized(description)}</p>}
       </div>
-      {actions}
+      {localized(actions)}
     </div>
   )
 }

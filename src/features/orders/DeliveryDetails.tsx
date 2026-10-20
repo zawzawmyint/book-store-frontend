@@ -1,6 +1,7 @@
+import { formatDateTime, money, serverDate } from '../../lib/format'
+import { localized, t, useI18n } from '../../lib/i18n'
 import { safeTrackingUrl } from './tracking-url'
 import type { CustomerOrderFieldsFragment } from '../../generated/graphql'
-import { money, serverDate } from '../../lib/format'
 export function DeliveryDetails({
   delivery,
   subtotalCents,
@@ -11,37 +12,67 @@ export function DeliveryDetails({
   CustomerOrderFieldsFragment,
   'delivery' | 'subtotalCents' | 'deliveryFeeCents' | 'totalCents' | 'status'
 >) {
+  useI18n()
+
   const address = delivery.address
   const shipment = delivery.shipment
   return (
-    <section className="mt-6 space-y-4 text-left" aria-label="Delivery details">
+    <section className="mt-6 space-y-4 text-start" aria-label={t('storefront:deliveryDetails')}>
       <dl className="space-y-2">
         <div className="flex justify-between">
-          <dt>Books subtotal</dt>
-          <dd>{money(subtotalCents)}</dd>
+          <dt>{t('storefront:booksSubtotal')}</dt>
+          <dd>{localized(money(subtotalCents))}</dd>
         </div>
         <div className="flex justify-between">
-          <dt>Delivery</dt>
-          <dd>{deliveryFeeCents === 0 ? 'Free delivery' : money(deliveryFeeCents)}</dd>
+          <dt>{t('storefront:delivery')}</dt>
+          <dd>
+            {localized(
+              deliveryFeeCents === 0 ? t('storefront:freeDelivery') : money(deliveryFeeCents),
+            )}
+          </dd>
         </div>
         <div className="flex justify-between font-semibold">
-          <dt>Total</dt>
-          <dd>{money(totalCents)}</dd>
+          <dt>{t('storefront:total')}</dt>
+          <dd>{localized(money(totalCents))}</dd>
         </div>
       </dl>
       <div>
-        <h2 className="font-semibold">Delivery address</h2>
-        <p>{address.recipientName}</p>
-        <p>{address.phone}</p>
-        <p>{address.addressLine1}</p>
-        {address.addressLine2 && <p>{address.addressLine2}</p>}
-        <p>{[address.city, address.region, address.postalCode].filter(Boolean).join(', ')}</p>
-        <p>{address.countryCode}</p>
+        <h2 className="font-semibold">{t('storefront:deliveryAddress')}</h2>
+        <p>
+          <bdi dir="auto">{localized(address.recipientName)}</bdi>
+        </p>
+        <p>
+          <bdi dir="ltr">{localized(address.phone)}</bdi>
+        </p>
+        <p>
+          <bdi dir="auto">{localized(address.addressLine1)}</bdi>
+        </p>
+        {address.addressLine2 && (
+          <p>
+            <bdi dir="auto">{localized(address.addressLine2)}</bdi>
+          </p>
+        )}
+        <p>
+          <bdi dir="auto">
+            {localized(
+              [address.city, address.region, address.postalCode].filter(Boolean).join(', '),
+            )}
+          </bdi>
+        </p>
+        <p>
+          <bdi dir="ltr">{localized(address.countryCode)}</bdi>
+        </p>
       </div>
       {shipment ? (
         <div>
-          <p>{shipment.carrier}</p>
-          {shipment.trackingNumber && <p>{shipment.trackingNumber}</p>}
+          <p>
+            <bdi dir="auto">{localized(shipment.carrier)}</bdi>
+          </p>
+          {shipment.trackingNumber && (
+            <p>
+              <bdi dir="ltr">{localized(shipment.trackingNumber)}</bdi>
+            </p>
+          )}
           {shipment.trackingUrl && safeTrackingUrl(shipment.trackingUrl) && (
             <a
               className="text-primary underline"
@@ -49,19 +80,29 @@ export function DeliveryDetails({
               target="_blank"
               rel="noopener noreferrer"
             >
-              Track with carrier
+              {t('storefront:trackWithCarrier')}
             </a>
           )}
           <p className="text-xs text-muted-foreground">
-            Tracking details are entered by staff. The carrier page provides its own updates.
+            {t('storefront:trackingDetailsAreEnteredByStaffTheCarrierPageProvidesIts')}
           </p>
         </div>
       ) : (
-        ['SHIPPED', 'DELIVERED'].includes(status) && <p>Tracking details not provided</p>
+        ['SHIPPED', 'DELIVERED'].includes(status) && (
+          <p>{t('storefront:trackingDetailsNotProvided')}</p>
+        )
       )}
-      {delivery.shippedAt && <p>Shipped {serverDate(delivery.shippedAt).toLocaleString()}</p>}
+      {delivery.shippedAt && (
+        <p>
+          {t('storefront:shippedValue', { value0: formatDateTime(serverDate(delivery.shippedAt)) })}
+        </p>
+      )}
       {delivery.deliveredAt && (
-        <p>Delivery confirmed {serverDate(delivery.deliveredAt).toLocaleString()}</p>
+        <p>
+          {t('storefront:deliveryConfirmedValue', {
+            value0: formatDateTime(serverDate(delivery.deliveredAt)),
+          })}
+        </p>
       )}
     </section>
   )

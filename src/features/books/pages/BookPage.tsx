@@ -1,3 +1,4 @@
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useQuery } from '@apollo/client/react'
 import { ArrowRight, Check, ShoppingBag } from 'lucide-react'
@@ -22,6 +23,8 @@ import { BookLoader } from '../../../app/components/BookLoader'
 type Book = NonNullable<BookQuery['book']>
 
 function PurchaseSummary({ book }: { book: Book }) {
+  useI18n()
+
   const add = useCartStore((state) => state.add)
   const blocked = useCartStore(cartBlocked)
   const owner = useCartStore((state) => state.owner)
@@ -88,7 +91,7 @@ function PurchaseSummary({ book }: { book: Book }) {
 
   return (
     <form
-      aria-label="Book purchase"
+      aria-label={t('storefront:bookPurchase')}
       onSubmit={(event) => {
         event.preventDefault()
         void addBook()
@@ -99,39 +102,41 @@ function PurchaseSummary({ book }: { book: Book }) {
         to={`/books?${new URLSearchParams({ genre: book.genre })}`}
         className="inline-flex min-h-11 items-center break-words text-xs font-bold uppercase tracking-[.22em] text-copper hover:underline"
       >
-        {book.genre}
+        <bdi dir="auto">{localized(book.genre)}</bdi>
       </Link>
       <h1 className="mt-2 break-words font-serif text-[clamp(2rem,3.5vw,3rem)] leading-[1.08] tracking-[-.04em]">
-        {book.title}
+        <bdi dir="auto">{localized(book.title)}</bdi>
       </h1>
       <p className="mt-4 break-words font-serif text-xl italic text-muted-foreground">
-        by{' '}
+        {t('storefront:by')}{' '}
         <Link
           to={`/books?${new URLSearchParams({ search: book.author })}`}
           className="underline underline-offset-4 hover:text-primary"
         >
-          {book.author}
+          <bdi dir="auto">{localized(book.author)}</bdi>
         </Link>
       </p>
       <Separator className="my-6 bg-border" />
       <p className="text-2xl font-semibold">
-        {money(book.priceCents)}{' '}
-        <span className="text-sm font-normal text-muted-foreground">each</span>
+        {localized(money(book.priceCents))}{' '}
+        <span className="text-sm font-normal text-muted-foreground">{t('storefront:each')}</span>
       </p>
       <Badge
         variant="outline"
         className={`mt-2 flex w-fit items-center gap-2 border-0 px-0 py-0 text-sm font-normal ${stock && !unavailable ? 'text-primary' : 'text-destructive'}`}
       >
         <Check size={15} />
-        {unavailable
-          ? 'Currently unavailable'
-          : stock
-            ? `${stock} available`
-            : 'Currently sold out'}
+        {localized(
+          unavailable
+            ? t('storefront:currentlyUnavailable')
+            : stock
+              ? t('storefront:availableCount', { value0: stock })
+              : t('storefront:currentlySoldOut'),
+        )}
       </Badge>
       <div className="mt-6 flex flex-wrap items-center gap-4">
         <label htmlFor="book-quantity" className="text-sm font-semibold">
-          Quantity
+          {t('storefront:quantity')}
         </label>
         <select
           id="book-quantity"
@@ -143,18 +148,24 @@ function PurchaseSummary({ book }: { book: Book }) {
           {remaining ? (
             Array.from({ length: remaining }, (_, i) => (
               <option key={i + 1} value={i + 1}>
-                {i + 1}
+                {localized(i + 1)}
               </option>
             ))
           ) : (
             <option value={0}>0</option>
           )}
         </select>
-        {inBag > 0 && <span className="text-sm text-muted-foreground">{inBag} in your bag</span>}
+        {inBag > 0 && (
+          <span className="text-sm text-muted-foreground">
+            {t('storefront:valueInYourBag', { value0: inBag })}
+          </span>
+        )}
       </div>
       {selected > 1 && (
         <p className="mt-3 text-sm text-muted-foreground">
-          Subtotal {money(book.priceCents * selected)} · excludes delivery
+          {t('storefront:subtotalValueExcludesDelivery', {
+            value0: money(book.priceCents * selected),
+          })}
         </p>
       )}
       <Button
@@ -163,36 +174,40 @@ function PurchaseSummary({ book }: { book: Book }) {
         className="mt-5 w-full disabled:cursor-not-allowed"
       >
         <ShoppingBag size={17} />
-        {pending
-          ? 'Adding…'
-          : unavailable
-            ? 'Unavailable'
-            : !stock
-              ? 'Sold out'
-              : !remaining
-                ? 'Maximum in bag'
-                : 'Add to bag'}
+        {localized(
+          pending
+            ? t('storefront:adding')
+            : unavailable
+              ? t('storefront:unavailable')
+              : !stock
+                ? t('storefront:soldOut')
+                : !remaining
+                  ? t('storefront:maximumInBag')
+                  : t('storefront:addToBag'),
+        )}
       </Button>
       <p role="status" aria-live="polite" className="mt-3 text-sm text-primary">
-        {added > 0 && inBag > 0 ? `Added ${added} to your bag` : ''}
+        {localized(
+          added > 0 && inBag > 0 ? t('storefront:addedValueToYourBag', { value0: added }) : '',
+        )}
       </p>
       {inBag > 0 && (
         <Link
           to="/cart"
           className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:underline"
         >
-          View bag <ArrowRight size={16} />
+          {t('storefront:viewBag')} <ArrowRight size={16} />
         </Link>
       )}
       <Separator className="mt-6 bg-border" />
       <div className="grid grid-cols-2 gap-6 pt-5 text-xs leading-5 text-muted-foreground">
         <span>
-          <strong className="mb-1 block text-foreground">Carefully chosen</strong>A shelf of
-          enduring favorites.
+          <strong className="mb-1 block text-foreground">{t('storefront:carefullyChosen')}</strong>
+          {t('storefront:aShelfOfEnduringFavorites')}
         </span>
         <span>
-          <strong className="mb-1 block text-foreground">Demo checkout</strong>Stripe hosted test
-          payments.
+          <strong className="mb-1 block text-foreground">{t('storefront:demoCheckout')}</strong>
+          {t('storefront:stripeHostedTestPayments')}
         </span>
       </div>
     </form>
@@ -200,6 +215,8 @@ function PurchaseSummary({ book }: { book: Book }) {
 }
 
 export function BookPage() {
+  useI18n()
+
   const { id = '' } = useParams()
   const location = useLocation()
   const navigationType = useNavigationType()
@@ -229,15 +246,15 @@ export function BookPage() {
       to={catalogReturn?.url ?? '/books'}
       state={catalogReturn ? { catalogReturn } : undefined}
     >
-      All books
+      {t('storefront:allBooks')}
     </BackLink>
   )
 
   if (loading)
     return (
       <PageContainer className="py-9 sm:py-14">
-        {back}
-        <BookLoader label="Opening this book…" />
+        {localized(back)}
+        <BookLoader label={t('storefront:openingThisBook')} />
         <div className="mt-9 grid gap-8 md:grid-cols-2">
           <Skeleton className="mx-auto h-72 w-52 md:h-96 md:w-72" />
           <div className="space-y-6">
@@ -251,10 +268,10 @@ export function BookPage() {
   if (error)
     return (
       <PageContainer className="space-y-8 py-14">
-        {back}
+        {localized(back)}
         <Alert variant="destructive">
           <AlertDescription>
-            We could not load this book.{' '}
+            {t('storefront:weCouldNotLoadThisBook')}
             <Button
               type="button"
               variant="ghost"
@@ -263,7 +280,7 @@ export function BookPage() {
               }}
               className="h-auto p-0 font-semibold underline hover:bg-transparent"
             >
-              Try again
+              {t('storefront:tryAgain')}
             </Button>
           </AlertDescription>
         </Alert>
@@ -272,10 +289,10 @@ export function BookPage() {
   if (!book)
     return (
       <PageContainer className="py-14">
-        {back}
-        <h1 className="mt-8 font-serif text-4xl">Book not found</h1>
+        {localized(back)}
+        <h1 className="mt-8 font-serif text-4xl">{t('storefront:bookNotFound')}</h1>
         <Link to="/books" className="mt-5 inline-block text-primary underline">
-          Back to the collection
+          {t('storefront:backToTheCollection')}
         </Link>
       </PageContainer>
     )
@@ -283,34 +300,42 @@ export function BookPage() {
   return (
     <>
       <PageContainer className="py-9 sm:py-14">
-        {back}
+        {localized(back)}
         <div className="mt-8 grid items-start gap-8 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-12 lg:gap-20">
           <Card className="grid place-items-center border-0 bg-cover-panel p-6 md:p-8">
             <div className="w-full max-w-[190px] md:max-w-[280px]">
-              <BookCover cover={book.cover} id={book.id} title={book.title} author={book.author} large />
+              <BookCover
+                cover={book.cover}
+                id={book.id}
+                title={localized(book.title)}
+                author={book.author}
+                large
+              />
             </div>
           </Card>
           <PurchaseSummary key={`${book.id}:${location.key}`} book={book} />
         </div>
         <section aria-labelledby="about-book" className="mt-12 border-t border-border pt-8">
           <h2 id="about-book" className="font-serif text-2xl sm:text-3xl">
-            About this book
+            {t('storefront:aboutThisBook')}
           </h2>
           <p className="mt-5 max-w-3xl whitespace-pre-line break-words text-base leading-8 text-muted-foreground">
-            {book.description.trim()
-              ? book.description
-              : 'A description is not available for this book yet.'}
+            {localized(
+              book.description.trim()
+                ? book.description
+                : t('storefront:aDescriptionIsNotAvailableForThisBookYet'),
+            )}
           </p>
         </section>
       </PageContainer>
       {relatedBooks.length > 0 && (
         <section aria-labelledby="related-books" className="pb-14">
           <BookRail
-            label="books in this genre"
+            label={t('storefront:booksInThisGenre')}
             headerClassName="mt-4 mb-8 border-t border-border pt-8"
             title={
               <h2 id="related-books" className="font-serif text-2xl sm:text-3xl">
-                More in this genre
+                {t('storefront:moreInThisGenre')}
               </h2>
             }
           >

@@ -1,3 +1,5 @@
+import { errorMessage } from '../../../lib/i18n/errors'
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { useState } from 'react'
 import { useApolloClient, useMutation } from '@apollo/client/react'
 import { SetBookArchivedDocument, type AdminBookFieldsFragment } from '../../../generated/graphql'
@@ -18,6 +20,8 @@ export function ArchiveBookDialog({
   close: () => void
   saved: (message: string) => void
 }) {
+  useI18n()
+
   const client = useApolloClient()
   const { handleError } = useAdminAccess()
   const [archive, { loading }] = useMutation(SetBookArchivedDocument)
@@ -26,28 +30,33 @@ export function ArchiveBookDialog({
     setFailure('')
     try {
       await archive({ variables: { id: book.id, archived: !book.archived } })
-      saved(book.archived ? 'Book restored.' : 'Book archived.')
+      saved(book.archived ? msg('admin:bookRestored2') : msg('admin:bookArchived2'))
       void refreshCatalog(client).catch(() => {})
     } catch (error) {
       handleError(error)
-      setFailure(error instanceof Error ? error.message : 'Unable to save')
+      setFailure(errorMessage(error, 'admin:unableToSave'))
     }
   }
   return (
     <AdminDialog
-      title={`${book.archived ? 'Restore' : 'Archive'} ${book.title}?`}
+      title={t('admin:valueValue', {
+        value0: t(book.archived ? 'common:labelRestore' : 'common:labelArchive'),
+        value1: book.title,
+      })}
       close={close}
       busy={loading}
       returnFocusTo={opener}
     >
       <p className="mb-4">
-        {book.archived
-          ? 'This book will appear in the store and become available for new orders.'
-          : 'This book will be hidden from the store and unavailable for new orders. Earlier order requests are preserved.'}
+        {localized(
+          book.archived
+            ? t('admin:thisBookWillAppearInTheStoreAndBecomeAvailableFor')
+            : t('admin:thisBookWillBeHiddenFromTheStoreAndUnavailableFor'),
+        )}
       </p>
       {failure && (
         <Alert role="alert" variant="destructive">
-          <AlertDescription>{failure}</AlertDescription>
+          <AlertDescription>{localized(failure)}</AlertDescription>
         </Alert>
       )}
       <Button
@@ -56,7 +65,11 @@ export function ArchiveBookDialog({
           void archiveBook()
         }}
       >
-        {loading ? 'Saving…' : `Confirm ${book.archived ? 'restore' : 'archive'}`}
+        {localized(
+          loading
+            ? t('admin:saving')
+            : t(book.archived ? 'admin:confirmRestore' : 'admin:confirmArchive'),
+        )}
       </Button>
     </AdminDialog>
   )

@@ -1,3 +1,5 @@
+import { formatDateTime } from '../../../lib/format'
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { Link } from 'react-router-dom'
 import { History } from 'lucide-react'
 import { IconAction } from '../../../app/components/IconAction'
@@ -19,20 +21,22 @@ export function ActivityTable({
   onPageChange: (page: number) => void
   bookHistory?: boolean
 }) {
+  useI18n()
+
   return (
     <>
       <AdminPageTable
         columns={[
-          { label: 'Time' },
-          { label: 'Actor' },
-          { label: 'Action' },
-          { label: 'Target' },
-          { label: 'Details' },
+          { label: t('common:labelTime') },
+          { label: t('common:labelActor') },
+          { label: t('common:labelAction') },
+          { label: t('common:labelTarget') },
+          { label: t('common:labelDetails') },
         ]}
         items={items}
         rowKey={(event) => event.id}
-        label="activity events"
-        emptyMessage="No activity recorded yet"
+        label={t('admin:activityEvents')}
+        emptyMessage={t('admin:noActivityRecordedYet')}
         page={page}
         total={total}
         onPageChange={onPageChange}
@@ -40,43 +44,53 @@ export function ActivityTable({
         renderRow={(event) => (
           <>
             <TableCell>
-              <time dateTime={event.createdAt}>{new Date(event.createdAt).toLocaleString()}</time>
+              <time dateTime={event.createdAt}>
+                {localized(formatDateTime(new Date(event.createdAt)))}
+              </time>
             </TableCell>
             <TableCell>
               <span className="break-words">
-                {event.source === 'SYSTEM'
-                  ? 'System'
-                  : event.source === 'OPERATOR'
-                    ? 'Operator command'
-                    : event.actorName}
+                {localized(
+                  event.source === 'SYSTEM'
+                    ? t('common:system')
+                    : event.source === 'OPERATOR'
+                      ? t('admin:operatorCommand')
+                      : event.actorName,
+                )}
               </span>
               {event.source !== 'OPERATOR' && event.source !== 'SYSTEM' && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Recorded role: {activityValue('ROLE', event.actorRole)}
+                  {t('admin:recordedRoleValue', { value0: activityValue('ROLE', event.actorRole) })}
                 </p>
               )}
             </TableCell>
-            <TableCell>{activityActions[event.action] ?? 'Unknown action'}</TableCell>
             <TableCell>
-              <span className="break-words">{event.targetName}</span>
+              {localized(activityActions[event.action] ?? t('admin:unknownAction'))}
+            </TableCell>
+            <TableCell>
+              <span className="break-words">
+                <bdi dir="auto">{localized(event.targetName)}</bdi>
+              </span>
               <p className="text-xs text-muted-foreground">
-                {event.targetType === 'BOOK'
-                  ? 'Book'
-                  : event.targetType === 'ORDER'
-                    ? 'Order request'
-                    : 'User'}{' '}
-                #{event.targetId}
+                {localized(
+                  event.targetType === 'BOOK'
+                    ? t('common:labelBook')
+                    : event.targetType === 'ORDER'
+                      ? t('admin:orderRequest')
+                      : t('common:labelUser'),
+                )}{' '}
+                #<bdi dir="ltr">{localized(event.targetId)}</bdi>
               </p>
               {event.targetType === 'ORDER' && validBookId(event.targetId) && (
                 <Link className="text-primary underline" to={`/admin/orders/${event.targetId}`}>
-                  View order request
+                  {t('admin:viewOrderRequest')}
                 </Link>
               )}
               {!bookHistory && event.targetType === 'BOOK' && validBookId(event.targetId) && (
                 <IconAction
                   asChild
-                  label="Book history"
-                  tooltip={`History for ${event.targetName}`}
+                  label={t('admin:bookHistory')}
+                  tooltip={t('admin:historyForValue', { value0: event.targetName })}
                   workspace
                 >
                   <Link to={`/admin/books/${event.targetId}/history`}>
@@ -89,32 +103,38 @@ export function ActivityTable({
               {event.changes.length > 0 ? (
                 <details className="max-w-md">
                   <summary className="cursor-pointer rounded focus-visible:outline-2">
-                    View changes
+                    {t('admin:viewChanges')}
                   </summary>
                   <dl className="mt-3 space-y-4">
                     {event.changes.map((change) => (
                       <div key={change.field}>
                         <dt className="font-semibold">
-                          {activityFields[change.field] ?? 'Changed field'}
+                          {localized(activityFields[change.field] ?? t('admin:changedField'))}
                         </dt>
                         <dd className="mt-1 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                          Previous: {activityValue(change.field, change.before)}
+                          {t('admin:previousValue', {
+                            value0: activityValue(change.field, change.before),
+                          })}
                         </dd>
                         <dd className="mt-1 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                          New: {activityValue(change.field, change.after)}
+                          {t('admin:newValue', {
+                            value0: activityValue(change.field, change.after),
+                          })}
                         </dd>
                       </div>
                     ))}
                   </dl>
                   {event.stockDelta != null && (
                     <p className="mt-3">
-                      Stock delta: {event.stockDelta > 0 ? '+' : ''}
-                      {event.stockDelta}
+                      {t('admin:stockDeltaValueValue', {
+                        value0: event.stockDelta > 0 ? '+' : '',
+                        value1: event.stockDelta,
+                      })}
                     </p>
                   )}
                 </details>
               ) : (
-                <span className="text-muted-foreground">No field changes</span>
+                <span className="text-muted-foreground">{t('admin:noFieldChanges')}</span>
               )}
             </TableCell>
           </>
@@ -122,7 +142,7 @@ export function ActivityTable({
       />
       {total === 0 && (
         <p className="mt-3 text-sm text-muted-foreground">
-          Earlier changes were not captured. Activity starts when history recording was enabled.
+          {t('admin:earlierChangesWereNotCapturedActivityStartsWhenHistoryRecordingWas')}
         </p>
       )}
     </>

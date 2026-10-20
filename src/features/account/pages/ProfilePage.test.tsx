@@ -38,7 +38,11 @@ it('rejects an empty name and a mismatched or short password before saving', asy
   const user = userEvent.setup()
   render(<ProfilePage />)
   expect(screen.getByText('ada@example.com')).toBeTruthy()
-  expect(screen.getByText(new Date('2026-01-02T00:00:00.000Z').toLocaleDateString())).toBeTruthy()
+  expect(
+    screen.getByText(
+      new Date('2026-01-02T00:00:00.000Z').toLocaleDateString('en-US', { calendar: 'gregory' }),
+    ),
+  ).toBeTruthy()
   expect(screen.queryByLabelText('Email')).toBeNull()
   await user.clear(screen.getByLabelText('Full name'))
   await user.click(screen.getByRole('button', { name: 'Save name' }))
@@ -77,7 +81,10 @@ it('keeps the password fields when the current password is rejected', async () =
   await user.type(screen.getByLabelText('New password'), 'new-password-123')
   await user.type(screen.getByLabelText('Confirm new password'), 'new-password-123')
   await user.click(screen.getByRole('button', { name: 'Change password' }))
-  expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('Invalid password'))
+  expect(await screen.findByRole('alert')).toHaveProperty(
+    'textContent',
+    expect.stringContaining('Unable to change your password.'),
+  )
   expect(screen.getByLabelText('Current password')).toHaveProperty('value', 'wrong-password')
   expect(screen.getByLabelText('New password')).toHaveProperty('value', 'new-password-123')
   expect(auth.changePassword).toHaveBeenCalledWith({

@@ -1,3 +1,4 @@
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { BookCover } from '../../books/components/BookCover'
@@ -16,30 +17,46 @@ export function CartLine({
   disabled?: boolean
   cover?: import('../../books/components/BookCover').CoverImage | null
 }) {
+  useI18n()
+
   return (
     <div className="flex gap-5 py-7 first:pt-0 sm:gap-8">
       <Link to={`/books/${item.id}`} className="w-24 shrink-0 bg-cover-panel p-2 sm:w-32 sm:p-3">
-        <BookCover cover={cover} decorative id={item.id} title={item.title} author={item.author} />
+        <BookCover
+          cover={cover}
+          decorative
+          id={item.id}
+          title={localized(item.title)}
+          author={item.author}
+        />
       </Link>
       <div className="flex min-w-0 flex-1 flex-col">
-        <p className="eyebrow text-[10px]">{item.genre}</p>
+        <p className="eyebrow text-[10px]">
+          <bdi dir="auto">{localized(item.genre)}</bdi>
+        </p>
         <Link
           to={`/books/${item.id}`}
           className="mt-2 font-serif text-xl leading-tight hover:underline sm:text-2xl"
         >
-          {item.title}
+          <bdi dir="auto">{localized(item.title)}</bdi>
         </Link>
-        <p className="mt-1 text-sm text-muted-foreground">{item.author}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          <bdi dir="auto">{localized(item.author)}</bdi>
+        </p>
         <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
-          <span className="text-muted-foreground">{money(item.priceCents)} each</span>
+          <span className="text-muted-foreground">
+            {t('storefront:valueEach', { value0: money(item.priceCents) })}
+          </span>
           <strong>
-            <span className="sr-only">Line total for {item.title}: </span>
-            {money(item.priceCents * item.quantity)}
+            <span className="sr-only">
+              {t('storefront:lineTotalForValue', { value0: item.title })}
+            </span>
+            {localized(money(item.priceCents * item.quantity))}
           </strong>
         </div>
         {item.available === false && (
           <p role="status" className="mt-2 text-sm text-destructive">
-            Unavailable for this quantity. Decrease or remove this book.
+            {t('storefront:unavailableForThisQuantityDecreaseOrRemoveThisBook')}
           </p>
         )}
         <div className="mt-auto flex items-end justify-between pt-5">
@@ -47,18 +64,18 @@ export function CartLine({
             <Button
               type="button"
               variant="ghost"
-              aria-label={`Remove one ${item.title}`}
+              aria-label={t('storefront:removeOneValue', { value0: item.title })}
               disabled={disabled}
               onClick={() => update(item.id, item.quantity - 1)}
               className="h-11 w-11 hover:bg-muted"
             >
               <Minus size={14} />
             </Button>
-            <span className="min-w-8 text-center text-sm">{item.quantity}</span>
+            <span className="min-w-8 text-center text-sm">{localized(item.quantity)}</span>
             <Button
               type="button"
               variant="ghost"
-              aria-label={`Add one ${item.title}`}
+              aria-label={t('storefront:addOneValue', { value0: item.title })}
               disabled={
                 disabled || item.available === false || item.quantity >= Math.min(10, item.stock)
               }
@@ -71,7 +88,7 @@ export function CartLine({
           <Button
             type="button"
             variant="ghost"
-            aria-label={`Remove ${item.title} from bag`}
+            aria-label={t('storefront:removeValueFromBag', { value0: item.title })}
             disabled={disabled}
             onClick={() => update(item.id, 0)}
             className="h-11 w-11 shrink-0 text-muted-foreground hover:text-destructive"

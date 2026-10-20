@@ -1,3 +1,5 @@
+import { formatDateTime, formatDate, money, serverDate } from '../../../lib/format'
+import { localized, t, useI18n } from '../../../lib/i18n'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import type { LucideIcon } from 'lucide-react'
@@ -14,7 +16,6 @@ import {
 } from '../../../app/components/ui/table'
 import { OrderStatusBadge } from '../../orders/OrderStatusBadge'
 import { PaymentStatus } from '../../orders/PaymentStatus'
-import { money, serverDate } from '../../../lib/format'
 import { AdminFeedback } from '../components/AdminFeedback'
 
 export function DashboardPanel({
@@ -26,13 +27,17 @@ export function DashboardPanel({
   children: ReactNode
   className?: string
 }) {
+  useI18n()
+
   return (
-    <section aria-label={title} className={`min-w-0 ${className}`}>
+    <section aria-label={localized(title)} className={`min-w-0 ${className}`}>
       <Card className="h-full">
         <CardHeader className="p-4 pb-3">
-          <h3 className="text-lg font-semibold">{title}</h3>
+          <h3 className="text-lg font-semibold">
+            <bdi dir="auto">{localized(title)}</bdi>
+          </h3>
         </CardHeader>
-        <CardContent className="px-4 pb-4 pt-0">{children}</CardContent>
+        <CardContent className="px-4 pb-4 pt-0">{localized(children)}</CardContent>
       </Card>
     </section>
   )
@@ -54,12 +59,14 @@ export function MetricCard({
   tone?: 'neutral' | 'info' | 'success' | 'warning' | 'danger'
   status?: string
 }) {
+  useI18n()
+
   return (
     <Card
       className="dashboard-cue dashboard-metric min-w-0"
       data-tone={tone}
       role="group"
-      aria-label={label}
+      aria-label={localized(label)}
     >
       <CardContent className="p-3">
         <div className="flex items-center gap-2">
@@ -68,15 +75,17 @@ export function MetricCard({
               <Icon size={14} aria-hidden="true" />
             </span>
           )}
-          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className="text-xs text-muted-foreground">{localized(label)}</p>
         </div>
         <div className="mt-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-          <p className="break-words text-xl font-semibold tracking-tight tabular-nums">{value}</p>
-          {status && <DashboardStatus tone={tone}>{status}</DashboardStatus>}
+          <p className="break-words text-xl font-semibold tracking-tight tabular-nums">
+            {localized(value)}
+          </p>
+          {status && <DashboardStatus tone={tone}>{localized(status)}</DashboardStatus>}
         </div>
         {link && (
           <Link to={link} className="mt-1 block text-xs underline underline-offset-4">
-            {linkLabel}
+            {localized(linkLabel)}
           </Link>
         )}
       </CardContent>
@@ -92,10 +101,12 @@ export function DashboardStatus({
   icon?: LucideIcon
   children: ReactNode
 }) {
+  useI18n()
+
   return (
     <span data-tone={tone} className="dashboard-cue dashboard-status">
       {Icon && <Icon size={12} aria-hidden="true" />}
-      {children}
+      {localized(children)}
     </span>
   )
 }
@@ -110,27 +121,29 @@ export function DashboardFeedback({
   hasData: boolean
   refresh: () => unknown
 }) {
+  useI18n()
+
   return (
     <>
       {loading && hasData && (
         <p role="status" className="sr-only">
-          Refreshing…
+          {t('admin:refreshing')}
         </p>
       )}
       {error && hasData && (
-        <p className="mb-2 text-sm">Showing stale data from the last successful update.</p>
+        <p className="mb-2 text-sm">{t('admin:showingStaleDataFromTheLastSuccessfulUpdate')}</p>
       )}
-      <AdminFeedback loading={loading && !hasData} error={error} retry={refresh} />
+      <AdminFeedback loading={loading && !hasData} error={localized(error)} retry={refresh} />
     </>
   )
 }
 export function UpdatedAt({ value, refreshing = false }: { value: string; refreshing?: boolean }) {
+  useI18n()
+
   return (
-    <p className="relative pl-5 text-xs text-muted-foreground">
-      {refreshing && (
-        <BookLoadingIcon className="absolute left-0 top-0.5 size-3" />
-      )}
-      Last updated {serverDate(value).toLocaleString()}
+    <p className="relative ps-5 text-xs text-muted-foreground">
+      {refreshing && <BookLoadingIcon className="absolute left-0 top-0.5 size-3" />}
+      {t('admin:lastUpdated', { value0: formatDateTime(serverDate(value)) })}
     </p>
   )
 }
@@ -145,44 +158,50 @@ export function OrderPreview({
   returnTo: string
   detailed?: boolean
 }) {
+  useI18n()
+
   return (
-    <DashboardPanel title={title}>
+    <DashboardPanel title={localized(title)}>
       {!orders.length ? (
-        <p className="text-sm text-muted-foreground">No orders to show.</p>
+        <p className="text-sm text-muted-foreground">{t('admin:noOrdersToShow')}</p>
       ) : detailed ? (
         <div className="overflow-x-auto">
-          <Table aria-label={title}>
+          <Table aria-label={localized(title)}>
             <TableHeader>
               <TableRow>
-                <TableHead>Order</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>State</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Details</TableHead>
+                <TableHead>{t('admin:order')}</TableHead>
+                <TableHead>{t('admin:customer')}</TableHead>
+                <TableHead>{t('admin:state')}</TableHead>
+                <TableHead>{t('admin:total')}</TableHead>
+                <TableHead>{t('admin:details')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {orders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell>
-                    #{order.id}
+                    #<bdi dir="ltr">{localized(order.id)}</bdi>
                     <p className="text-xs text-muted-foreground">
-                      {serverDate(order.createdAt).toLocaleDateString()}
+                      {localized(formatDate(serverDate(order.createdAt)))}
                     </p>
                   </TableCell>
-                  <TableCell>{order.customerName}</TableCell>
+                  <TableCell>
+                    <bdi dir="auto">{localized(order.customerName)}</bdi>
+                  </TableCell>
                   <TableCell>
                     <OrderStatusBadge status={order.status} paymentStatus={order.payment.status} />
                     <PaymentStatus payment={order.payment} />
                   </TableCell>
-                  <TableCell className="tabular-nums">{money(order.totalCents)}</TableCell>
+                  <TableCell className="tabular-nums">
+                    {localized(money(order.totalCents))}
+                  </TableCell>
                   <TableCell>
                     <Link
                       className="underline"
                       to={`/admin/orders/${order.id}`}
                       state={{ returnTo }}
                     >
-                      View order #{order.id}
+                      {t('admin:viewOrderValue', { value0: order.id })}
                     </Link>
                   </TableCell>
                 </TableRow>
@@ -196,16 +215,19 @@ export function OrderPreview({
             <li key={order.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
               <div>
                 <p className="font-medium">
-                  #{order.id} · {order.customerName}
+                  #<bdi dir="ltr">{localized(order.id)}</bdi> ·{' '}
+                  <bdi dir="auto">{localized(order.customerName)}</bdi>
                 </p>
-                <p className="text-xs text-muted-foreground">{money(order.totalCents)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {localized(money(order.totalCents))}
+                </p>
               </div>
               <Link
                 className="text-sm underline"
                 to={`/admin/orders/${order.id}`}
                 state={{ returnTo }}
               >
-                View order #{order.id}
+                {t('admin:viewOrderValue', { value0: order.id })}
               </Link>
             </li>
           ))}

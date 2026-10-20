@@ -1,3 +1,4 @@
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { useQuery } from '@apollo/client/react'
 import { Navigate, Link, useLocation } from 'react-router-dom'
 import { ArrowRight, BookOpen, Compass, Sparkles, Feather, Moon, Rocket } from 'lucide-react'
@@ -15,6 +16,8 @@ import { Skeleton } from '../../../app/components/ui/skeleton'
 import { BookLoader } from '../../../app/components/BookLoader'
 
 export function HomePage() {
+  useI18n()
+
   const { search, hash } = useLocation()
   const params = new URLSearchParams(search)
   if (params.has('search') || params.has('page') || hash === '#collection')
@@ -28,31 +31,37 @@ export function HomePage() {
 }
 
 function ShelfIntro() {
+  useI18n()
+
   return (
     <div>
-      <p className="eyebrow mb-3">The Quiet Shelf edit</p>
+      <p className="eyebrow mb-3">{t('storefront:theQuietShelfEdit')}</p>
       <h2 id="home-selections" className="font-serif text-3xl tracking-[-.04em] sm:text-4xl">
-        Selected for your shelf
+        {t('storefront:selectedForYourShelf')}
       </h2>
       <p className="mt-3 text-sm text-muted-foreground">
-        A few favorites to begin your next reading adventure.
+        {t('storefront:aFewFavoritesToBeginYourNextReadingAdventure')}
       </p>
     </div>
   )
 }
 
 function ShelfLink() {
+  useI18n()
+
   return (
     <Link
       to="/books"
       className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:underline"
     >
-      View all books <ArrowRight size={16} aria-hidden="true" />
+      {t('storefront:viewAllBooks')} <ArrowRight size={16} aria-hidden="true" />
     </Link>
   )
 }
 
 function HomeContent() {
+  useI18n()
+
   const { data, loading, error, refetch } = useQuery(StorefrontHomeDocument, {
     variables: homepageVariables,
     notifyOnNetworkStatusChange: true,
@@ -76,9 +85,9 @@ function HomeContent() {
         <section className="page-shell pt-12 sm:pt-16" aria-labelledby="home-genres">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <h2 id="home-genres" className="scroll-mt-6 font-serif text-2xl sm:text-3xl">
-              Where will your next chapter take you?
+              {t('storefront:whereWillYourNextChapterTakeYou')}
             </h2>
-            <span className="text-sm text-muted-foreground">Browse by genre</span>
+            <span className="text-sm text-muted-foreground">{t('storefront:browseByGenre')}</span>
           </div>
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {genres.map((genre) => {
@@ -99,7 +108,9 @@ function HomeContent() {
                   className="group flex min-h-36 flex-col items-center justify-center gap-4 rounded-xl bg-surface px-3 py-5 text-center text-sm font-semibold transition-colors hover:bg-muted motion-reduce:transition-none"
                 >
                   <Icon size={32} strokeWidth={1.2} className="text-primary" aria-hidden="true" />
-                  <span>{genre}</span>
+                  <span>
+                    <bdi dir="auto">{localized(genre)}</bdi>
+                  </span>
                   <ArrowRight size={14} className="text-muted-foreground" aria-hidden="true" />
                 </Link>
               )
@@ -110,7 +121,7 @@ function HomeContent() {
       <section className="pt-16 sm:pt-20" aria-labelledby="home-selections">
         {books.length && !error ? (
           <BookRail
-            label="selected books"
+            label={t('storefront:selectedBooks')}
             headerClassName="mb-8 border-t border-border pt-10"
             title={<ShelfIntro />}
             actions={<ShelfLink />}
@@ -127,7 +138,7 @@ function HomeContent() {
             </div>
             {loading && !data ? (
               <>
-                <BookLoader label="Opening selected books…" />
+                <BookLoader label={t('storefront:openingSelectedBooks')} />
                 <div className="grid grid-cols-2 gap-5 lg:grid-cols-4" aria-hidden="true">
                   {[0, 1, 2, 3].map((id) => (
                     <Skeleton key={id} className="h-72 sm:h-96" />
@@ -137,27 +148,29 @@ function HomeContent() {
             ) : error ? (
               <Alert variant="destructive">
                 <AlertDescription>
-                  We could not load our selected books.{' '}
+                  {t('storefront:weCouldNotLoadOurSelectedBooks')}
                   <Button
                     variant="ghost"
                     className="h-auto p-0 underline"
                     onClick={() => void refetch()}
                   >
-                    Try again
+                    {t('storefront:tryAgain')}
                   </Button>
                 </AlertDescription>
               </Alert>
             ) : (
               <div className="rounded-sm bg-muted p-8 text-center">
-                <p className="font-serif text-2xl">No selections on this shelf just yet.</p>
+                <p className="font-serif text-2xl">
+                  {t('storefront:noSelectionsOnThisShelfJustYet')}
+                </p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Explore the full collection to find your next read.
+                  {t('storefront:exploreTheFullCollectionToFindYourNextRead')}
                 </p>
                 <Link
                   to="/books"
                   className="mt-4 inline-block text-sm font-semibold text-primary underline"
                 >
-                  Explore all books
+                  {t('storefront:exploreAllBooks')}
                 </Link>
               </div>
             )}

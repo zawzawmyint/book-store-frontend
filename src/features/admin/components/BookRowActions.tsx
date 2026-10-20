@@ -1,3 +1,4 @@
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { History, MoreHorizontal, PackagePlus, Pencil } from 'lucide-react'
@@ -24,22 +25,24 @@ export function BookRowActions({
   onStock: () => void
   onArchive: (opener: HTMLButtonElement | null) => void
 }) {
+  useI18n()
+
   return (
     <div className="flex justify-end gap-1">
-      <IconAction asChild label={`Edit ${book.title}`} workspace>
+      <IconAction asChild label={t('admin:editValue', { value0: book.title })} workspace>
         <Link to={`${book.id}/edit`} state={{ returnTo }}>
           <Pencil aria-hidden="true" />
         </Link>
       </IconAction>
       {isAdmin && (
-        <IconAction asChild label={`History for ${book.title}`} workspace>
+        <IconAction asChild label={t('admin:historyForValue', { value0: book.title })} workspace>
           <Link to={`${book.id}/history?${new URLSearchParams({ returnTo })}`}>
             <History aria-hidden="true" />
           </Link>
         </IconAction>
       )}
       <Button type="button" variant="ghost" onClick={onStock}>
-        <PackagePlus size={16} aria-hidden="true" /> Adjust stock
+        <PackagePlus size={16} aria-hidden="true" /> {t('admin:adjustStock')}
       </Button>
       {isAdmin && <BookRowMenu book={book} onArchive={onArchive} />}
     </div>
@@ -53,6 +56,8 @@ function BookRowMenu({
   book: AdminBookFieldsFragment
   onArchive: (opener: HTMLButtonElement | null) => void
 }) {
+  useI18n()
+
   const trigger = useRef<HTMLButtonElement>(null)
   const openingDialog = useRef(false)
   return (
@@ -62,7 +67,11 @@ function BookRowMenu({
       }}
     >
       <DropdownMenuTrigger asChild>
-        <IconAction ref={trigger} workspace label={`More actions for ${book.title}`}>
+        <IconAction
+          ref={trigger}
+          workspace
+          label={t('admin:moreActionsForValue', { value0: book.title })}
+        >
           <MoreHorizontal className="size-4" aria-hidden="true" />
         </IconAction>
       </DropdownMenuTrigger>
@@ -79,7 +88,7 @@ function BookRowMenu({
             onArchive(trigger.current)
           }}
         >
-          {book.archived ? 'Restore' : 'Archive'}
+          {localized(t(book.archived ? 'common:labelRestore' : 'common:labelArchive'))}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

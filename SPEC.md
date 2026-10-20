@@ -1,5 +1,7 @@
 # The Quiet Shelf storefront specification
 
+> **Implemented localization:** [Storefront and admin localization](specs/localization/SPEC.md) delivers English, Arabic, Thai, and Simplified Chinese interface translation, locale-aware USD/date formatting, browser-local language selection, and Arabic RTL using i18next/react-i18next. Technical acceptance includes the actual 200% native-browser zoom and coordinated PostgreSQL browser evidence; [the verification record](specs/localization/VERIFICATION.md) describes the exact coverage. Human native-speaker sign-off is optional and was not performed.
+
 > **Implemented book cover uploads:** [Book covers](specs/book-cover-uploads/SPEC.md) documents the staff cover editor, real-image presentation, guest lookup, and existing-cover fallback.
 
 > **Proposed UI improvement:** [Bag and checkout UI](specs/bag-checkout-ui/SPEC.md) documents the delivered bag and checkout presentation changes: clearer line prices, responsive delivery/review layouts, synchronized summaries, touch controls, and compact legacy-bag recovery. Unit, lint, build, SQLite, and PostgreSQL verification completed; the feature remains **Proposed** because actual 200% browser-zoom validation could not be performed.
@@ -36,6 +38,36 @@
 > **Implemented shared loading UI:** [Shared book loading indicator](specs/loading-ui/SPEC.md) supplies contextual, motion-aware loading status across storefront and workspace states without changing request or session behavior.
 
 ## Purpose and current scope
+
+### Implemented: storefront and workspace localization
+
+The storefront and Staff/Admin workspace bundle `i18next` 26.5.2 and
+`react-i18next` 17.1.0 with `common`, `storefront`, and `admin` JSON namespaces
+for `en`, `ar`, `th`, and `zh-Hans`. `src/lib/i18n` initializes before React,
+validates the browser-local `book-store-language` preference, falls back to English,
+updates document language/direction/title, and keeps blocked storage usable in memory.
+The headers expose a 44px icon-only language control with a translated accessible
+name and self-identifying native-language dropdown options; the same control is also
+available within shared dialog/sheet content.
+
+Changing language updates application-owned copy, validation/errors, navigation,
+activity/status labels, charts, and display formatting without changing routes,
+queries, canonical API values, persisted cart/checkout records, authorization, or
+transaction identity. Dates use browser-local time and the Gregorian calendar; money
+remains USD; dashboard totals retain exact cents. Arabic sets RTL direction, uses
+logical layout and correctly directed portals, moves workspace navigation to the
+right, and preserves mixed-script content direction. Persisted catalog and customer
+content, backend emails, and hosted Stripe Checkout remain outside this frontend
+scope.
+
+Automated evidence includes 315 frontend tests in 58 files, clean lint, a production
+build (with the existing Vite chunk-size warning), all 79 SQLite Chromium journeys,
+and all 79 disposable PostgreSQL browser journeys. The localization-specific matrix
+audited 648 route visits across four languages, desktop, 375px mobile, actual native
+200% browser zoom, and both themes, with no page overflow, raw translation keys, or
+unnamed interactive roles. The [localization verification record](specs/localization/VERIFICATION.md)
+lists the commands, artifact locations, and review limitations. Human native-speaker
+sign-off is optional and was not performed.
 
 ### Implemented: collapsible workspace sidebar
 

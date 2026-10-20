@@ -101,7 +101,9 @@ it('shows another account and rejects a short or mismatched password before savi
   expect(await screen.findByRole('heading', { name: 'Ada Reader' })).toBeTruthy()
   expect(screen.getByText('ada@example.com')).toBeTruthy()
   expect(screen.getByText('Customer')).toBeTruthy()
-  expect(screen.getByText(new Date(ada.createdAt).toLocaleDateString())).toBeTruthy()
+  expect(
+    screen.getByText(new Date(ada.createdAt).toLocaleDateString('en-US', { calendar: 'gregory' })),
+  ).toBeTruthy()
   expect(screen.getByRole('link', { name: 'Back to users' }).getAttribute('href')).toBe(
     '/admin/users?search=Ada&role=CUSTOMER&page=2',
   )
@@ -158,7 +160,9 @@ it('keeps the password fields when the reset is rejected', async () => {
   await user.type(screen.getByLabelText('New password'), 'new-password-123')
   await user.type(screen.getByLabelText('Confirm new password'), 'new-password-123')
   await user.click(screen.getByRole('button', { name: 'Set password' }))
-  expect((await screen.findByRole('alert')).textContent).toContain('User was not found')
+  expect((await screen.findByRole('alert')).textContent).toContain(
+    'Please check the entered details and try again.',
+  )
   expect(screen.getByLabelText('New password')).toHaveProperty('value', 'new-password-123')
   expect(screen.getByLabelText('Confirm new password')).toHaveProperty('value', 'new-password-123')
 })
@@ -185,7 +189,9 @@ it('shows an unknown account message and no password form', async () => {
       },
     },
   ])
-  expect((await screen.findByRole('alert')).textContent).toContain('User was not found')
+  expect((await screen.findByRole('alert')).textContent).toContain(
+    'Please check the entered details and try again.',
+  )
   expect(screen.queryByLabelText('New password')).toBeNull()
   expect(screen.queryByRole('button', { name: 'Set password' })).toBeNull()
 })

@@ -1,10 +1,11 @@
+import { message as msg } from '../../lib/i18n'
 export const PAGE_SIZE = 12
 
 export const catalogSorts = {
-  default: 'Default order',
-  'title-asc': 'Title: A–Z',
-  'price-asc': 'Price: low to high',
-  'price-desc': 'Price: high to low',
+  default: msg('storefront:defaultOrder'),
+  'title-asc': msg('storefront:titleAZ'),
+  'price-asc': msg('storefront:priceLowToHigh'),
+  'price-desc': msg('storefront:priceHighToLow'),
 } as const
 export type CatalogState = {
   search: string
@@ -73,8 +74,8 @@ export function parsePriceRange(
   const minPrice = parse(min),
     maxPrice = parse(max)
   if (Number.isNaN(minPrice) || Number.isNaN(maxPrice))
-    return { error: 'Enter a price from 0 to 10000 with at most two decimal places.' }
+    return { error: msg('storefront:enterAPriceFrom0To10000WithAtMostTwo') }
   if (minPrice !== undefined && maxPrice !== undefined && minPrice > maxPrice)
-    return { error: 'Min price must be no greater than Max price.' }
+    return { error: msg('storefront:minPriceMustBeNoGreaterThanMaxPrice') }
   return { minPrice, maxPrice }
 }

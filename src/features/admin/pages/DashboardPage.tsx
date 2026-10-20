@@ -1,3 +1,4 @@
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@apollo/client/react'
@@ -23,10 +24,10 @@ import { dashboardPeriod } from '../dashboard/dashboard-format'
 
 const noVariables = {}
 const fulfillmentLabels: Record<string, string> = {
-  SUBMITTED: 'Awaiting preparation',
-  PREPARING: 'Preparing',
-  SHIPPED: 'Shipped',
-  DELIVERED: 'Delivered',
+  SUBMITTED: msg('admin:awaitingPreparation'),
+  PREPARING: msg('admin:preparing'),
+  SHIPPED: msg('admin:shipped'),
+  DELIVERED: msg('admin:delivered'),
 }
 
 function DashboardStockDialog({
@@ -38,6 +39,8 @@ function DashboardStockDialog({
   close: () => void
   saved: (message: string) => void
 }) {
+  useI18n()
+
   const { data, loading, error, refetch } = useQuery(AdminBookDocument, {
     variables: { id },
     fetchPolicy: 'no-cache',
@@ -46,15 +49,17 @@ function DashboardStockDialog({
   if (data?.adminBook) return <StockDialog book={data.adminBook} close={close} saved={saved} />
   return (
     <div>
-      <AdminFeedback loading={loading} error={error} retry={refetch} />
+      <AdminFeedback loading={loading} error={localized(error)} retry={refetch} />
       <Button variant="ghost" onClick={close}>
-        Cancel stock adjustment
+        {t('admin:cancelStockAdjustment')}
       </Button>
     </div>
   )
 }
 
 export default function DashboardPage() {
+  useI18n()
+
   const { role } = useAdminAccess()
   const [params, setParams] = useSearchParams()
   const location = useLocation()
@@ -76,9 +81,9 @@ export default function DashboardPage() {
   const periodControl =
     role === 'ADMIN' ? (
       <label className="flex items-center gap-2 text-sm">
-        Payment period
+        {t('admin:paymentPeriod')}
         <select
-          aria-label="Payment period"
+          aria-label={t('admin:paymentPeriod')}
           className="rounded-md border border-input bg-background px-3 py-2"
           value={periodValue}
           onChange={(event) => {
@@ -87,26 +92,26 @@ export default function DashboardPage() {
             setParams(next)
           }}
         >
-          <option value="7">Last 7 days</option>
-          <option value="30">Last 30 days</option>
-          <option value="90">Last 90 days</option>
+          <option value="7">{t('admin:last7Days')}</option>
+          <option value="30">{t('admin:last30Days')}</option>
+          <option value="90">{t('admin:last90Days')}</option>
         </select>
       </label>
     ) : null
   const fulfillmentPanel = dashboard ? (
-    <DashboardPanel title="Current fulfillment">
+    <DashboardPanel title={t('admin:currentFulfillment')}>
       <p className="mb-2 text-sm text-muted-foreground">
-        Paid orders without a pending cancellation. Current counts, independent of payment period.
+        {t('admin:paidOrdersWithoutAPendingCancellationCurrentCountsIndependentOfPayment')}
       </p>
       <FulfillmentChart counts={dashboard.fulfillment} />
       <ul className="mt-3 grid grid-cols-2 gap-2 text-sm">
         {dashboard.fulfillment.map((row) => (
           <li key={row.status}>
             <p>
-              {fulfillmentLabels[row.status]}: <strong>{row.count}</strong>
+              {localized(fulfillmentLabels[row.status])}: <strong>{localized(row.count)}</strong>
             </p>
             <Link className="text-xs underline" to={`/admin/orders?status=${row.status}`}>
-              All orders in this status
+              {t('admin:allOrdersInThisStatus')}
             </Link>
           </li>
         ))}
@@ -116,34 +121,34 @@ export default function DashboardPage() {
   return (
     <section className="space-y-4">
       <AdminPageHeader
-        title="Dashboard"
-        description="A clear view of your store and what needs attention."
+        title={t('admin:dashboard')}
+        description={t('admin:aClearViewOfYourStoreAndWhatNeedsAttention')}
         actions={
           <div className="flex flex-wrap items-center gap-3">
-            {periodControl}
+            {localized(periodControl)}
             <Button
               variant="outline"
-              aria-label="Refresh dashboard"
+              aria-label={t('admin:refreshDashboard')}
               onClick={() => {
                 void state.refresh()
                 setRefreshKey((key) => key + 1)
               }}
             >
-              <RefreshCw size={16} aria-hidden="true" /> Refresh
+              <RefreshCw size={16} aria-hidden="true" /> {t('admin:refresh')}
             </Button>
           </div>
         }
       />
       {notice && (
         <p role="status" className="text-sm">
-          {notice}
+          {localized(notice)}
         </p>
       )}
       <DashboardFeedback {...state} hasData={!!dashboard} />
       {dashboard && (
         <>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-medium">Current operations</p>
+            <p className="text-sm font-medium">{t('admin:currentOperations')}</p>
             <UpdatedAt value={dashboard.generatedAt} refreshing={state.loading} />
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
@@ -152,7 +157,7 @@ export default function DashboardPage() {
               .map((row) => (
                 <MetricCard
                   key={row.status}
-                  label={fulfillmentLabels[row.status]}
+                  label={localized(fulfillmentLabels[row.status])}
                   value={row.count}
                   icon={
                     row.status === 'SUBMITTED'
@@ -172,34 +177,36 @@ export default function DashboardPage() {
                   }
                   status={
                     row.count === 0
-                      ? 'Nothing pending'
+                      ? t('admin:nothingPending')
                       : row.status === 'SUBMITTED'
-                        ? 'Needs attention'
+                        ? t('admin:needsAttention')
                         : row.status === 'PREPARING'
-                          ? 'In progress'
-                          : 'On the way'
+                          ? t('admin:inProgress')
+                          : t('admin:onTheWay')
                   }
                   link={`/admin/orders?status=${row.status}`}
-                  linkLabel="All orders in this status"
+                  linkLabel={msg('admin:allOrdersInThisStatus')}
                 />
               ))}
             <MetricCard
-              label="Low stock (1–5)"
+              label={t('admin:lowStock15')}
               value={dashboard.lowStockCount}
               icon={TriangleAlert}
               tone={dashboard.lowStockCount > 0 ? 'warning' : 'neutral'}
-              status={dashboard.lowStockCount > 0 ? 'Needs restocking' : 'No issues'}
+              status={
+                dashboard.lowStockCount > 0 ? t('admin:needsRestocking') : t('admin:noIssues')
+              }
               link="/admin/books?low=true"
-              linkLabel="View low and out-of-stock books"
+              linkLabel={msg('admin:viewLowAndOutOfStockBooks')}
             />
             <MetricCard
-              label="Out of stock"
+              label={t('admin:outOfStock')}
               value={dashboard.outOfStockCount}
               icon={CircleAlert}
               tone={dashboard.outOfStockCount > 0 ? 'danger' : 'neutral'}
-              status={dashboard.outOfStockCount > 0 ? 'Needs action' : 'No issues'}
+              status={dashboard.outOfStockCount > 0 ? t('admin:needsAction') : t('admin:noIssues')}
               link="/admin/books?low=true"
-              linkLabel="View low and out-of-stock books"
+              linkLabel={msg('admin:viewLowAndOutOfStockBooks')}
             />
           </div>
         </>
@@ -215,16 +222,16 @@ export default function DashboardPage() {
           />
         </>
       )}
-      {role !== 'ADMIN' && fulfillmentPanel}
+      {localized(role !== 'ADMIN' && fulfillmentPanel)}
       {dashboard && (
         <>
           <div>
-            <DashboardPanel title="Stock alerts">
+            <DashboardPanel title={t('admin:stockAlerts')}>
               <p className="mb-3 text-sm text-muted-foreground">
-                Active books with five or fewer copies. Lowest stock first.
+                {t('admin:activeBooksWithFiveOrFewerCopiesLowestStockFirst')}
               </p>
               {!dashboard.stockAlerts.length ? (
-                <p className="text-sm">No stock alerts.</p>
+                <p className="text-sm">{t('admin:noStockAlerts')}</p>
               ) : (
                 <ul className="divide-y divide-border">
                   {dashboard.stockAlerts.map((book) => (
@@ -233,15 +240,21 @@ export default function DashboardPage() {
                       className="flex flex-wrap items-center justify-between gap-3 py-3"
                     >
                       <div className="min-w-0">
-                        <p className="font-medium">{book.title}</p>
+                        <p className="font-medium">
+                          <bdi dir="auto">{localized(book.title)}</bdi>
+                        </p>
                         <p className="mb-1 text-sm text-muted-foreground">
-                          <span data-testid="stock-count">{book.stock}</span> copies
+                          <span data-testid="stock-count" data-count={book.stock}>
+                            {t('common:copyCount', { count: book.stock })}
+                          </span>
                         </p>
                         <DashboardStatus
                           tone={book.stock === 0 ? 'danger' : 'warning'}
                           icon={book.stock === 0 ? CircleAlert : TriangleAlert}
                         >
-                          {book.stock === 0 ? 'Out of stock' : 'Needs restocking'}
+                          {localized(
+                            book.stock === 0 ? t('admin:outOfStock') : t('admin:needsRestocking'),
+                          )}
                         </DashboardStatus>
                       </div>
                       <Button
@@ -252,7 +265,7 @@ export default function DashboardPage() {
                           setStockId(book.id)
                         }}
                       >
-                        Adjust stock
+                        {t('admin:adjustStock')}
                       </Button>
                     </li>
                   ))}
@@ -262,18 +275,18 @@ export default function DashboardPage() {
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
             <OrderPreview
-              title="Awaiting preparation"
+              title={t('admin:awaitingPreparation')}
               orders={dashboard.awaitingPreparation}
               returnTo={returnTo}
             />
             <OrderPreview
-              title="Ready to ship"
+              title={t('admin:readyToShip')}
               orders={dashboard.readyToShip}
               returnTo={returnTo}
             />
           </div>
           <OrderPreview
-            title="Recent orders"
+            title={t('admin:recentOrders')}
             orders={dashboard.recentOrders}
             returnTo={returnTo}
             detailed

@@ -1,3 +1,5 @@
+import { errorMessage } from '../../../lib/i18n/errors'
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { useEffect, useState } from 'react'
 import { useWatch, type UseFormReturn } from 'react-hook-form'
 import type { DeliveryOptionsQuery } from '../../../generated/graphql'
@@ -25,25 +27,59 @@ type DeliveryAddressFormProps = {
 }
 
 const fields = [
-  { name: 'recipientName', label: 'Recipient name', max: 120, autoComplete: 'shipping name' },
-  { name: 'phone', label: 'Phone number', max: 32, autoComplete: 'shipping tel' },
+  {
+    name: 'recipientName',
+    get label() {
+      return t('storefront:recipientName')
+    },
+    max: 120,
+    autoComplete: 'shipping name',
+  },
+  {
+    name: 'phone',
+    get label() {
+      return t('storefront:phoneNumber')
+    },
+    max: 32,
+    autoComplete: 'shipping tel',
+  },
   {
     name: 'addressLine1',
-    label: 'Address line 1',
+    get label() {
+      return t('storefront:addressLine1')
+    },
     max: 200,
     autoComplete: 'shipping address-line1',
   },
   {
     name: 'addressLine2',
-    label: 'Address line 2 (optional)',
+    get label() {
+      return t('storefront:addressLine2Optional')
+    },
     max: 200,
     autoComplete: 'shipping address-line2',
   },
-  { name: 'city', label: 'City', max: 100, autoComplete: 'shipping address-level2' },
-  { name: 'region', label: 'Region (optional)', max: 100, autoComplete: 'shipping address-level1' },
+  {
+    name: 'city',
+    get label() {
+      return t('storefront:city')
+    },
+    max: 100,
+    autoComplete: 'shipping address-level2',
+  },
+  {
+    name: 'region',
+    get label() {
+      return t('storefront:regionOptional')
+    },
+    max: 100,
+    autoComplete: 'shipping address-level1',
+  },
   {
     name: 'postalCode',
-    label: 'Postal code (optional)',
+    get label() {
+      return t('storefront:postalCodeOptional')
+    },
     max: 32,
     autoComplete: 'shipping postal-code',
   },
@@ -60,6 +96,8 @@ export function DeliveryAddressForm({
   onInvalidate,
   onRetryOptions,
 }: DeliveryAddressFormProps) {
+  useI18n()
+
   const [line2Expanded, setLine2Expanded] = useState(false)
   const line2 = useWatch({ control: form.control, name: 'addressLine2' })
   const showLine2 = line2Expanded || !!line2 || !!form.formState.errors.addressLine2
@@ -73,17 +111,17 @@ export function DeliveryAddressForm({
       onChange={onInvalidate}
     >
       <div>
-        <h2 className="font-serif text-2xl">Delivery address</h2>
+        <h2 className="font-serif text-2xl">{t('storefront:deliveryAddress')}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Where should we send your next chapter?
+          {t('storefront:whereShouldWeSendYourNextChapter')}
         </p>
       </div>
-      {optionsLoading && <BookLoader compact label="Loading delivery options…" />}
+      {optionsLoading && <BookLoader compact label={t('storefront:loadingDeliveryOptions')} />}
       {optionsError && (
         <p role="alert">
-          {optionsError.message}
+          {localized(errorMessage(optionsError, 'common:requestFailed'))}
           <Button type="button" variant="ghost" onClick={onRetryOptions}>
-            Retry delivery options
+            {t('storefront:retryDeliveryOptions')}
           </Button>
         </p>
       )}
@@ -97,18 +135,18 @@ export function DeliveryAddressForm({
               <Button
                 type="button"
                 variant="link"
-                className="min-h-11 whitespace-normal text-left text-sm"
+                className="min-h-11 whitespace-normal text-start text-sm"
                 aria-expanded={false}
                 aria-controls="optional-address-line"
                 onClick={() => setLine2Expanded(true)}
               >
-                Add apartment, suite, etc. (optional)
+                {t('storefront:addApartmentSuiteEtcOptional')}
               </Button>
             ) : null}
             <div id={field.name === 'addressLine2' ? 'optional-address-line' : undefined}>
               {(field.name !== 'addressLine2' || showLine2) && (
                 <>
-                  <Label htmlFor={field.name}>{field.label}</Label>
+                  <Label htmlFor={field.name}>{localized(field.label)}</Label>
                   <Input
                     id={field.name}
                     autoComplete={field.autoComplete}
@@ -126,7 +164,7 @@ export function DeliveryAddressForm({
                       role="alert"
                       id={`${field.name}-error`}
                     >
-                      {form.formState.errors[field.name]?.message}
+                      {localized(form.formState.errors[field.name]?.message)}
                     </p>
                   )}
                 </>
@@ -135,7 +173,7 @@ export function DeliveryAddressForm({
           </div>
         ))}
         <div>
-          <Label htmlFor="countryCode">Country</Label>
+          <Label htmlFor="countryCode">{t('storefront:country')}</Label>
           <select
             id="countryCode"
             autoComplete="shipping country"
@@ -144,25 +182,29 @@ export function DeliveryAddressForm({
             aria-invalid={!!form.formState.errors.countryCode}
             aria-describedby={form.formState.errors.countryCode ? 'country-error' : undefined}
           >
-            <option value="">Choose a country</option>
+            <option value="">{t('storefront:chooseACountry2')}</option>
             {deliveryOptions?.countryCodes.map((code) => (
               <option key={code} value={code}>
-                {countryName(code)}
+                {localized(countryName(code))}
               </option>
             ))}
           </select>
           {form.formState.errors.countryCode && (
             <p role="alert" id="country-error">
-              {form.formState.errors.countryCode.message}
+              {localized(form.formState.errors.countryCode.message)}
             </p>
           )}
         </div>
       </fieldset>
       {deliveryOptions && (
         <p className="text-sm text-muted-foreground">
-          Configured delivery per order:{' '}
-          {deliveryOptions.feeCents === 0 ? 'Free delivery' : money(deliveryOptions.feeCents)}.
-          Confirmed at review.
+          {t('storefront:configuredDeliveryPerOrderValueValueConfirmedAtReview', {
+            value0: ' ',
+            value1:
+              deliveryOptions.feeCents === 0
+                ? t('storefront:freeDelivery')
+                : money(deliveryOptions.feeCents),
+          })}
         </p>
       )}
       <Button
@@ -170,7 +212,7 @@ export function DeliveryAddressForm({
         className="min-h-11 w-full"
         disabled={reviewing || optionsLoading || !!optionsError || !deliveryOptions}
       >
-        {reviewing ? 'Reviewing…' : 'Review order'}
+        {localized(reviewing ? t('storefront:reviewing') : t('storefront:reviewOrder'))}
       </Button>
     </form>
   )

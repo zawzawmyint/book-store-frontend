@@ -1,3 +1,5 @@
+import { errorMessage } from '../../lib/i18n/errors'
+import { message as msg } from '../../lib/i18n'
 import { create } from 'zustand'
 import { CombinedGraphQLErrors } from '@apollo/client'
 import { addToCart, changeQuantity, type BookSummary, type CartItem } from './cart'
@@ -119,9 +121,9 @@ export function createCartStore() {
           status: 'ready',
           message: initial
             ? acknowledgeCartEdit(owner)
-              ? 'Your bag was reloaded. An unconfirmed edit may not have been saved.'
+              ? msg('storefront:yourBagWasReloadedAnUnconfirmedEditMayNotHaveBeen')
               : ''
-            : 'Your bag is up to date.',
+            : msg('storefront:yourBagIsUpToDate'),
         })
       } catch (error) {
         if (
@@ -138,7 +140,7 @@ export function createCartStore() {
         set({
           status: 'error',
           retryKind: 'load',
-          message: 'Your account bag could not be loaded. Retry loading your bag.',
+          message: msg('storefront:yourAccountBagCouldNotBeLoadedRetryLoadingYourBag'),
         })
       }
     }
@@ -173,7 +175,7 @@ export function createCartStore() {
         if (!active(owner, token)) return null
         apply(cart)
         operation = undefined
-        set({ status: 'ready', message: 'Bag saved.' })
+        set({ status: 'ready', message: msg('storefront:bagSaved') })
         warning()
         await mergeNext()
         return active(owner, token) ? cart : null
@@ -194,15 +196,19 @@ export function createCartStore() {
             set({
               status: 'ready',
               message: '',
-              validationMessage: `${error instanceof Error ? error.message : 'This selection could not be saved.'} Review availability, then decrease or remove unavailable selections.`,
+              validationMessage: msg(
+                'storefront:valueReviewAvailabilityThenDecreaseOrRemoveUnavailableSelections',
+                { value0: errorMessage(error, 'common:invalidInput') },
+              ),
             })
           } catch {
             if (active(owner, token))
               set({
                 status: 'error',
                 retryKind: 'load',
-                message:
-                  'This selection was rejected. Reload your bag to review current availability before trying again.',
+                message: msg(
+                  'storefront:thisSelectionWasRejectedReloadYourBagToReviewCurrentAvailability',
+                ),
               })
           }
           return null
@@ -220,21 +226,25 @@ export function createCartStore() {
             } else current.input = { ...current.input, expectedRevision: cart.revision }
             set({
               status: 'conflict',
-              message:
-                'Your bag changed elsewhere. Review the latest selections, then retry your intended change.',
+              message: msg(
+                'storefront:yourBagChangedElsewhereReviewTheLatestSelectionsThenRetryYour',
+              ),
             })
           } catch {
             if (active(owner, token))
               set({
                 status: 'error',
-                message:
-                  'Your bag changed elsewhere, but the latest selections could not be loaded. Retry to check again.',
+                message: msg('storefront:yourBagChangedElsewhereButTheLatestSelectionsCouldNotBe'),
               })
           }
         } else
           set({
             status: 'error',
-            message: `${current.kind === 'merge' ? 'Guest merge' : 'Bag save'} could not be confirmed. Retry the same operation to recover safely.`,
+            message: msg('storefront:valueCouldNotBeConfirmedRetryTheSameOperationToRecover', {
+              value0: msg(
+                current.kind === 'merge' ? 'storefront:guestMerge' : 'storefront:bagSave',
+              ),
+            }),
           })
         warning()
         return null
@@ -255,8 +265,7 @@ export function createCartStore() {
       if (!disk.savePending(record)) {
         set({
           status: 'error',
-          message:
-            'Too many unresolved guest merges. Recover an earlier account merge before adding another.',
+          message: msg('storefront:tooManyUnresolvedGuestMergesRecoverAnEarlierAccountMergeBefore'),
           retryKind: 'load',
         })
         return false
@@ -342,15 +351,16 @@ export function createCartStore() {
         const invalid = (items: CartItem[]) => {
           const existing = items.find((item) => item.id === book.id)
           if (!Number.isInteger(quantity) || quantity < 1)
-            return 'Choose a positive whole-number quantity.'
+            return msg('storefront:chooseAPositiveWholeNumberQuantity')
           if (owner !== null && existing?.available === false)
-            return 'This book is unavailable in your account bag. Review availability before adding again.'
-          if (book.stock < 1) return 'This book is sold out.'
+            return msg('storefront:thisBookIsUnavailableInYourAccountBagReviewAvailabilityBefore')
+          if (book.stock < 1) return msg('storefront:thisBookIsSoldOut')
           const stock =
             owner !== null && existing ? Math.min(book.stock, existing.stock) : book.stock
           if ((existing?.quantity ?? 0) + quantity > Math.min(10, stock))
-            return 'This addition exceeds available stock or the ten-copy bag limit.'
-          if (!existing && items.length >= 20) return 'Your bag can hold at most twenty titles.'
+            return msg('storefront:thisAdditionExceedsAvailableStockOrTheTenCopyBagLimit')
+          if (!existing && items.length >= 20)
+            return msg('storefront:yourBagCanHoldAtMostTwentyTitles')
           return ''
         }
         if (cartBlocked(get())) return false
@@ -388,12 +398,16 @@ export function createCartStore() {
             (get().items.find((item) => item.id === book.id)?.quantity ?? 0) >= target
           if (saved && active(owner, token) && !complete)
             set({
-              validationMessage: 'Your bag was adjusted. Review availability before adding again.',
+              validationMessage: msg(
+                'storefront:yourBagWasAdjustedReviewAvailabilityBeforeAddingAgain',
+              ),
             })
           return complete
         } catch {
           if (generation === token && get().owner === owner)
-            set({ validationMessage: 'This addition could not be confirmed. Please try again.' })
+            set({
+              validationMessage: msg('storefront:thisAdditionCouldNotBeConfirmedPleaseTryAgain'),
+            })
           return false
         }
       },

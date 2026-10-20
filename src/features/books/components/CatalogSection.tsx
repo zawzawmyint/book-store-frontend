@@ -1,3 +1,4 @@
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { Search, X } from 'lucide-react'
 import { IconAction } from '../../../app/components/IconAction'
 import { BookCard } from './BookCard'
@@ -13,6 +14,8 @@ import { Skeleton } from '../../../app/components/ui/skeleton'
 import { BookLoader } from '../../../app/components/BookLoader'
 
 export function CatalogSection() {
+  useI18n()
+
   const catalog = useCatalog()
   const {
     applied,
@@ -39,19 +42,36 @@ export function CatalogSection() {
   const price = applied.minPrice !== undefined || applied.maxPrice !== undefined
   const chips: { label: string; name: string; remove: Partial<CatalogState> }[] = [
     ...(applied.search
-      ? [{ label: `Search: ${applied.search}`, name: 'search', remove: { search: '' } }]
+      ? [
+          {
+            label: msg('storefront:searchValue', { value0: applied.search }),
+            name: 'search',
+            remove: { search: '' },
+          },
+        ]
       : []),
     ...(applied.genre
-      ? [{ label: `Genre: ${applied.genre}`, name: 'genre', remove: { genre: '' } }]
+      ? [
+          {
+            label: msg('storefront:genreValue', { value0: applied.genre }),
+            name: 'genre',
+            remove: { genre: '' },
+          },
+        ]
       : []),
     ...(applied.inStock
-      ? [{ label: 'In stock only', name: 'availability', remove: { inStock: false } }]
+      ? [{ label: msg('storefront:inStockOnly'), name: 'availability', remove: { inStock: false } }]
       : []),
     ...(price
       ? [
           {
-            label: `Price: ${applied.minPrice === undefined ? 'Any' : money(applied.minPrice)} – ${applied.maxPrice === undefined ? 'Any' : money(applied.maxPrice)}`,
-            name: 'price range',
+            label: msg('storefront:priceValueValue', {
+              value0:
+                applied.minPrice === undefined ? t('common:labelAny') : money(applied.minPrice),
+              value1:
+                applied.maxPrice === undefined ? t('common:labelAny') : money(applied.maxPrice),
+            }),
+            name: msg('storefront:priceRange'),
             remove: { minPrice: undefined, maxPrice: undefined },
           },
         ]
@@ -62,24 +82,30 @@ export function CatalogSection() {
     <section id="collection" className="page-shell pt-6 sm:pt-8">
       <div className="space-y-6 lg:flex lg:items-start lg:gap-8 lg:space-y-0">
         <aside
-          aria-label="Catalog filters"
-          className="space-y-5 lg:sticky lg:top-[calc(var(--storefront-header-height,5rem)+1.5rem)] lg:w-[280px] lg:shrink-0 lg:self-start lg:max-h-[calc(100dvh-var(--storefront-header-height,5rem)-3rem)] lg:overflow-y-auto lg:border-r lg:border-border lg:pr-6"
+          aria-label={t('storefront:catalogFilters')}
+          className="space-y-5 lg:sticky lg:top-[calc(var(--storefront-header-height,5rem)+1.5rem)] lg:w-[280px] lg:shrink-0 lg:self-start lg:max-h-[calc(100dvh-var(--storefront-header-height,5rem)-3rem)] lg:overflow-y-auto lg:border-r lg:border-border lg:pe-6"
         >
           <div>
-            <h1 className="font-serif text-2xl tracking-[-.03em]">All books</h1>
+            <h1 className="font-serif text-2xl tracking-[-.03em]">{t('storefront:allBooks')}</h1>
             <p role="status" className="mt-2 text-sm text-muted-foreground">
-              {loading
-                ? 'Finding stories…'
-                : error
-                  ? 'Results unavailable'
-                  : books.length
-                    ? `Showing ${page * PAGE_SIZE + 1}–${page * PAGE_SIZE + books.length} of ${total ?? 0} books`
-                    : `${total ?? 0} books found`}
+              {localized(
+                loading
+                  ? t('storefront:findingStories')
+                  : error
+                    ? t('storefront:resultsUnavailable')
+                    : books.length
+                      ? t('storefront:showingRange', {
+                          value0: page * PAGE_SIZE + 1,
+                          value1: page * PAGE_SIZE + books.length,
+                          value2: t('common:bookCount', { count: total ?? 0 }),
+                        })
+                      : t('storefront:booksFound', { count: total ?? 0 }),
+              )}
             </p>
           </div>
           <form onSubmit={submitSearch} role="search">
             <label htmlFor="catalog-search" className="mb-2 block text-sm font-semibold">
-              Search books
+              {t('storefront:searchBooks')}
             </label>
             <div className="catalog-search-field flex items-center rounded-sm border border-control focus-within:border-primary focus-within:ring-1 focus-within:ring-inset focus-within:ring-ring">
               <Input
@@ -87,11 +113,11 @@ export function CatalogSection() {
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
                 maxLength={100}
-                placeholder="Search title or author"
+                placeholder={t('storefront:searchTitleOrAuthor')}
                 className="min-h-11 min-w-0 border-0 bg-transparent px-3 py-3 text-sm focus-visible:ring-0"
               />
               <IconAction
-                label="Search books"
+                label={t('storefront:searchBooks')}
                 type="submit"
                 variant="ghost"
                 className="text-primary"
@@ -102,7 +128,7 @@ export function CatalogSection() {
           </form>
           <div className="hidden lg:block">
             <label htmlFor="catalog-sort" className="mb-3 block text-sm font-semibold">
-              Sort by
+              {t('storefront:sortBy')}
             </label>
             <select
               id="catalog-sort"
@@ -112,28 +138,31 @@ export function CatalogSection() {
             >
               {Object.entries(catalogSorts).map(([value, label]) => (
                 <option key={value} value={value}>
-                  {label}
+                  {localized(label)}
                 </option>
               ))}
             </select>
           </div>
           <CatalogFilters applied={applied} genres={genres} update={update} />
           {(chips.length > 0 || applied.sort !== 'default') && (
-            <div className="flex flex-wrap items-center gap-2" aria-label="Active filters">
+            <div
+              className="flex flex-wrap items-center gap-2"
+              aria-label={t('storefront:activeFilters')}
+            >
               {chips.map((chip) => (
                 <Button
                   key={chip.name}
                   variant="secondary"
-                  className="h-auto min-h-11 max-w-full gap-2 whitespace-normal rounded-full px-3 py-2 text-left text-xs"
+                  className="h-auto min-h-11 max-w-full gap-2 whitespace-normal rounded-full px-3 py-2 text-start text-xs"
                   onClick={() => update(chip.remove)}
-                  aria-label={`Remove ${chip.name} filter`}
+                  aria-label={t('storefront:removeValueFilter', { value0: chip.name })}
                 >
-                  <span className="break-words">{chip.label}</span>
+                  <span className="break-words">{localized(chip.label)}</span>
                   <X className="size-3 shrink-0" aria-hidden="true" />
                 </Button>
               ))}
               <Button variant="ghost" className="min-h-11 text-xs underline" onClick={clearAll}>
-                Clear all
+                {t('storefront:clearAll')}
               </Button>
             </div>
           )}
@@ -141,20 +170,20 @@ export function CatalogSection() {
         <div
           id="catalog-results"
           role="region"
-          aria-label="Book results"
+          aria-label={t('storefront:bookResults')}
           tabIndex={-1}
           className="min-w-0 flex-1"
         >
           {error && (
             <Alert variant="destructive">
               <AlertDescription>
-                The shelves could not load.{' '}
+                {t('storefront:theShelvesCouldNotLoad')}
                 <Button
                   variant="ghost"
                   onClick={() => refetch()}
                   className="h-auto p-0 font-bold underline"
                 >
-                  Try again
+                  {t('storefront:tryAgain')}
                 </Button>
                 .
               </AlertDescription>
@@ -162,7 +191,7 @@ export function CatalogSection() {
           )}
           {loading && (
             <>
-              <BookLoader label="Opening your shelf…" />
+              <BookLoader label={t('storefront:openingYourShelf')} />
               <div className="grid grid-cols-1 gap-5 min-[375px]:grid-cols-2 xl:grid-cols-3">
                 {Array.from({ length: 6 }, (_, index) => (
                   <Skeleton key={index} className="h-96 rounded-none bg-muted" />
@@ -172,9 +201,9 @@ export function CatalogSection() {
           )}
           {!loading && !error && books.length === 0 && (
             <div className="rounded-sm bg-muted px-6 py-20 text-center">
-              <p className="font-serif text-3xl">No books on this shelf.</p>
+              <p className="font-serif text-3xl">{t('storefront:noBooksOnThisShelf')}</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                Try another title, author, genre, or price range.
+                {t('storefront:tryAnotherTitleAuthorGenreOrPriceRange')}
               </p>
             </div>
           )}
@@ -187,7 +216,7 @@ export function CatalogSection() {
           )}
           {!loading && !error && (total ?? 0) > PAGE_SIZE && (
             <nav
-              aria-label="Catalog pages"
+              aria-label={t('storefront:catalogPages')}
               className="mt-14 flex items-center justify-center gap-4"
             >
               <Button
@@ -196,10 +225,10 @@ export function CatalogSection() {
                 onClick={() => changePage(page - 1)}
                 className="min-h-11 px-2 text-sm"
               >
-                Previous
+                {t('storefront:previous')}
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {page + 1} of {pages}
+                {t('storefront:pageValueOfValue', { value0: page + 1, value1: pages })}
               </span>
               <Button
                 variant="ghost"
@@ -207,7 +236,7 @@ export function CatalogSection() {
                 onClick={() => changePage(page + 1)}
                 className="min-h-11 px-2 text-sm"
               >
-                Next
+                {t('storefront:next')}
               </Button>
             </nav>
           )}

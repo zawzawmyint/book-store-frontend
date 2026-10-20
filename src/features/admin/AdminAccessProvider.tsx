@@ -1,3 +1,4 @@
+import { localized } from '../../lib/i18n'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApolloClient, useQuery } from '@apollo/client/react'
 import { useLocation } from 'react-router-dom'
@@ -95,7 +96,7 @@ export function AdminAccessProvider({ children }: { children: React.ReactNode })
         confirmRole,
       }}
     >
-      {children}
+      {localized(children)}
     </AccessContext.Provider>
   )
 }

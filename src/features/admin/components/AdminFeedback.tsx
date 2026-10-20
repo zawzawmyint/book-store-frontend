@@ -1,3 +1,5 @@
+import { errorMessage } from '../../../lib/i18n/errors'
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { Button } from '../../../app/components/ui/button'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { Skeleton } from '../../../app/components/ui/skeleton'
@@ -13,10 +15,12 @@ export function AdminFeedback({
   error?: Error
   retry: () => unknown
 }) {
+  useI18n()
+
   if (loading)
     return (
       <div className="space-y-3 py-8">
-        <BookLoader label="Loading workspace…" />
+        <BookLoader label={t('admin:loadingWorkspace')} />
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-10 w-full" />
       </div>
@@ -24,14 +28,16 @@ export function AdminFeedback({
   if (error)
     return (
       <Alert role="alert" variant="destructive" className="my-6 space-y-3">
-        <AlertDescription>{error.message}</AlertDescription>
+        <AlertDescription>
+          {localized(errorMessage(error, 'common:requestFailed'))}
+        </AlertDescription>
         <Button
           variant="ghost"
           onClick={() => {
             void retry()
           }}
         >
-          Retry
+          {t('admin:retry')}
         </Button>
       </Alert>
     )
@@ -51,27 +57,35 @@ export function AdminPagination({
   itemCount: number
   change: (page: number) => void
 }) {
+  useI18n()
+
   const offset = (page - 1) * ADMIN_PAGE_SIZE
   const start = itemCount ? offset + 1 : 0
   const end = itemCount ? Math.min(total, offset + itemCount) : 0
   return (
-    <nav aria-label="Pagination" className="mt-4 flex flex-wrap items-center justify-between gap-3">
-      <span className="text-sm text-muted-foreground">
-        Showing {start}–{end} of {total} {label}
+    <nav
+      aria-label={t('admin:pagination')}
+      className="mt-4 flex flex-wrap items-center justify-between gap-3"
+    >
+      <span className="text-sm text-muted-foreground" aria-label={label}>
+        {t('admin:showingRange', { value0: start, value1: end, value2: total })}
       </span>
       <div className="flex items-center gap-3">
         <Button variant="outline" disabled={page <= 1} onClick={() => change(page - 1)}>
-          Previous
+          {t('admin:previous')}
         </Button>
         <span className="text-xs text-muted-foreground">
-          Page {page} of {Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE))}
+          {t('admin:pageValueOfValue', {
+            value0: page,
+            value1: Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE)),
+          })}
         </span>
         <Button
           variant="outline"
           disabled={page * ADMIN_PAGE_SIZE >= total}
           onClick={() => change(page + 1)}
         >
-          Next
+          {t('admin:next')}
         </Button>
       </div>
     </nav>

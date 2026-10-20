@@ -1,3 +1,4 @@
+import { message as msg } from '../../lib/i18n'
 import type { HomepageBookFragment } from '../../generated/graphql'
 
 // Editorial choices for the current catalog. Product metadata comes from the API.
@@ -5,8 +6,7 @@ import type { HomepageBookFragment } from '../../generated/graphql'
 export const homepageSelections: { bookId: string; editorialNote?: string }[] = [
   {
     bookId: '1',
-    editorialNote:
-      'A brief, beautifully written portrait of longing and reinvention. Come for the glitter of the Jazz Age; stay for the questions it leaves behind.',
+    editorialNote: msg('storefront:editorialNote'),
   },
   { bookId: '2' },
   { bookId: '4' },

@@ -88,7 +88,7 @@ it('retains rejected adjustment input and refreshes stock without resubmitting',
   )
   await user.type(screen.getByLabelText('Quantity change'), '-5')
   await user.click(screen.getByRole('button', { name: 'Apply adjustment' }))
-  await screen.findByText('Insufficient stock')
+  await screen.findByText('Please check the entered details and try again.')
   await screen.findByText('2', { exact: true })
   expect(screen.getByLabelText('Quantity change')).toHaveProperty('value', '-5')
 })

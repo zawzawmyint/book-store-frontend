@@ -1,3 +1,4 @@
+import { localized, t, useI18n } from '../lib/i18n'
 import { BookOpenText, LogIn, ShoppingBag, UserRound } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useLayoutEffect, useRef } from 'react'
@@ -13,6 +14,7 @@ import { Badge } from './components/ui/badge'
 import { ThemeSwitch } from './components/ThemeSwitch'
 import { StorefrontSearch } from './components/StorefrontSearch'
 import { StorefrontMenu } from './components/StorefrontMenu'
+import { LanguageSwitcher } from './components/LanguageSwitcher'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +23,8 @@ import {
 } from './components/ui/dropdown-menu'
 
 export function Layout() {
+  useI18n()
+
   const { pathname } = useLocation()
   const stickyHeader = pathname.replace(/\/+$/, '') !== '/books'
   const rootRef = useRef<HTMLDivElement>(null)
@@ -62,52 +66,65 @@ export function Layout() {
   return (
     <div ref={rootRef} className="storefront-layout min-h-screen bg-background text-foreground">
       <div className="bg-[#234a3b] px-4 py-2 text-center text-[10px] font-bold uppercase tracking-[.22em] text-[#eee9d9] sm:text-xs">
-        A little bookstore for big imaginations
+        {t('common:aLittleBookstoreForBigImaginations')}
       </div>
       <header
         ref={headerRef}
         className={`${stickyHeader ? 'sticky top-0 ' : ''}z-30 border-b border-border bg-background`}
       >
         <PageContainer className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 py-3 sm:flex-nowrap sm:gap-6 sm:py-4">
-          <Link to="/" className="flex items-center gap-2.5" aria-label="The Quiet Shelf home">
+          <Link
+            to="/"
+            className="flex items-center gap-2.5"
+            aria-label={t('common:theQuietShelfHome')}
+          >
             <span className="hidden size-9 place-items-center rounded-full bg-[#2d5744] text-[#f7ebd2] sm:grid">
               <BookOpenText size={20} strokeWidth={1.6} />
             </span>
-            <span className="max-w-[88px] font-serif text-base font-semibold leading-tight tracking-tight sm:max-w-none sm:text-2xl">
+            <bdi
+              dir="ltr"
+              data-brand=""
+              className="max-w-[88px] font-serif text-base font-semibold leading-tight tracking-tight sm:max-w-none sm:text-2xl"
+            >
               the quiet shelf<span className="text-copper">.</span>
-            </span>
+            </bdi>
           </Link>
           <nav
-            className="ml-auto flex items-center gap-0 text-sm sm:gap-2"
-            aria-label="Main navigation"
+            className="ms-auto flex items-center gap-0 text-sm sm:gap-2"
+            aria-label={t('common:mainNavigation')}
           >
             <NavLink
               to="/books"
-              className="mr-4 hidden min-h-11 items-center px-1 font-semibold text-muted-foreground hover:text-primary sm:inline-flex [&.active]:text-primary"
+              className="me-4 hidden min-h-11 items-center px-1 font-semibold text-muted-foreground hover:text-primary sm:inline-flex [&.active]:text-primary"
             >
-              All books
+              {t('common:allBooks')}
             </NavLink>
+            <LanguageSwitcher />
             <StorefrontSearch />
             {!isPending &&
               (session?.user.emailVerified === true ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <IconAction label="Account">
+                    <IconAction label={t('common:account')}>
                       <UserRound aria-hidden="true" />
                     </IconAction>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <div className="px-3 py-2 text-sm font-medium">{session.user.name}</div>
+                    <div className="px-3 py-2 text-sm font-medium">
+                      <bdi dir="auto">{localized(session.user.name)}</bdi>
+                    </div>
                     <DropdownMenuItem asChild>
-                      <Link to="/account/profile">Profile</Link>
+                      <Link to="/account/profile">{t('common:profile')}</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/account/orders">Orders</Link>
+                      <Link to="/account/orders">{t('common:orders')}</Link>
                     </DropdownMenuItem>
                     {!admin.loading && (admin.role === 'ADMIN' || admin.role === 'STAFF') && (
                       <DropdownMenuItem asChild>
                         <Link to="/admin">
-                          {admin.role === 'STAFF' ? 'Staff workspace' : 'Admin'}
+                          {localized(
+                            admin.role === 'STAFF' ? t('common:staffWorkspace') : t('common:admin'),
+                          )}
                         </Link>
                       </DropdownMenuItem>
                     )}
@@ -116,12 +133,12 @@ export function Layout() {
                         void signOut()
                       }}
                     >
-                      Sign out
+                      {t('common:signOut')}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <IconAction asChild label="Sign in">
+                <IconAction asChild label={t('common:signIn')}>
                   <Link to="/sign-in">
                     <LogIn aria-hidden="true" />
                   </Link>
@@ -129,8 +146,8 @@ export function Layout() {
               ))}
             <IconAction
               asChild
-              label={`Bag with ${count} ${count === 1 ? 'item' : 'items'}`}
-              tooltip="Bag"
+              label={t('common:bagCount', { value0: t('common:itemCount', { count }) })}
+              tooltip={t('common:bagTooltip')}
               className="relative"
             >
               <Link to="/cart">
@@ -139,7 +156,7 @@ export function Layout() {
                   variant="secondary"
                   className="absolute -right-0.5 -top-0.5 grid size-4 place-items-center p-0 text-[9px]"
                 >
-                  {count}
+                  {localized(count)}
                 </Badge>
               </Link>
             </IconAction>
@@ -160,25 +177,27 @@ export function Layout() {
         <PageContainer className="grid gap-10 py-14 sm:grid-cols-[1fr_auto]">
           <div>
             <p className="font-serif text-2xl">
-              the quiet shelf<span className="text-copper">.</span>
+              <bdi dir="ltr" data-brand="">
+                the quiet shelf<span className="text-copper">.</span>
+              </bdi>
             </p>
             <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">
-              Browse enduring books and build a collection worth keeping.
+              {t('common:browseEnduringBooksAndBuildACollectionWorthKeeping')}
             </p>
           </div>
           <nav
-            aria-label="Footer navigation"
+            aria-label={t('common:footerNavigation')}
             className="grid grid-cols-2 gap-x-8 gap-y-3 self-start text-sm text-muted-foreground [&_a]:inline-flex [&_a]:min-h-11 [&_a]:items-center [&_a:hover]:text-primary [&_a:hover]:underline"
           >
-            <Link to="/">Home</Link>
-            <Link to="/books">All books</Link>
-            <Link to="/account/orders">Your orders</Link>
-            <Link to="/account/profile">Your profile</Link>
+            <Link to="/">{t('common:home')}</Link>
+            <Link to="/books">{t('common:allBooks')}</Link>
+            <Link to="/account/orders">{t('common:yourOrders')}</Link>
+            <Link to="/account/profile">{t('common:yourProfile')}</Link>
           </nav>
         </PageContainer>
         <PageContainer className="flex flex-wrap justify-between gap-3 border-t border-border py-5 text-xs text-muted-foreground">
-          <span>© 2026 The Quiet Shelf</span>
-          <span>Stripe test payments • Books for delivery</span>
+          <span>{t('common:2026TheQuietShelf')}</span>
+          <span>{t('common:stripeTestPaymentsBooksForDelivery')}</span>
         </PageContainer>
       </footer>
     </div>

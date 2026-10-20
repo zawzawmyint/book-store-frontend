@@ -1,3 +1,4 @@
+import { localized, t, useI18n } from '../lib/i18n'
 import { clearCheckoutAttempts } from '../features/checkout/checkout-attempt'
 import { useEffect, useState } from 'react'
 import { useApolloClient } from '@apollo/client/react'
@@ -8,6 +9,8 @@ import { useCartStore } from '../features/cart/cart-store'
 
 /** Unmounts routed content until Apollo data is cleared for the current identity. */
 export function SessionBoundary({ children }: { children: React.ReactNode }) {
+  useI18n()
+
   const { data, isPending } = authClient.useSession()
   const client = useApolloClient()
   const userId = data?.user.emailVerified === true ? data.user.id : null
@@ -30,9 +33,7 @@ export function SessionBoundary({ children }: { children: React.ReactNode }) {
   }, [client, isPending, readyId, userId])
 
   if (isPending || readyId !== userId) {
-    return (
-      <BookLoader label="Loading your account…" className="py-24" />
-    )
+    return <BookLoader label={t('common:loadingYourAccount')} className="py-24" />
   }
-  return <CartSession owner={userId}>{children}</CartSession>
+  return <CartSession owner={userId}>{localized(children)}</CartSession>
 }

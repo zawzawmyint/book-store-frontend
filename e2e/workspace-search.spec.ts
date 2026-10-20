@@ -54,7 +54,7 @@ test('Staff opens workspace search, navigates by keyboard and preserves filtered
   await expect(page.getByRole('option', { name: /Order #1/ })).toHaveCount(0)
   expect(bookRequests).toEqual([])
   await expect(page.getByText('Enter at least two characters or an order number.')).toHaveCount(0)
-  await expect(page.getByRole('status')).toHaveText('1 orders found.')
+  await expect(page.getByRole('status')).toHaveText('Results: 1 order')
 })
 
 test('search rejects short input, isolates errors and discards old responses after typing or close', async ({
@@ -124,7 +124,7 @@ test('private search disappears on session loss and Customers cannot mount it', 
 }) => {
   await signIn(page)
   await page.getByRole('button', { name: 'Search workspace', exact: true }).click()
-  await page.getByRole('combobox').fill('reader')
+  await page.getByRole('combobox', { name: 'Search books and orders' }).fill('reader')
   await expect(page.getByRole('option', { name: /Test Reader/ }).first()).toBeVisible()
   await page.context().clearCookies()
   await page.evaluate(() => window.dispatchEvent(new Event('focus')))
@@ -162,10 +162,10 @@ test('search fits mobile and themes, avoids editable/other-modal shortcuts and n
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(390)
   await page.screenshot({ path: 'test-results/workspace-search-mobile-dark.png', fullPage: true })
-  await page.getByRole('combobox').press('Escape')
+  await page.getByRole('combobox', { name: 'Search books and orders' }).press('Escape')
   await page.getByRole('switch', { name: 'Dark mode' }).click()
   await page.getByRole('button', { name: 'Search workspace', exact: true }).click()
-  await page.getByRole('combobox').fill('Dracula')
+  await page.getByRole('combobox', { name: 'Search books and orders' }).fill('Dracula')
   await expect(page.getByRole('option', { name: /Dracula/ })).toBeVisible()
   await page.screenshot({ path: 'test-results/workspace-search-mobile-light.png', fullPage: true })
 })

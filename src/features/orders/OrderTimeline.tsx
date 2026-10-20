@@ -1,4 +1,5 @@
-import { serverDate } from '../../lib/format'
+import { formatDateTime, serverDate } from '../../lib/format'
+import { localized, t, useI18n } from '../../lib/i18n'
 import type { MyOrderQuery } from '../../generated/graphql'
 import { orderStatusLabels } from './order-status'
 type Event = NonNullable<MyOrderQuery['myOrder']>['history'][number] & {
@@ -13,31 +14,35 @@ export function OrderTimeline({
   history: readonly Event[]
   attributed?: boolean
 }) {
+  useI18n()
+
   return (
     <section className="mt-8">
-      <h2 className="font-serif text-2xl">Request progress</h2>
+      <h2 className="font-serif text-2xl">{t('storefront:requestProgress')}</h2>
       <ol className="mt-4 space-y-4">
         {history.map((event) => (
-          <li key={event.id} className="border-l-2 border-border pl-4">
-            <p className="font-semibold">{orderStatusLabels[event.toStatus]}</p>
+          <li key={event.id} className="border-s-2 border-border ps-4">
+            <p className="font-semibold">{localized(orderStatusLabels[event.toStatus])}</p>
             <time
               className="text-sm text-muted-foreground"
               dateTime={serverDate(event.createdAt).toISOString()}
             >
-              {serverDate(event.createdAt).toLocaleString()}
+              {localized(formatDateTime(serverDate(event.createdAt)))}
             </time>
-            {event.toStatus === 'DELIVERED' && <p className="text-sm">Staff confirmed delivery.</p>}
+            {event.toStatus === 'DELIVERED' && (
+              <p className="text-sm">{t('storefront:staffConfirmedDelivery')}</p>
+            )}
             {event.cancellationReason && (
               <p className="mt-2 whitespace-pre-wrap break-words">
-                Reason: {event.cancellationReason}
+                {t('storefront:reasonValue', { value0: event.cancellationReason })}
               </p>
             )}
             {attributed && (
               <p className="text-sm">
-                {event.actorType === 'SYSTEM' ? 'System' : event.actorName}
-                {event.actorRole && ' · Recorded role: '}
-                {event.actorRole?.[0]}
-                {event.actorRole?.slice(1).toLowerCase()}
+                {localized(event.actorType === 'SYSTEM' ? t('common:system') : event.actorName)}
+                {localized(event.actorRole && t('storefront:recordedRole'))}
+                {localized(event.actorRole?.[0])}
+                {localized(event.actorRole?.slice(1).toLowerCase())}
               </p>
             )}
           </li>

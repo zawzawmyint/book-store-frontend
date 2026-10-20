@@ -1,3 +1,6 @@
+import { errorMessage } from '../../../lib/i18n/errors'
+import { formatDate } from '../../../lib/format'
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { useState } from 'react'
 import { Copy, Eye } from 'lucide-react'
 import { IconAction } from '../../../app/components/IconAction'
@@ -36,6 +39,8 @@ function readRole(value: string | null): AdminUserRoleFilter {
 }
 
 export function UsersPage() {
+  useI18n()
+
   const { params, page, limit, offset, changePage, changeParams } = useAdminPagination()
   const search = (params.get('search') ?? '').slice(0, 100)
   const role = readRole(params.get('role'))
@@ -64,36 +69,36 @@ export function UsersPage() {
     setCopyError('')
     try {
       await navigator.clipboard.writeText(id)
-      setNotice('User ID copied.')
+      setNotice(msg('admin:userIdCopied'))
     } catch {
       setNotice('')
-      setCopyError('Unable to copy the user ID.')
+      setCopyError(msg('admin:unableToCopyTheUserId'))
     }
   }
   return (
     <section>
       <AdminPageHeader
-        title="Users"
-        description="Registered users. Manage customer, staff, and admin roles."
+        title={t('admin:users')}
+        description={t('admin:registeredUsersManageCustomerStaffAndAdminRoles')}
       />
       {notice && (
         <Alert role="status" className="my-4">
-          <AlertDescription>{notice}</AlertDescription>
+          <AlertDescription>{localized(notice)}</AlertDescription>
         </Alert>
       )}
       {copyError && (
         <Alert role="alert" variant="destructive" className="my-4">
-          <AlertDescription>{copyError}</AlertDescription>
+          <AlertDescription>{localized(copyError)}</AlertDescription>
         </Alert>
       )}
       <AdminFilterToolbar
         search={search}
         onSearch={(value) => changeParams({ search: value, page: '' })}
-        searchLabel="Search users"
-        searchPlaceholder="Name or email"
+        searchLabel={t('admin:searchUsers')}
+        searchPlaceholder={t('admin:nameOrEmail')}
       >
         <div className="admin-toolbar-field">
-          <Label htmlFor="admin-user-role">Role</Label>
+          <Label htmlFor="admin-user-role">{t('admin:role')}</Label>
           <Select
             value={role}
             onValueChange={(value) =>
@@ -104,58 +109,74 @@ export function UsersPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="admin-workspace">
-              <SelectItem value="ALL">All</SelectItem>
-              <SelectItem value="CUSTOMER">Customers</SelectItem>
-              <SelectItem value="STAFF">Staff</SelectItem>
-              <SelectItem value="ADMIN">Admins</SelectItem>
+              <SelectItem value="ALL">{t('admin:all')}</SelectItem>
+              <SelectItem value="CUSTOMER">{t('admin:customers')}</SelectItem>
+              <SelectItem value="STAFF">{t('admin:staff')}</SelectItem>
+              <SelectItem value="ADMIN">{t('admin:admins')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </AdminFilterToolbar>
-      <AdminFeedback loading={loading} error={error} retry={refetch} />
+      <AdminFeedback loading={loading} error={localized(error)} retry={refetch} />
       {!loading && !error && users && (
         <AdminPageTable
           columns={[
-            { label: 'Name' },
-            { label: 'Email' },
-            { label: 'Role' },
-            { label: 'Joined' },
-            { label: 'User ID' },
-            { label: 'Actions' },
+            { label: t('common:labelName') },
+            { label: t('common:labelEmail') },
+            { label: t('common:labelRole') },
+            { label: t('common:labelJoined') },
+            { label: t('common:labelUserID') },
+            { label: t('common:labelActions') },
           ]}
           items={users.items}
           rowKey={(user) => user.id}
-          label="users"
-          emptyMessage="No accounts match."
+          label={t('admin:users2')}
+          emptyMessage={t('admin:noAccountsMatch')}
           page={page}
           total={users.total}
           onPageChange={changePage}
           tableClassName="min-w-[880px]"
           renderRow={(user) => (
             <>
-              <TableCell>{user.name}</TableCell>
+              <TableCell>
+                <bdi dir="auto">{localized(user.name)}</bdi>
+              </TableCell>
               <TableCell>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span>{user.email}</span>
+                  <span>
+                    <bdi dir="ltr">{localized(user.email)}</bdi>
+                  </span>
                   <EmailVerificationBadge verified={user.emailVerified} />
                 </div>
               </TableCell>
               <TableCell>
-                {user.role === 'ADMIN' ? 'Admin' : user.role === 'STAFF' ? 'Staff' : 'Customer'}
+                {localized(
+                  user.role === 'ADMIN'
+                    ? t('admin:admin')
+                    : user.role === 'STAFF'
+                      ? t('admin:staff')
+                      : t('admin:customer'),
+                )}
               </TableCell>
-              <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+              <TableCell>{localized(formatDate(new Date(user.createdAt)))}</TableCell>
               <TableCell>
-                <span className="font-sans text-xs break-all">{user.id}</span>
+                <span className="font-sans text-xs break-all">
+                  <bdi dir="ltr">{localized(user.id)}</bdi>
+                </span>
               </TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-2">
-                  <IconAction asChild label={`View user ${user.name}`} workspace>
+                  <IconAction
+                    asChild
+                    label={t('admin:viewUserValue', { value0: user.name })}
+                    workspace
+                  >
                     <Link to={user.id} state={{ returnTo: `/admin/users?${params}` }}>
                       <Eye aria-hidden="true" />
                     </Link>
                   </IconAction>
                   <IconAction
-                    label={`Copy user ID for ${user.name}`}
+                    label={t('admin:copyUserIdForValue', { value0: user.name })}
                     workspace
                     onClick={() => void copyId(user.id)}
                   >
@@ -173,7 +194,7 @@ export function UsersPage() {
                       })
                     }}
                   >
-                    Change role
+                    {t('admin:changeRole')}
                   </Button>
                 </div>
               </TableCell>
@@ -217,6 +238,8 @@ function RoleDialog({
   close: () => void
   saved: (message: string) => void
 }) {
+  useI18n()
+
   const { handleError, retry, confirmRole } = useAdminAccess()
   const navigate = useNavigate()
   const [selectedRole, setSelectedRole] = useState(role)
@@ -236,7 +259,7 @@ function RoleDialog({
         close()
         return
       }
-      setError(failure instanceof Error ? failure.message : 'Unable to refresh users')
+      setError(errorMessage(failure, 'admin:unableToRefreshUsers'))
     } finally {
       setChecking(false)
     }
@@ -246,7 +269,7 @@ function RoleDialog({
     try {
       const response = await changeAccess({ variables: { userId: user.id, role: selectedRole } })
       const updated = response.data?.setUserRole
-      if (!updated) throw new Error('The result is unknown')
+      if (!updated) throw new Error(msg('admin:theResultIsUnknown'))
       if (isSelf && updated.role !== 'ADMIN') {
         await confirmRole(updated.role)
         retry()
@@ -254,7 +277,16 @@ function RoleDialog({
         return
       }
       saved(
-        `${updated.name} is now ${updated.role === 'ADMIN' ? 'an admin' : updated.role === 'STAFF' ? 'a staff member' : 'a customer'}.`,
+        msg('admin:roleChanged', {
+          value0: updated.name,
+          value1: msg(
+            updated.role === 'ADMIN'
+              ? 'common:adminRole'
+              : updated.role === 'STAFF'
+                ? 'common:staffRole'
+                : 'common:customerRole',
+          ),
+        }),
       )
     } catch (failure) {
       handleError(failure)
@@ -263,25 +295,35 @@ function RoleDialog({
         return
       }
       if (CombinedGraphQLErrors.is(failure)) {
-        setError(failure.message)
+        setError(errorMessage(failure, 'admin:unableToRefreshUsers'))
         await refresh().catch(() => {})
         return
       }
       setUnknown(true)
       setChecked(false)
-      setError('The result is unknown. Refresh the user list before confirming again.')
+      setError(msg('admin:theResultIsUnknownRefreshTheUserListBeforeConfirmingAgain'))
     }
   }
   return (
     <AdminDialog
-      title={`Change role for ${user.name}?`}
+      title={t('admin:changeRoleForValue', { value0: user.name })}
       close={close}
       busy={loading || checking}
       returnFocusTo={opener}
     >
       <div className="mb-4 space-y-3">
-        <p>Current role: {role === 'ADMIN' ? 'Admin' : role === 'STAFF' ? 'Staff' : 'Customer'}.</p>
-        <Label htmlFor="new-user-role">New role</Label>
+        <p>
+          {t('admin:currentRoleValue', {
+            value0: t(
+              role === 'ADMIN'
+                ? 'common:adminRole'
+                : role === 'STAFF'
+                  ? 'common:staffRole'
+                  : 'common:customerRole',
+            ),
+          })}
+        </p>
+        <Label htmlFor="new-user-role">{t('admin:newRole')}</Label>
         <select
           id="new-user-role"
           className="w-full rounded-md border border-control bg-input text-foreground p-3"
@@ -289,29 +331,31 @@ function RoleDialog({
           disabled={loading || checking}
           onChange={(event) => setSelectedRole(event.target.value as typeof role)}
         >
-          <option value="CUSTOMER">Customer</option>
-          <option value="STAFF">Staff</option>
-          <option value="ADMIN">Admin</option>
+          <option value="CUSTOMER">{t('admin:customer')}</option>
+          <option value="STAFF">{t('admin:staff')}</option>
+          <option value="ADMIN">{t('admin:admin')}</option>
         </select>
         <p>
-          {selectedRole === 'ADMIN'
-            ? 'This account will be able to open the admin workspace and can still shop as a customer.'
-            : selectedRole === 'STAFF'
-              ? 'Staff can add and edit books, change prices, adjust stock, and view orders. User management and archive/restore remain admin-only.'
-              : 'Workspace access ends on the next request. The user account and existing order requests remain.'}
+          {localized(
+            selectedRole === 'ADMIN'
+              ? t('admin:thisAccountWillBeAbleToOpenTheAdminWorkspaceAnd')
+              : selectedRole === 'STAFF'
+                ? t('admin:staffCanAddAndEditBooksChangePricesAdjustStockAnd')
+                : t('admin:workspaceAccessEndsOnTheNextRequestTheUserAccountAnd'),
+          )}
         </p>
         {selectedRole !== 'ADMIN' && isSelf && (
           <p>
-            This will remove your own admin access.
-            {selectedRole === 'STAFF'
-              ? ' You will retain books and orders access, but lose user management and archive/restore.'
-              : ' You will lose all workspace access.'}
+            {t('admin:thisWillRemoveYourOwnAdminAccessValue', {
+              value0:
+                selectedRole === 'STAFF' ? msg('admin:selfStaffAccess') : msg('admin:selfNoAccess'),
+            })}
           </p>
         )}
       </div>
       {error && (
         <Alert role="alert" variant="destructive" className="mb-4">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{localized(error)}</AlertDescription>
         </Alert>
       )}
       {unknown && (
@@ -324,12 +368,11 @@ function RoleDialog({
               void checkUsers()
             }}
           >
-            Refresh user list
+            {t('admin:refreshUserList')}
           </Button>
           {checked && (
             <p role="status" className="mb-4 text-sm">
-              The list was refreshed. This does not confirm whether the earlier change ran. Review
-              the account before confirming again.
+              {t('admin:theListWasRefreshedThisDoesNotConfirmWhetherTheEarlier')}
             </p>
           )}
         </>
@@ -339,7 +382,7 @@ function RoleDialog({
         disabled={selectedRole === role || loading || checking || (unknown && !checked)}
         onClick={() => void confirm()}
       >
-        {loading ? 'Saving…' : 'Confirm role change'}
+        {localized(loading ? t('admin:saving') : t('admin:confirmRoleChange'))}
       </Button>
     </AdminDialog>
   )

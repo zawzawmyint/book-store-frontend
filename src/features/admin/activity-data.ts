@@ -1,31 +1,32 @@
+import { message as msg, t, localize } from '../../lib/i18n'
 import { paymentLabels } from '../orders/payment-status'
 import { orderStatusLabels } from '../orders/order-status'
 import type { AdminActivityQueryVariables } from '../../generated/graphql'
 import { money } from '../../lib/format'
 
 export const activityActions = {
-  ORDER_PAYMENT_CHANGED: 'Payment status changed',
-  ORDER_STATUS_CHANGED: 'Order status changed',
-  BOOK_CREATED: 'Book created',
-  BOOK_UPDATED: 'Book updated',
-  BOOK_STOCK_ADJUSTED: 'Stock adjusted',
-  BOOK_ARCHIVED: 'Book archived',
-  BOOK_RESTORED: 'Book restored',
-  USER_ROLE_CHANGED: 'User role changed',
-  USER_PASSWORD_RESET: 'User password reset',
+  ORDER_PAYMENT_CHANGED: msg('admin:paymentStatusChanged'),
+  ORDER_STATUS_CHANGED: msg('admin:orderStatusChanged'),
+  BOOK_CREATED: msg('admin:bookCreated'),
+  BOOK_UPDATED: msg('admin:bookUpdated'),
+  BOOK_STOCK_ADJUSTED: msg('admin:stockAdjusted'),
+  BOOK_ARCHIVED: msg('admin:bookArchived'),
+  BOOK_RESTORED: msg('admin:bookRestored'),
+  USER_ROLE_CHANGED: msg('admin:userRoleChanged'),
+  USER_PASSWORD_RESET: msg('admin:userPasswordReset'),
 } as const
 export const activityFields = {
-  COVER: 'Cover',
-  ORDER_PAYMENT_STATUS: 'Payment status',
-  ORDER_STATUS: 'Order status',
-  TITLE: 'Title',
-  AUTHOR: 'Author',
-  GENRE: 'Genre',
-  DESCRIPTION: 'Description',
-  PRICE_CENTS: 'Price',
-  STOCK: 'Stock',
-  ARCHIVED: 'Archive state',
-  ROLE: 'Role',
+  COVER: msg('admin:cover'),
+  ORDER_PAYMENT_STATUS: msg('admin:paymentStatus'),
+  ORDER_STATUS: msg('admin:orderStatus'),
+  TITLE: msg('admin:title'),
+  AUTHOR: msg('admin:author'),
+  GENRE: msg('admin:genre'),
+  DESCRIPTION: msg('admin:description'),
+  PRICE_CENTS: msg('admin:price'),
+  STOCK: msg('admin:stock'),
+  ARCHIVED: msg('admin:archiveState'),
+  ROLE: msg('admin:role'),
 } as const
 export function validActorId(id: string) {
   return (
@@ -66,26 +67,26 @@ export function readActivityFilters(params: URLSearchParams) {
   let error = ''
   if (actorUserId) {
     if (!validActorId(actorUserId))
-      error = 'Enter a valid actor user ID without spaces (256 characters or fewer).'
+      error = msg('admin:enterAValidActorUserIdWithoutSpaces256CharactersOr')
     else variables.actorUserId = actorUserId
   }
   if (action) variables.action = action
   if (params.get('changedField') === 'PRICE_CENTS') variables.changedField = 'PRICE_CENTS'
   if (from) {
     const bound = localDateBound(from)
-    if (!bound) error = 'Enter a valid From date.'
+    if (!bound) error = msg('admin:enterAValidFromDate')
     else variables.from = bound
   }
   if (to) {
     const bound = localDateBound(to, true)
-    if (!bound) error = 'Enter a valid To date.'
+    if (!bound) error = msg('admin:enterAValidToDate')
     else variables.to = bound
   }
-  if (from && to && from > to) error = 'From date must be on or before To date.'
+  if (from && to && from > to) error = msg('admin:fromDateMustBeOnOrBeforeToDate')
   return { variables, error, actorUserId, from, to, action: action ?? '' }
 }
 export function activityValue(field: string, value: string | null | undefined) {
-  if (value == null) return 'Not previously set'
+  if (value == null) return t('admin:notPreviouslySet')
   if (
     field === 'PRICE_CENTS' &&
     /^(0|[1-9]\d*)$/.test(value) &&
@@ -93,14 +94,20 @@ export function activityValue(field: string, value: string | null | undefined) {
   )
     return money(Number(value))
   if (field === 'ORDER_STATUS' && Object.hasOwn(orderStatusLabels, value))
-    return orderStatusLabels[value as keyof typeof orderStatusLabels]
+    return localize(orderStatusLabels[value as keyof typeof orderStatusLabels])
   if (field === 'ORDER_PAYMENT_STATUS' && Object.hasOwn(paymentLabels, value))
-    return paymentLabels[value as keyof typeof paymentLabels]
+    return localize(paymentLabels[value as keyof typeof paymentLabels])
   if (field === 'ROLE' && ['ADMIN', 'STAFF', 'CUSTOMER'].includes(value))
-    return value[0] + value.slice(1).toLowerCase()
+    return t(
+      value === 'ADMIN'
+        ? 'common:adminRole'
+        : value === 'STAFF'
+          ? 'common:staffRole'
+          : 'common:customerRole',
+    )
   if (field === 'ARCHIVED' && ['true', 'false'].includes(value))
-    return value === 'true' ? 'Archived' : 'Active'
-  return value || '(empty)'
+    return value === 'true' ? t('admin:archived') : t('admin:active')
+  return value || t('admin:empty')
 }
 export function booksReturnTo(value: unknown) {
   if (typeof value !== 'string' || value.includes('\\') || hasControlCharacters(value))

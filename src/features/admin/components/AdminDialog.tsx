@@ -1,3 +1,4 @@
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { useState } from 'react'
 import { Button } from '../../../app/components/ui/button'
 import {
@@ -23,6 +24,8 @@ export function AdminDialog({
   returnFocusTo?: HTMLElement | null
   returnFocusFallback?: () => HTMLElement | null
 }) {
+  useI18n()
+
   const [opener] = useState<HTMLElement | null>(
     () =>
       returnFocusTo ??
@@ -52,12 +55,14 @@ export function AdminDialog({
         }}
       >
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle>
+            <bdi dir="auto">{localized(title)}</bdi>
+          </DialogTitle>
         </DialogHeader>
-        {children}
+        {localized(children)}
         <DialogFooter>
           <Button type="button" variant="ghost" disabled={busy} onClick={close}>
-            Cancel
+            {t('admin:cancel')}
           </Button>
         </DialogFooter>
       </DialogContent>

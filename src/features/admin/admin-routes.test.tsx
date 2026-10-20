@@ -154,7 +154,7 @@ it('offers a retry when role revalidation fails after a forbidden action', async
   const user = userEvent.setup()
   await screen.findByText('Resolved role: STAFF')
   await user.click(screen.getByRole('button', { name: 'Denied action' }))
-  expect(await screen.findByText(/Role service unavailable/)).toBeTruthy()
+  expect(await screen.findByText(/Unable to complete this request/)).toBeTruthy()
   expect(screen.queryByText('Resolved role: STAFF')).toBeNull()
   await user.click(screen.getByRole('button', { name: 'Retry access check' }))
   expect(await screen.findByText('Resolved role: STAFF')).toBeTruthy()

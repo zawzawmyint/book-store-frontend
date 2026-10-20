@@ -1,3 +1,4 @@
+import { localized, t, useI18n } from '../../../lib/i18n'
 import { useId, type ReactNode } from 'react'
 import { Search } from 'lucide-react'
 import { IconAction } from '../../../app/components/IconAction'
@@ -17,6 +18,8 @@ export function AdminFilterToolbar({
   searchPlaceholder: string
   children?: ReactNode
 }) {
+  useI18n()
+
   const searchId = useId()
   return (
     <form
@@ -29,7 +32,7 @@ export function AdminFilterToolbar({
       }}
     >
       <div className="admin-toolbar-search admin-toolbar-field">
-        <Label htmlFor={searchId}>{searchLabel}</Label>
+        <Label htmlFor={searchId}>{localized(searchLabel)}</Label>
         <div className="admin-toolbar-search-controls">
           <Input
             id={searchId}
@@ -37,10 +40,10 @@ export function AdminFilterToolbar({
             name="search"
             defaultValue={search}
             maxLength={100}
-            placeholder={searchPlaceholder}
+            placeholder={localized(searchPlaceholder)}
           />
           <IconAction
-            label="Search"
+            label={t('admin:search')}
             tooltip={searchLabel}
             workspace
             type="submit"
@@ -50,7 +53,7 @@ export function AdminFilterToolbar({
           </IconAction>
         </div>
       </div>
-      {children}
+      {localized(children)}
     </form>
   )
 }

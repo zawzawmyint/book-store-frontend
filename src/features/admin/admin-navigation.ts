@@ -1,3 +1,4 @@
+import { t } from '../../lib/i18n'
 import {
   BookOpenText,
   ClipboardList,
@@ -21,30 +22,87 @@ type WorkspaceSection = {
 const workspaceSections: readonly WorkspaceSection[] = [
   {
     to: '/admin',
-    headerLabel: 'Overview',
-    navigation: { group: 'Overview', title: 'Dashboard', icon: LayoutDashboard },
+    get headerLabel() {
+      return t('admin:overview')
+    },
+    navigation: {
+      get group() {
+        return t('admin:overview')
+      },
+      get title() {
+        return t('admin:dashboard')
+      },
+      icon: LayoutDashboard,
+    },
   },
   {
     to: '/admin/books',
-    headerLabel: 'Catalog',
-    navigation: { group: 'Catalog', title: 'Books', icon: BookOpenText },
+    get headerLabel() {
+      return t('admin:catalog')
+    },
+    navigation: {
+      get group() {
+        return t('admin:catalog')
+      },
+      get title() {
+        return t('admin:books')
+      },
+      icon: BookOpenText,
+    },
   },
   {
     to: '/admin/orders',
-    headerLabel: 'Orders',
-    navigation: { group: 'Sales', title: 'Order requests', icon: ClipboardList },
+    get headerLabel() {
+      return t('admin:orders')
+    },
+    navigation: {
+      get group() {
+        return t('admin:sales')
+      },
+      get title() {
+        return t('admin:orderRequests')
+      },
+      icon: ClipboardList,
+    },
   },
   {
     to: '/admin/users',
-    headerLabel: 'People',
-    navigation: { group: 'People', title: 'Users', icon: Users, adminOnly: true },
+    get headerLabel() {
+      return t('admin:people')
+    },
+    navigation: {
+      get group() {
+        return t('admin:people')
+      },
+      get title() {
+        return t('admin:users')
+      },
+      icon: Users,
+      adminOnly: true,
+    },
   },
   {
     to: '/admin/activity',
-    headerLabel: 'Store',
-    navigation: { group: 'Store', title: 'Activity', icon: History, adminOnly: true },
+    get headerLabel() {
+      return t('admin:store')
+    },
+    navigation: {
+      get group() {
+        return t('admin:store')
+      },
+      get title() {
+        return t('admin:activity')
+      },
+      icon: History,
+      adminOnly: true,
+    },
   },
-  { to: '/admin/profile', headerLabel: 'Profile' },
+  {
+    to: '/admin/profile',
+    get headerLabel() {
+      return t('admin:profile')
+    },
+  },
 ]
 
 export function getAdminNavigation(role: string | null | undefined) {
@@ -57,7 +115,7 @@ export function getAdminSectionLabel(pathname: string) {
   return (
     workspaceSections.find(({ to }) =>
       to === '/admin' ? pathname === to : pathname.startsWith(to),
-    )?.headerLabel ?? 'Catalog'
+    )?.headerLabel ?? t('admin:catalog')
   )
 }
 

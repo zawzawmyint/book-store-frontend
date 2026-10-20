@@ -1,3 +1,4 @@
+import { localized } from '../../../lib/i18n'
 import type { Key, ReactNode } from 'react'
 import {
   Table,
@@ -36,10 +37,10 @@ export function AdminPageTable<T>({
   return (
     <>
       {items.length === 0 ? (
-        <p className="admin-empty">{emptyMessage}</p>
+        <p className="admin-empty">{localized(emptyMessage)}</p>
       ) : (
         <div className="admin-table-panel">
-          <Table aria-label={label} className={tableClassName}>
+          <Table aria-label={localized(label)} className={tableClassName}>
             <TableHeader>
               <TableRow>
                 {columns.map(({ label, numeric }) => (
@@ -48,14 +49,14 @@ export function AdminPageTable<T>({
                     scope="col"
                     className={numeric ? 'admin-numeric' : undefined}
                   >
-                    {label}
+                    {localized(label)}
                   </TableHead>
                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.map((item) => (
-                <TableRow key={rowKey(item)}>{renderRow(item)}</TableRow>
+                <TableRow key={rowKey(item)}>{localized(renderRow(item))}</TableRow>
               ))}
             </TableBody>
           </Table>
@@ -65,7 +66,7 @@ export function AdminPageTable<T>({
         page={page}
         total={total}
         itemCount={items.length}
-        label={label}
+        label={localized(label)}
         change={onPageChange}
       />
     </>

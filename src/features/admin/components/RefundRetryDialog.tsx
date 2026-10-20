@@ -1,3 +1,4 @@
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { useState } from 'react'
 import { useMutation } from '@apollo/client/react'
 import { RetryOrderRefundDocument, type AdminOrderDetailFragment } from '../../../generated/graphql'
@@ -15,6 +16,8 @@ export function RefundRetryDialog({
   saved: (order: AdminOrderDetailFragment) => void
   refresh: () => Promise<unknown>
 }) {
+  useI18n()
+
   const [retry, { loading }] = useMutation(RetryOrderRefundDocument)
   const [error, setError] = useState('')
   const [uncertain, setUncertain] = useState(false)
@@ -23,19 +26,21 @@ export function RefundRetryDialog({
     if (loading || uncertain) return
     try {
       const result = await retry({ variables: { orderId: order.id } })
-      if (!result.data) throw new Error('Unconfirmed refund')
+      if (!result.data) throw new Error(msg('admin:unconfirmedRefund'))
       saved(result.data.retryOrderRefund)
       close()
     } catch (failure) {
       handleError(failure)
       setUncertain(true)
-      setError('Refund outcome is uncertain. Refresh the order before a deliberate retry.')
+      setError(msg('admin:refundOutcomeIsUncertainRefreshTheOrderBeforeADeliberateRetry'))
     }
   }
   return (
-    <AdminDialog title="Retry full refund" close={close} busy={loading}>
-      <p>Request a full refund for cancelled order #{order.id}. The server confirms its outcome.</p>
-      {error && <p role="alert">{error}</p>}
+    <AdminDialog title={t('admin:retryFullRefund')} close={close} busy={loading}>
+      <p>
+        {t('admin:requestAFullRefundForCancelledOrderValueTheServerConfirms', { value0: order.id })}
+      </p>
+      {error && <p role="alert">{localized(error)}</p>}
       {uncertain ? (
         <Button
           onClick={async () => {
@@ -43,11 +48,11 @@ export function RefundRetryDialog({
             close()
           }}
         >
-          Refresh order
+          {t('admin:refreshOrder')}
         </Button>
       ) : (
         <Button disabled={loading} onClick={() => void submit()}>
-          {loading ? 'Requesting refund…' : 'Confirm refund retry'}
+          {localized(loading ? t('admin:requestingRefund') : t('admin:confirmRefundRetry'))}
         </Button>
       )}
     </AdminDialog>

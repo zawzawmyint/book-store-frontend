@@ -1,3 +1,5 @@
+import { errorMessage } from '../../../lib/i18n/errors'
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { Input } from '../../../app/components/ui/input'
 import { safeTrackingUrl } from '../../orders/tracking-url'
 import { useState } from 'react'
@@ -34,6 +36,8 @@ export function OrderStatusDialog({
   draft: string
   setDraft: (value: string) => void
 }) {
+  useI18n()
+
   const [mutate, { loading }] = useMutation(SetOrderStatusDocument)
   const { handleError } = useAdminAccess()
   const [error, setError] = useState('')
@@ -47,7 +51,7 @@ export function OrderStatusDialog({
     try {
       const current = await refresh()
       if (!current) {
-        setError('Order request not found. Close this dialog and refresh.')
+        setError(msg('admin:orderRequestNotFoundCloseThisDialogAndRefresh'))
         return
       }
       refreshed(current)
@@ -74,7 +78,7 @@ export function OrderStatusDialog({
                 : null,
             ) !== JSON.stringify(Object.values(expected).some(Boolean) ? expected : null)
           ) {
-            setError('Shipment details changed. Close this dialog and inspect the saved shipment.')
+            setError(msg('admin:shipmentDetailsChangedCloseThisDialogAndInspectTheSavedShipment'))
             setConflicted(true)
             return
           }
@@ -89,7 +93,7 @@ export function OrderStatusDialog({
       setChecked(true)
     } catch (failure) {
       handleError(failure)
-      setError('Unable to refresh the request. Refresh before trying again.')
+      setError(msg('admin:unableToRefreshTheRequestRefreshBeforeTryingAgain'))
     } finally {
       setChecking(false)
     }
@@ -98,7 +102,7 @@ export function OrderStatusDialog({
     event.preventDefault()
     const reason = draft.trim()
     if (target === 'CANCELLED' && (reason.length < 1 || reason.length > 500)) {
-      setError('Enter a reason between 1 and 500 characters.')
+      setError(msg('admin:enterAReasonBetween1And500Characters'))
       return
     }
     if (
@@ -109,9 +113,7 @@ export function OrderStatusDialog({
         ),
       )
     ) {
-      setError(
-        'Enter a carrier (100 characters or fewer), an optional tracking number (120 or fewer), and a valid HTTPS URL only with a tracking number.',
-      )
+      setError(msg('admin:enterACarrier100CharactersOrFewerAnOptionalTrackingNumber'))
       return
     }
     const normalizedShipment = {
@@ -131,9 +133,7 @@ export function OrderStatusDialog({
             normalizedShipment.trackingUrl.length > 2048 ||
             !safeTrackingUrl(normalizedShipment.trackingUrl))))
     ) {
-      setError(
-        'Enter a carrier (100 characters or fewer), an optional tracking number (120 or fewer), and a valid HTTPS URL only with a tracking number.',
-      )
+      setError(msg('admin:enterACarrier100CharactersOrFewerAnOptionalTrackingNumber'))
       return
     }
     setError('')
@@ -149,7 +149,7 @@ export function OrderStatusDialog({
           },
         },
       })
-      if (!response.data) throw new Error('Unconfirmed response')
+      if (!response.data) throw new Error(msg('admin:unconfirmedResponse'))
       saved(response.data.setOrderStatus)
     } catch (failure) {
       handleError(failure)
@@ -164,46 +164,47 @@ export function OrderStatusDialog({
           setConflicted(true)
           setUncertain(true)
           setChecked(false)
-          setError(
-            'The request changed. Refresh its current status before confirming a fresh action.',
-          )
+          setError(msg('admin:theRequestChangedRefreshItsCurrentStatusBeforeConfirmingAFresh'))
           await check(true)
-        } else setError(failure.message)
+        } else setError(errorMessage(failure, 'common:requestFailed'))
       } else {
         setUncertain(true)
         setChecked(false)
-        setError(
-          'The outcome could not be confirmed. Refresh the request before a deliberate retry.',
-        )
+        setError(msg('admin:theOutcomeCouldNotBeConfirmedRefreshTheRequestBeforeA'))
         await check()
       }
     }
   }
   const label =
     target === 'PREPARING'
-      ? 'Confirm preparation'
+      ? msg('admin:confirmPreparation')
       : target === 'SHIPPED'
-        ? 'Confirm shipment'
+        ? msg('admin:confirmShipment')
         : target === 'DELIVERED'
-          ? 'Confirm delivery'
-          : 'Confirm cancellation'
+          ? msg('admin:confirmDelivery')
+          : msg('admin:confirmCancellation')
   return (
     <AdminDialog
-      title={`Change order request #${order.id}`}
+      title={t('admin:changeOrderRequestValue', { value0: order.id })}
       close={close}
       busy={loading || checking}
     >
       <p>
-        Current status: {orderStatusLabels[order.status]}. Requested result:{' '}
-        {orderStatusLabels[target]}.
+        {t('admin:currentStatusValueRequestedResultValueValue', {
+          value0: orderStatusLabels[order.status],
+          value1: ' ',
+          value2: orderStatusLabels[target],
+        })}
       </p>
       {(loading || checking) && (
-        <p role="status">{loading ? 'Updating request…' : 'Refreshing request…'}</p>
+        <p role="status">
+          {localized(loading ? t('admin:updatingRequest') : t('admin:refreshingRequest'))}
+        </p>
       )}
       <form onSubmit={submit} className="space-y-4">
         {target === 'CANCELLED' ? (
           <>
-            <Label htmlFor="cancel-reason">Reason shown to customer</Label>
+            <Label htmlFor="cancel-reason">{t('admin:reasonShownToCustomer')}</Label>
             <Textarea
               id="cancel-reason"
               value={draft}
@@ -211,30 +212,29 @@ export function OrderStatusDialog({
               onChange={(event) => setDraft(event.target.value)}
             />
             <p className="text-sm">
-              {order.payment.status === 'PAID'
-                ? 'A full refund including the delivery fee will be requested. Cancellation does not confirm the refund.'
-                : order.payment.required
-                  ? 'The payment session must close before the reservation is released. An uncertain result needs confirmation.'
-                  : 'The saved book quantities return to stock.'}
+              {localized(
+                order.payment.status === 'PAID'
+                  ? t('admin:aFullRefundIncludingTheDeliveryFeeWillBeRequestedCancellation')
+                  : order.payment.required
+                    ? t('admin:thePaymentSessionMustCloseBeforeTheReservationIsReleasedAn')
+                    : t('admin:theSavedBookQuantitiesReturnToStock'),
+              )}
             </p>
           </>
         ) : (
           <div className="space-y-4">
             {target === 'SHIPPED' ? (
               <>
-                <p>
-                  The books have left the store; cancellation will be unavailable. Shipment details
-                  are optional.
-                </p>
+                <p>{t('admin:theBooksHaveLeftTheStoreCancellationWillBeUnavailableShipment')}</p>
                 {(
                   [
-                    { key: 'carrier', label: 'Carrier (optional)', max: 100 },
-                    { key: 'trackingNumber', label: 'Tracking number (optional)', max: 120 },
-                    { key: 'trackingUrl', label: 'Tracking URL (optional)', max: 2048 },
+                    { key: 'carrier', label: t('admin:carrierOptional'), max: 100 },
+                    { key: 'trackingNumber', label: t('admin:trackingNumberOptional'), max: 120 },
+                    { key: 'trackingUrl', label: t('admin:trackingUrlOptional'), max: 2048 },
                   ] as const
                 ).map((field) => (
                   <div key={field.key}>
-                    <Label htmlFor={`shipment-${field.key}`}>{field.label}</Label>
+                    <Label htmlFor={`shipment-${field.key}`}>{localized(field.label)}</Label>
                     <Input
                       id={`shipment-${field.key}`}
                       maxLength={field.max}
@@ -249,25 +249,27 @@ export function OrderStatusDialog({
               </>
             ) : target === 'DELIVERED' ? (
               <p>
-                Confirm only after actual delivery confirmation. This marks the order Delivered.
+                {t('admin:confirmOnlyAfterActualDeliveryConfirmationThisMarksTheOrderDelivered')}
               </p>
             ) : (
-              <p>This begins preparation of the paid order.</p>
+              <p>{t('admin:thisBeginsPreparationOfThePaidOrder')}</p>
             )}
           </div>
         )}
         {error && (
           <Alert role="alert" variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{localized(error)}</AlertDescription>
           </Alert>
         )}
         {uncertain && (
           <>
             <Button type="button" variant="ghost" disabled={checking} onClick={() => void check()}>
-              Refresh request
+              {t('admin:refreshRequest')}
             </Button>
             {checked && (
-              <p role="status">Request refreshed. Review the action before a deliberate retry.</p>
+              <p role="status">
+                {t('admin:requestRefreshedReviewTheActionBeforeADeliberateRetry')}
+              </p>
             )}
           </>
         )}
@@ -275,7 +277,7 @@ export function OrderStatusDialog({
           disabled={loading || checking || (uncertain && (!checked || conflicted))}
           type="submit"
         >
-          {loading ? 'Saving…' : label}
+          {localized(loading ? t('admin:saving') : label)}
         </Button>
       </form>
     </AdminDialog>

@@ -1,7 +1,10 @@
+import { localized, message as msg, useI18n } from '../../lib/i18n'
 import { BookOpenText } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 export function BookLoadingIcon({ className }: { className?: string }) {
+  useI18n()
+
   return (
     <BookOpenText
       aria-hidden="true"
@@ -12,7 +15,7 @@ export function BookLoadingIcon({ className }: { className?: string }) {
 }
 
 export function BookLoader({
-  label = 'Loading…',
+  label = msg('common:loading'),
   compact = false,
   className,
 }: {
@@ -20,10 +23,12 @@ export function BookLoader({
   compact?: boolean
   className?: string
 }) {
+  useI18n()
+
   return (
     <div
       role="status"
-      aria-label={label}
+      aria-label={localized(label)}
       className={cn(
         compact ? 'flex items-center gap-2' : 'flex flex-col items-center gap-3 py-8 text-center',
         'text-sm text-muted-foreground',
@@ -31,7 +36,7 @@ export function BookLoader({
       )}
     >
       <BookLoadingIcon className={compact ? 'size-5' : undefined} />
-      <span>{label}</span>
+      <span>{localized(label)}</span>
     </div>
   )
 }

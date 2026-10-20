@@ -1,3 +1,4 @@
+import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { useState } from 'react'
 import { BookOpen, ShieldCheck, Store } from 'lucide-react'
 import { useForm } from 'react-hook-form'
@@ -16,24 +17,46 @@ const schema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, 'Enter your name.')
-    .max(120, 'Use 120 characters or fewer.')
+    .min(1, msg('storefront:enterYourName'))
+    .max(120, msg('storefront:use120CharactersOrFewer'))
     .optional(),
-  email: z.email('Enter a valid email address.').max(254, 'Use 254 characters or fewer.'),
+  email: z
+    .email(msg('storefront:enterAValidEmailAddress'))
+    .max(254, msg('storefront:use254CharactersOrFewer')),
   password: z
     .string()
-    .min(8, 'Use at least 8 characters.')
-    .max(128, 'Use 128 characters or fewer.'),
+    .min(8, msg('storefront:useAtLeast8Characters'))
+    .max(128, msg('storefront:use128CharactersOrFewer')),
 })
 type Fields = z.infer<typeof schema>
 
 const demoAccounts = [
-  { role: 'Customer', icon: BookOpen, description: 'Browse books' },
-  { role: 'Staff', icon: Store, description: 'Manage the store' },
-  { role: 'Admin', icon: ShieldCheck, description: 'Explore all tools' },
+  {
+    role: 'Customer',
+    icon: BookOpen,
+    get description() {
+      return t('storefront:browseBooks')
+    },
+  },
+  {
+    role: 'Staff',
+    icon: Store,
+    get description() {
+      return t('storefront:manageTheStore')
+    },
+  },
+  {
+    role: 'Admin',
+    icon: ShieldCheck,
+    get description() {
+      return t('storefront:exploreAllTools')
+    },
+  },
 ] as const
 
 export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
+  useI18n()
+
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const returnTo = safeReturnTo(params.get('returnTo'))
@@ -56,7 +79,7 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   async function submit(fields: Fields) {
     if (demoPending) return
     if (mode === 'sign-up' && !fields.name?.trim()) {
-      setError('name', { message: 'Enter your name.' })
+      setError('name', { message: msg('storefront:enterYourName') })
       return
     }
     setServerError('')
@@ -78,10 +101,10 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
         setNeedsVerification(unverified)
         setServerError(
           result.error.status === 429
-            ? 'Too many attempts. Wait before trying again.'
+            ? msg('storefront:tooManyAttemptsWaitBeforeTryingAgain')
             : unverified
-              ? 'Verify your email before signing in.'
-              : 'Unable to continue. Check your details and try again.',
+              ? msg('storefront:verifyYourEmailBeforeSigningIn')
+              : msg('storefront:unableToContinueCheckYourDetailsAndTryAgain'),
         )
         return
       }
@@ -89,7 +112,7 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
         replace: true,
       })
     } catch {
-      setServerError('Unable to connect. Check your connection and try again.')
+      setServerError(msg('storefront:unableToConnectCheckYourConnectionAndTryAgain'))
     }
   }
 
@@ -104,39 +127,39 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
         email: `demo-${role.toLowerCase()}@example.com`,
         password: 'BookstoreDemo123!',
       })
-      if (result.error) throw new Error('Demo sign-in failed')
+      if (result.error) throw new Error(msg('storefront:demoSignInFailed'))
       navigate(target, { replace: true })
     } catch {
       setDemoTarget(null)
-      setServerError(
-        'Unable to sign in to the demo account. Check the API connection and run bun run demo:seed in the backend, then retry.',
-      )
+      setServerError(msg('storefront:unableToSignInToTheDemoAccountCheckTheApi'))
     } finally {
       setDemoPending(false)
     }
   }
 
   if (sessionPending)
-    return (
-      <BookLoader label="Loading your account…" className="py-24" />
-    )
+    return <BookLoader label={t('storefront:loadingYourAccount')} className="py-24" />
   if (session?.user.emailVerified === true) return <Navigate to={demoTarget ?? returnTo} replace />
   const isSignUp = mode === 'sign-up'
   const otherPath = `${isSignUp ? '/sign-in' : '/sign-up'}?returnTo=${encodeURIComponent(returnTo)}`
   return (
     <PageContainer className="mx-auto max-w-xl py-16 sm:py-24">
-      <p className="eyebrow mb-3">Your account</p>
-      <h1 className="font-serif text-5xl">{isSignUp ? 'Create an account' : 'Sign in'}</h1>
+      <p className="eyebrow mb-3">{t('storefront:yourAccount')}</p>
+      <h1 className="font-serif text-5xl">
+        {localized(isSignUp ? t('storefront:createAnAccount') : t('storefront:signIn'))}
+      </h1>
       <p className="mt-4 text-sm leading-6 text-muted-foreground">
-        {isSignUp
-          ? 'Verify your email, then sign in to continue.'
-          : 'Sign in to continue to your account or checkout.'}
+        {localized(
+          isSignUp
+            ? t('storefront:verifyYourEmailThenSignInToContinue')
+            : t('storefront:signInToContinueToYourAccountOrCheckout'),
+        )}
       </p>
       {(needsVerification || session?.user.emailVerified === false) && (
         <p className="mt-4 text-sm">
-          Verify your email before continuing.{' '}
+          {t('storefront:verifyYourEmailBeforeContinuing')}
           <Link className="text-primary underline" to={authEmailPath('/check-email', returnTo)}>
-            Request a verification email
+            {t('storefront:requestAVerificationEmail')}
           </Link>
         </p>
       )}
@@ -144,60 +167,66 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
         {isSignUp && (
           <FormField
             id="auth-name"
-            label="Full name"
+            label={t('storefront:fullName')}
             autoComplete="name"
             required
             maxLength={120}
             {...register('name')}
-            error={errors.name?.message}
+            error={localized(errors.name?.message)}
           />
         )}
         <FormField
           id="auth-email"
-          label="Email address"
+          label={t('storefront:emailAddress')}
           type="email"
           autoComplete="email"
           required
           maxLength={254}
           {...register('email')}
-          error={errors.email?.message}
+          error={localized(errors.email?.message)}
         />
         <FormField
           id="auth-password"
-          label="Password"
+          label={t('storefront:password')}
           type="password"
           autoComplete={isSignUp ? 'new-password' : 'current-password'}
           required
           {...register('password')}
-          error={errors.password?.message}
+          error={localized(errors.password?.message)}
         />
         {serverError && (
           <Alert
             variant="destructive"
             className="border-destructive bg-destructive-muted text-destructive"
           >
-            <AlertDescription>{serverError}</AlertDescription>
+            <AlertDescription>{localized(serverError)}</AlertDescription>
           </Alert>
         )}
         <Button type="submit" disabled={isSubmitting || demoPending} className="w-full">
-          {isSubmitting ? 'Please wait…' : isSignUp ? 'Create account' : 'Sign in'}
+          {localized(
+            isSubmitting
+              ? t('storefront:pleaseWait')
+              : isSignUp
+                ? t('storefront:createAccount')
+                : t('storefront:signIn'),
+          )}
         </Button>
       </form>
       {!isSignUp && (
         <p className="mt-4 text-sm">
           <Link className="text-primary underline" to={authEmailPath('/forgot-password', returnTo)}>
-            Forgot password?
+            {t('storefront:forgotPassword')}
           </Link>
         </p>
       )}
       {!isSignUp && demoEnabled && (
         <section
-          aria-label="Demo accounts"
+          aria-label={t('storefront:demoAccounts')}
           className="mt-8 rounded-xl border border-border bg-card p-5 sm:p-6"
         >
-          <h2 className="text-sm font-semibold">Try a demo account</h2>
+          <h2 className="text-sm font-semibold">{t('storefront:tryADemoAccount')}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Choose a role to explore the local store.
+            {t('storefront:chooseARoleToExploreTheLocalStore')}
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             {demoAccounts.map(({ role, icon: Icon, description }) => (
@@ -205,8 +234,16 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
                 key={role}
                 type="button"
                 variant="outline"
-                aria-label={`Demo ${role}`}
-                className="min-h-20 justify-start gap-3 rounded-lg px-4 py-3 text-left whitespace-normal hover:border-primary/60 hover:bg-primary/5"
+                aria-label={t('storefront:demoValue', {
+                  value0: t(
+                    role === 'Admin'
+                      ? 'common:adminRole'
+                      : role === 'Staff'
+                        ? 'common:staffRole'
+                        : 'common:customerRole',
+                  ),
+                })}
+                className="min-h-20 justify-start gap-3 rounded-lg px-4 py-3 text-start whitespace-normal hover:border-primary/60 hover:bg-primary/5"
                 disabled={isSubmitting || demoPending}
                 onClick={() => void signInDemo(role)}
               >
@@ -214,9 +251,17 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
                   <Icon aria-hidden="true" className="size-4" />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-sm font-semibold">{role}</span>
+                  <span className="block text-sm font-semibold">
+                    {t(
+                      role === 'Admin'
+                        ? 'common:adminRole'
+                        : role === 'Staff'
+                          ? 'common:staffRole'
+                          : 'common:customerRole',
+                    )}
+                  </span>
                   <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                    {description}
+                    {localized(description)}
                   </span>
                 </span>
               </Button>
@@ -224,15 +269,17 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
           </div>
           {demoPending && (
             <p role="status" className="mt-3 text-sm">
-              Signing in to your demo account…
+              {t('storefront:signingInToYourDemoAccount')}
             </p>
           )}
         </section>
       )}
       <p className="mt-6 text-sm">
-        {isSignUp ? 'Already have an account?' : 'New to the bookstore?'}{' '}
+        {localized(
+          isSignUp ? t('storefront:alreadyHaveAnAccount') : t('storefront:newToTheBookstore'),
+        )}{' '}
         <Link className="font-semibold text-primary underline" to={otherPath}>
-          {isSignUp ? 'Sign in' : 'Create an account'}
+          {localized(isSignUp ? t('storefront:signIn') : t('storefront:createAnAccount'))}
         </Link>
       </p>
     </PageContainer>
