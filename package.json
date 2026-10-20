@@ -16,7 +16,8 @@
     "codegen": "graphql-codegen --config codegen.ts",
     "format": "prettier --write src index.html vite.config.ts codegen.ts README.md",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:localization": "playwright test --config playwright.localization.config.ts"
   },
   "dependencies": {
     "@apollo/client": "^4.3.1",

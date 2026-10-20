@@ -201,7 +201,7 @@
   "netCaptured": "صافي المبالغ المحصّلة",
   "recordedPayments": "المدفوعات المسجّلة",
   "valueValueValueValueValueTodayIsPartial": "{{value0}} – {{value1}} · {{value2}} · {{value3}} {{value4}}. بيانات اليوم غير مكتملة.",
-  "testPaymentsIncludeDeliveryFeesNetCapturedSubtractsSuccessfulRefundsIt": "تشمل المدفوعات التجريبية رسوم التوصيل. يُخصم من صافي المبالغ المحصّلة ما رُدّ بنجاح؛ وهو لا يمثل الربح.",
+  "testPaymentsIncludeDeliveryFeesNetCapturedSubtractsSuccessfulRefundsIt": "تشمل المدفوعات التجريبية رسوم التوصيل. صافي المبالغ المحصّلة هو إجمالي المبالغ المحصّلة بعد خصم المبالغ المردودة بنجاح؛ وهو لا يمثل الربح.",
   "viewDailyValues": "عرض القيم اليومية",
   "dailyRecordedPayments": "المدفوعات المسجّلة يوميًا",
   "date": "التاريخ",

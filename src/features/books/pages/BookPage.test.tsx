@@ -258,3 +258,10 @@ it('isolates related failures and skips related requests for missing books', () 
   expect(screen.getByRole('heading', { name: 'Book not found' })).toBeInTheDocument()
   expect(query.calls.at(-1)).toEqual(expect.objectContaining({ skip: true }))
 })
+
+it('separates the translated byline label from the isolated author link', () => {
+  mount()
+  expect(screen.getByRole('link', { name: book.author }).parentElement).toHaveTextContent(
+    'by Author & Friend',
+  )
+})

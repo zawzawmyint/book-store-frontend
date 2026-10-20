@@ -10,7 +10,7 @@ Implemented feature: [Book cover uploads](specs/book-cover-uploads/SPEC.md) adds
 
 Proposed feature: [Bag and checkout UI](specs/bag-checkout-ui/SPEC.md) documents delivered presentation changes with completed automated verification; actual 200% browser-zoom validation remains pending.
 
-Proposed feature: [Storefront and admin localization](specs/localization/SPEC.md) delivers bundled English, Arabic, Thai, and Simplified Chinese UI resources through i18next/react-i18next. It includes browser-local language selection, locale-aware USD/date/number presentation, and Arabic RTL across storefront and workspace routes. Acceptance remains open for actual 200% browser zoom, broad visual/native-language review, and the coordinated PostgreSQL browser suite.
+Implemented feature: [Storefront and admin localization](specs/localization/SPEC.md) delivers bundled English, Arabic, Thai, and Simplified Chinese UI resources through i18next/react-i18next. It includes browser-local language selection, locale-aware USD/date/number presentation, and Arabic RTL across storefront and workspace routes. The technical verification record is [here](specs/localization/VERIFICATION.md); human native-speaker sign-off is optional and was not performed.
 
 A React + TypeScript + Tailwind bookstore storefront using shadcn/ui primitives, Zustand, React Hook Form, and Zod. This folder is its own Git repository. The backend lives in the sibling `backend` repository and should be started first.
 
@@ -45,7 +45,9 @@ Language choice is stored per browser origin under `book-store-language`; it is 
 
 Resources live in `src/lib/i18n/locales/<language>/` as `common.json`, `storefront.json`, and `admin.json`. Add semantic keys to English first, then keep every language namespace/key and interpolation parameter set aligned. Use i18next `count` keys for quantities; Arabic requires its supported plural forms. Resolve copy at render time or keep transient `message()` descriptors for feedback that must update after a language switch. Do not translate persisted catalog/customer content, canonical enum values, identifiers, routes, query strings, payloads, or server prose.
 
-Use `src/lib/format.ts` for display-only money, numbers, dates, and datetimes. It formats USD with the selected locale, uses browser-local time and a Gregorian calendar, and retains the exact BigInt dashboard-money path. Arabic uses RTL document direction and logical layout; keep arbitrary content direction-aware and canonical email/ID/tracking values legible. The feature specification records product boundaries and remaining acceptance work.
+Use `src/lib/format.ts` for display-only money, numbers, dates, and datetimes. It formats USD with the selected locale, uses browser-local time and a Gregorian calendar, and retains the exact BigInt dashboard-money path. Arabic uses RTL document direction and logical layout; keep arbitrary content direction-aware and canonical email/ID/tracking values legible. See the [localization specification](specs/localization/SPEC.md) and [verification record](specs/localization/VERIFICATION.md) for feature boundaries and evidence.
+
+Run the isolated localization acceptance matrix with `bun run test:localization`. On this Windows machine, use PowerShell `$env:LOCALIZATION_BROWSER_CHANNEL='msedge'` before the command; other environments use its default Chromium channel. The suite uses disposable browser profiles and isolated test fixtures.
 
 ## Local demo login
 

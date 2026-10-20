@@ -1,6 +1,6 @@
 # The Quiet Shelf storefront specification
 
-> **Proposed localization:** [Storefront and admin localization](specs/localization/SPEC.md) delivers English, Arabic, Thai, and Simplified Chinese interface translation, locale-aware USD/date formatting, browser-local language selection, and Arabic RTL using i18next/react-i18next. The implementation is delivered, while final acceptance remains pending actual 200% zoom, broad visual/native-language review, and a coordinated PostgreSQL browser run. See the [implementation plan](docs/superpowers/plans/2026-10-19-localization.md).
+> **Implemented localization:** [Storefront and admin localization](specs/localization/SPEC.md) delivers English, Arabic, Thai, and Simplified Chinese interface translation, locale-aware USD/date formatting, browser-local language selection, and Arabic RTL using i18next/react-i18next. Technical acceptance includes the actual 200% native-browser zoom and coordinated PostgreSQL browser evidence; [the verification record](specs/localization/VERIFICATION.md) describes the exact coverage. Human native-speaker sign-off is optional and was not performed.
 
 > **Implemented book cover uploads:** [Book covers](specs/book-cover-uploads/SPEC.md) documents the staff cover editor, real-image presentation, guest lookup, and existing-cover fallback.
 
@@ -39,7 +39,7 @@
 
 ## Purpose and current scope
 
-### Delivered pending acceptance: storefront and workspace localization
+### Implemented: storefront and workspace localization
 
 The storefront and Staff/Admin workspace bundle `i18next` 26.5.2 and
 `react-i18next` 17.1.0 with `common`, `storefront`, and `admin` JSON namespaces
@@ -60,13 +60,14 @@ right, and preserves mixed-script content direction. Persisted catalog and custo
 content, backend emails, and hosted Stripe Checkout remain outside this frontend
 scope.
 
-Automated evidence includes 314 frontend tests in 58 files, clean lint, a production
-build (with the existing Vite chunk-size warning), and all 79 SQLite Chromium
-journeys passing in 7.9 minutes. The sibling backend's PostgreSQL browser command
-currently times out during its pre-browser compiled SQLite readiness smoke, so it has
-not supplied PostgreSQL parity evidence.
-Actual 200% browser zoom, comprehensive visual review, and native semantic review are
-also outstanding; therefore the linked feature specification remains Proposed.
+Automated evidence includes 315 frontend tests in 58 files, clean lint, a production
+build (with the existing Vite chunk-size warning), all 79 SQLite Chromium journeys,
+and all 79 disposable PostgreSQL browser journeys. The localization-specific matrix
+audited 648 route visits across four languages, desktop, 375px mobile, actual native
+200% browser zoom, and both themes, with no page overflow, raw translation keys, or
+unnamed interactive roles. The [localization verification record](specs/localization/VERIFICATION.md)
+lists the commands, artifact locations, and review limitations. Human native-speaker
+sign-off is optional and was not performed.
 
 ### Implemented: collapsible workspace sidebar
 

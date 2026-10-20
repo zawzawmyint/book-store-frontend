@@ -108,7 +108,7 @@ function PurchaseSummary({ book }: { book: Book }) {
         <bdi dir="auto">{localized(book.title)}</bdi>
       </h1>
       <p className="mt-4 break-words font-serif text-xl italic text-muted-foreground">
-        {t('storefront:by')}
+        {t('storefront:by')}{' '}
         <Link
           to={`/books?${new URLSearchParams({ search: book.author })}`}
           className="underline underline-offset-4 hover:text-primary"

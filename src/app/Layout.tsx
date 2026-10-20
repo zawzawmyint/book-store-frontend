@@ -81,12 +81,13 @@ export function Layout() {
             <span className="hidden size-9 place-items-center rounded-full bg-[#2d5744] text-[#f7ebd2] sm:grid">
               <BookOpenText size={20} strokeWidth={1.6} />
             </span>
-            <span
+            <bdi
+              dir="ltr"
               data-brand=""
               className="max-w-[88px] font-serif text-base font-semibold leading-tight tracking-tight sm:max-w-none sm:text-2xl"
             >
               the quiet shelf<span className="text-copper">.</span>
-            </span>
+            </bdi>
           </Link>
           <nav
             className="ms-auto flex items-center gap-0 text-sm sm:gap-2"
@@ -176,7 +177,9 @@ export function Layout() {
         <PageContainer className="grid gap-10 py-14 sm:grid-cols-[1fr_auto]">
           <div>
             <p className="font-serif text-2xl">
-              the quiet shelf<span className="text-copper">.</span>
+              <bdi dir="ltr" data-brand="">
+                the quiet shelf<span className="text-copper">.</span>
+              </bdi>
             </p>
             <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">
               {t('common:browseEnduringBooksAndBuildACollectionWorthKeeping')}
