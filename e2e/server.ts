@@ -16,6 +16,7 @@ import { seedDemoAccounts } from '../../backend/src/database/demo-seed.js'
 import { createPaymentRepository } from '../../backend/src/modules/payments/payment.repository.js'
 import { createPaymentService } from '../../backend/src/modules/payments/payment.service.js'
 import { randomUUID } from 'node:crypto'
+import { loadNotificationConfig } from '../../backend/src/modules/notifications/notification.config.js'
 
 // Only the isolated browser fixture accepts this override, never product configuration.
 const deliveryFeeCents = Number(process.env.E2E_DELIVERY_FEE_CENTS ?? '500')
@@ -103,10 +104,24 @@ for (let index = 1; index <= 3; index += 1) {
   await createSeedAccountStore(db).markVerified(fixture.user.id)
 }
 const provider = new BrowserPaymentProvider()
-const paymentService = createPaymentService(createPaymentRepository(db, Date.now), {
-  ...options,
-  provider,
-})
+const app = await createApp(
+  db,
+  {
+    ...options,
+    notificationConfig: loadNotificationConfig({
+      IN_APP_NOTIFICATIONS_ENABLED: 'true',
+      NOTIFICATION_LIVE_ENABLED: 'false',
+    }),
+  },
+  { ...options, provider },
+)
+const paymentService = createPaymentService(
+  createPaymentRepository(app.locals.notificationStore, Date.now),
+  {
+    ...options,
+    provider,
+  },
+)
 const fixtureAddress = {
   recipientName: 'Test Reader',
   phone: '+1 202 555 0123',
@@ -139,7 +154,6 @@ const snapshotBook = (await store.book(12))!
 await store.updateBook(12, { title: 'Saved request title', priceCents: 1234 })
 await fixtureOrder('12')
 await store.updateBook(12, { title: snapshotBook.title, priceCents: snapshotBook.priceCents })
-const app = await createApp(db, options, { ...options, provider })
 app.get('/__test/mail', (req, res) => {
   const message = inbox.findLast((mail) => mail.to === req.query.email)
   if (!message) {
@@ -163,6 +177,11 @@ app.post('/__test__/revoke-admin', async (_req, res) => {
 // Appearance checks must not inherit the preceding self-demotion journey's role.
 app.post('/__test__/restore-admin', async (_req, res) => {
   await membership.setAdminAccess(adminId, true, operatorActor)
+  res.json({ ok: true })
+})
+// Independent inbox recipients must not inherit an earlier role-revocation journey.
+app.post('/__test__/restore-notification-peer', async (_req, res) => {
+  await membership.setAdminAccess(revocableId, true, operatorActor)
   res.json({ ok: true })
 })
 const server = app.listen(4100, '127.0.0.1')

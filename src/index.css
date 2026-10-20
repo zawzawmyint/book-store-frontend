@@ -116,6 +116,22 @@
   }
 }
 
+/* Keep notification targets usable in both shells, including portaled inboxes.
+   The workspace's unlayered button rules otherwise override utility minimums. */
+.notification-action[data-slot='button'],
+.admin-workspace .notification-action[data-slot='button'] {
+  min-height: 44px;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  white-space: normal;
+}
+.notification-inbox > button:not([data-slot='button']) {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  min-width: 44px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .book-loading-icon {
     animation: none;
@@ -777,7 +793,19 @@ select option {
   --font-body: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif;
   --font-display: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif;
 }
-:root:is(:lang(ar), :lang(th), :lang(zh)) :is(.eyebrow, .uppercase, [class*='tracking-']:not([data-brand]), label, button, h1, h2, h3, nav, th) {
+:root:is(:lang(ar), :lang(th), :lang(zh))
+  :is(
+    .eyebrow,
+    .uppercase,
+    [class*='tracking-']:not([data-brand]),
+    label,
+    button,
+    h1,
+    h2,
+    h3,
+    nav,
+    th
+  ) {
   letter-spacing: normal;
   text-transform: none;
 }
@@ -790,11 +818,25 @@ select option {
 [dir='rtl'] .book-rail-fade {
   background: linear-gradient(to left, transparent, var(--background));
 }
-[dir='rtl'] :is(.lucide-arrow-left, .lucide-arrow-right, .lucide-chevron-left, .lucide-chevron-right, .lucide-panel-left) {
+[dir='rtl']
+  :is(
+    .lucide-arrow-left,
+    .lucide-arrow-right,
+    .lucide-chevron-left,
+    .lucide-chevron-right,
+    .lucide-panel-left
+  ) {
   transform: scaleX(-1);
 }
 /* Canonical inputs retain their existing decimal/identifier syntax inside RTL. */
-:is(input[type='email'], input[type='url'], input[type='number'], input[type='tel'], input[inputmode='decimal'], input[inputmode='numeric']) {
+:is(
+  input[type='email'],
+  input[type='url'],
+  input[type='number'],
+  input[type='tel'],
+  input[inputmode='decimal'],
+  input[inputmode='numeric']
+) {
   direction: ltr;
   text-align: start;
 }

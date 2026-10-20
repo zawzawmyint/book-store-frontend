@@ -1,4 +1,5 @@
 import { t, useI18n } from '../lib/i18n'
+import { NotificationsPage } from '../features/notifications/NotificationsPage'
 import { CheckoutReturnPage } from '../features/checkout/pages/CheckoutReturnPage'
 import { OrderPage as CustomerOrderPage } from '../features/account/pages/OrderPage'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
@@ -66,6 +67,7 @@ export default function App() {
                     <Route path="/account/orders" element={<OrdersPage />} />
                     <Route path="/account/orders/:id" element={<CustomerOrderPage />} />
                     <Route path="/account/profile" element={<ProfilePage />} />
+                    <Route path="/account/notifications" element={<NotificationsPage />} />
                   </Route>
                   <Route
                     path="*"
@@ -100,6 +102,7 @@ export default function App() {
                       <Route path="customers/:id" element={<LegacyUsersRedirect />} />
                     </Route>
                     <Route path="profile" element={<AdminProfilePage />} />
+                    <Route path="notifications" element={<NotificationsPage />} />
                   </Route>
                 </Route>
               </Routes>

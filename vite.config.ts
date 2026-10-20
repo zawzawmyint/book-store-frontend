@@ -16,6 +16,7 @@ export default defineConfig({
       '/graphql': apiTarget,
       '/api/auth': apiTarget,
       '/api/books': apiTarget,
+      '/api/notifications': { target: apiTarget, timeout: 0, proxyTimeout: 0 },
       '/media': apiTarget,
       '/health': apiTarget,
     },

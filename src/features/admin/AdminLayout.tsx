@@ -1,4 +1,6 @@
 import { localized, t, useI18n } from '../../lib/i18n'
+import { NotificationProvider } from '../notifications/NotificationProvider'
+import { NotificationBell } from '../notifications/NotificationBell'
 import { BookOpenText, ArrowUpRight, X } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Button } from '../../app/components/ui/button'
@@ -139,6 +141,14 @@ function AdminSidebarToggle() {
 }
 
 export function AdminLayout() {
+  return (
+    <NotificationProvider scope="WORKSPACE">
+      <WorkspaceLayout />
+    </NotificationProvider>
+  )
+}
+
+function WorkspaceLayout() {
   useI18n()
 
   const { role } = useAdminAccess()
@@ -170,6 +180,7 @@ export function AdminLayout() {
             <div className="flex shrink-0 items-center gap-2">
               <LanguageSwitcher />
               <WorkspaceSearch key={`${role}:${key}`} />
+              <NotificationBell />
               <ThemeSwitch />
               <AdminAccountMenu />
             </div>

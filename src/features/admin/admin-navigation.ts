@@ -103,6 +103,12 @@ const workspaceSections: readonly WorkspaceSection[] = [
       return t('admin:profile')
     },
   },
+  {
+    to: '/admin/notifications',
+    get headerLabel() {
+      return t('common:notificationTitle')
+    },
+  },
 ]
 
 export function getAdminNavigation(role: string | null | undefined) {
