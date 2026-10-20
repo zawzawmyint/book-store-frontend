@@ -1,0 +1,12 @@
+# Shadcn component adoption verification
+
+Recorded 2026-10-20 on `feat/shadcn-storefront-admin`.
+
+- `bun run test -- --maxWorkers=2` passed **349 tests in 71 files** in **101.68 seconds**. Focused component coverage includes local table-column visibility/server-page behavior, archive/restore pending-error-focus behavior, breadcrumb navigation, pagination, Command selection and async guards, and shared field behavior.
+- `bun run lint` passed. The production build passed with the existing Vite chunk-size warning. Compared with the pre-adoption baseline, the final main bundle is **1438.72 kB / 407.36 kB gzip** versus **1364.42 kB / 386.69 kB gzip**: **+74.30 kB raw / +20.67 kB gzip** (about **5.35%** gzip). CSS is **86.64 kB / 17.11 kB gzip** versus **85.20 kB / 16.87 kB gzip**; the Dashboard chunk is **385.42 kB / 112.83 kB gzip** versus **385.32 kB / 112.72 kB gzip**.
+- The default browser suite passed **91 tests**, with **one intentional native-zoom skip**, across **92 cases** in **10.3 minutes**. The new component matrix passed 16 width/language/theme conditions over 48 route visits; the search/header matrix passed 32 visits.
+- The native browser matrix passed **4/4** in **7.0 minutes**: English, Arabic, Thai, and Simplified Chinese at actual CDP zoom 2, both Light and Dark themes, DPR 2, and `visualViewport.scale === 1`. It covered public, authentication, account, checkout, and admin routes; Field/book/delivery forms and dirty validation; both Command drawers, including no-selection, bounds, and focus; the Columns menu and Breadcrumb; archive-dialog cancellation/focus; quick-notification Item/Empty states; stock dialogs; and Account-language keyboard interaction and logout persistence.
+- Representative screenshots were saved outside the repository at `C:\Users\ZACK\ZZM\tuts\.delivery-work\shadcn-adoption` and visually inspected, including the Arabic mobile admin form and toolbar, English 200% archive/notification views, and Arabic 200% Columns view.
+- Independent review found no actionable issue. A six-pixel toolbar-alignment regression found during browser validation was corrected; the focused desktop/mobile toolbar check and the final full suite passed afterward.
+
+The adoption adds only `@tanstack/react-table` **8.21.3** and `cmdk` **1.1.1**. It introduces no GraphQL operation, backend/schema, permission, configuration, migration, or production-rollout change. The existing in-app-notification production gates remain separately tracked in [its verification record](../in-app-notifications/VERIFICATION.md).

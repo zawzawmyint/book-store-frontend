@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { toggleAppearance } from './preferences'
 
 test.beforeEach(async ({ page, request }, info) => {
   await page.setExtraHTTPHeaders({ 'X-Real-IP': `203.0.113.${(info.line % 200) + 1}` })
@@ -163,7 +164,7 @@ test('search fits mobile and themes, avoids editable/other-modal shortcuts and n
     .toBeLessThanOrEqual(390)
   await page.screenshot({ path: 'test-results/workspace-search-mobile-dark.png', fullPage: true })
   await page.getByRole('combobox', { name: 'Search books and orders' }).press('Escape')
-  await page.getByRole('switch', { name: 'Dark mode' }).click()
+  await toggleAppearance(page)
   await page.getByRole('button', { name: 'Search workspace', exact: true }).click()
   await page.getByRole('combobox', { name: 'Search books and orders' }).fill('Dracula')
   await expect(page.getByRole('option', { name: /Dracula/ })).toBeVisible()

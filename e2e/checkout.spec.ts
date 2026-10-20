@@ -1,3 +1,4 @@
+import { expectSignedOutAccount } from './preferences'
 import { signInRespectingRateLimit, verifyAndSignIn } from './auth-email-helpers'
 import { reviewDelivery, checkoutInput } from './delivery'
 import { hostedPayment } from './hosted-payment'
@@ -36,7 +37,7 @@ test('cart survives sign-in redirect; account checkout appears in order history'
   expect(await title.evaluate((el) => getComputedStyle(el).fontFamily)).toContain('Lora')
   await page.getByRole('button', { name: 'Account', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Sign out' }).click()
-  await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible()
+  await expectSignedOutAccount(page)
   await page.goto('/account/orders')
   await expect(page).toHaveURL(/\/sign-in\?returnTo=/)
   await page.getByLabel('Email address').fill('ada@example.com')

@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../app/components/u
 import { Skeleton } from '../../app/components/ui/skeleton'
 import { BookLoader } from '../../app/components/BookLoader'
 import { AdminAccountMenu } from './components/AdminAccountMenu'
-import { ThemeSwitch } from '../../app/components/ThemeSwitch'
 
 function AdminAccessScreen({ children }: { children: ReactNode }) {
   useI18n()
@@ -23,7 +22,6 @@ function AdminAccessScreen({ children }: { children: ReactNode }) {
           {t('admin:theQuietShelfAdmin')}
         </span>
         <div className="flex shrink-0 items-center gap-2">
-          <ThemeSwitch />
           <AdminAccountMenu />
         </div>
       </header>

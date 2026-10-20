@@ -1,17 +1,19 @@
 import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { BookOpenText, ClipboardList, Search } from 'lucide-react'
 import { Button } from '../../../app/components/ui/button'
-import { Input } from '../../../app/components/ui/input'
-import { BookLoader } from '../../../app/components/BookLoader'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '../../../app/components/ui/dialog'
+  CommandInput,
+  CommandList,
+  CommandGroup,
+  CommandItem,
+  COMMAND_NO_SELECTION,
+} from '../../../app/components/ui/command'
+import { Empty, EmptyHeader, EmptyDescription } from '../../../app/components/ui/empty'
+import { BookLoader } from '../../../app/components/BookLoader'
+import { Dialog } from '../../../app/components/ui/dialog'
+import { SearchFinder } from '../../../app/components/SearchFinder'
 import {
   WorkspaceSearchBooksDocument,
   WorkspaceSearchOrdersDocument,
@@ -96,7 +98,6 @@ function WorkspaceSearchDialog({
   const [value, setValue] = useState('')
   const [active, setActive] = useState<string>()
   const term = value.trim()
-  const prefix = useId()
   const input = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
   const books = useWorkspaceSearch({ query: WorkspaceSearchBooksDocument, term, onDenied: close })
@@ -142,8 +143,17 @@ function WorkspaceSearchDialog({
         if (!opened) close()
       }}
     >
-      <DialogContent
-        className="admin-workspace admin-dialog max-w-xl p-4 sm:p-6"
+      <SearchFinder
+        workspace
+        title={t('admin:searchWorkspace')}
+        commandProps={{
+          label: t('admin:searchBooksAndOrders'),
+          value: selected?.key ?? COMMAND_NO_SELECTION,
+          onValueChange: setActive,
+          shouldFilter: false,
+          loop: true,
+          vimBindings: false,
+        }}
         onOpenAutoFocus={(event) => {
           event.preventDefault()
           input.current?.focus()
@@ -152,52 +162,30 @@ function WorkspaceSearchDialog({
           event.preventDefault()
           returnFocusTo()
         }}
+        input={
+          <>
+            <CommandInput
+              ref={input}
+              aria-label={t('admin:searchBooksAndOrders')}
+              maxLength={100}
+              placeholder={t('admin:bookTitleAuthorOrderNumberCustomerNameOrEmail')}
+              value={value}
+              onValueChange={(nextValue) => {
+                setValue(nextValue)
+                setActive(undefined)
+              }}
+              onKeyDown={(event) => {
+                if (event.nativeEvent.isComposing || event.keyCode === 229) return
+                if (event.key === 'Enter' && selected) {
+                  event.preventDefault()
+                  choose(selected)
+                }
+              }}
+            />
+          </>
+        }
+        footer={<p>{t('admin:toSelectEnterToOpenEscToClose')}</p>}
       >
-        <DialogHeader>
-          <DialogTitle>{t('admin:searchWorkspace')}</DialogTitle>
-          <DialogDescription>
-            {t('admin:findBooksAndOrdersWithoutLeavingYourWork')}
-          </DialogDescription>
-        </DialogHeader>
-        <label htmlFor={`${prefix}-input`} className="sr-only">
-          {t('admin:searchBooksAndOrders')}
-        </label>
-        <Input
-          ref={input}
-          id={`${prefix}-input`}
-          role="combobox"
-          aria-autocomplete="list"
-          aria-expanded="true"
-          aria-controls={`${prefix}-results`}
-          aria-activedescendant={selected ? `${prefix}-${selected.key}` : undefined}
-          maxLength={100}
-          placeholder={t('admin:bookTitleAuthorOrderNumberCustomerNameOrEmail')}
-          value={value}
-          onChange={(event) => {
-            setValue(event.target.value)
-            setActive(undefined)
-          }}
-          onKeyDown={(event) => {
-            if (event.nativeEvent.isComposing) return
-            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-              event.preventDefault()
-              if (!results.length) return
-              const current = results.findIndex((row) => row.key === active)
-              const next =
-                event.key === 'ArrowDown'
-                  ? (current + 1) % results.length
-                  : current < 0
-                    ? results.length - 1
-                    : (current - 1 + results.length) % results.length
-              const row = results[next]
-              setActive(row.key)
-              document.getElementById(`${prefix}-${row.key}`)?.scrollIntoView({ block: 'nearest' })
-            } else if (event.key === 'Enter' && selected) {
-              event.preventDefault()
-              choose(selected)
-            }
-          }}
-        />
         <p role="status" aria-live="polite" className="sr-only">
           {localized(
             !eligible
@@ -220,17 +208,13 @@ function WorkspaceSearchDialog({
                     }),
           )}
         </p>
-        <div className="max-h-[55vh] overflow-y-auto">
+        <div className="search-finder-groups">
           {!eligible && (
             <p className="py-6 text-sm text-muted-foreground">
               {t('admin:enterAtLeastTwoCharactersOrAnOrderNumber')}
             </p>
           )}
-          <div
-            role="listbox"
-            aria-label={t('admin:workspaceSearchResults')}
-            id={`${prefix}-results`}
-          >
+          <CommandList label={t('admin:workspaceSearchResults')}>
             {(['books', 'orders'] as const).map((type) => {
               const state = type === 'books' ? books : orders
               const total =
@@ -238,19 +222,17 @@ function WorkspaceSearchDialog({
               const Icon = type === 'books' ? BookOpenText : ClipboardList
               return (
                 state.eligible && (
-                  <div
-                    role="group"
-                    aria-labelledby={`${prefix}-${type}-heading`}
+                  <CommandGroup
+                    value={type}
                     key={type}
                     className="py-3"
+                    heading={
+                      <span className="mb-2 flex items-center gap-2 text-sm font-semibold capitalize">
+                        <Icon size={16} aria-hidden="true" />
+                        {t(type === 'books' ? 'admin:books' : 'admin:orders')}
+                      </span>
+                    }
                   >
-                    <h3
-                      id={`${prefix}-${type}-heading`}
-                      className="mb-2 flex items-center gap-2 text-sm font-semibold capitalize"
-                    >
-                      <Icon size={16} aria-hidden="true" />
-                      {t(type === 'books' ? 'admin:books' : 'admin:orders')}
-                    </h3>
                     {state.loading && (
                       <BookLoader
                         compact
@@ -269,22 +251,23 @@ function WorkspaceSearchDialog({
                       </p>
                     )}
                     {!state.loading && !state.error && total === 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        {t(type === 'books' ? 'admin:noMatchingBooks' : 'admin:noMatchingOrders')}
-                      </p>
+                      <Empty className="items-start gap-2 p-2 text-start">
+                        <EmptyHeader className="items-start">
+                          <EmptyDescription>
+                            {t(
+                              type === 'books' ? 'admin:noMatchingBooks' : 'admin:noMatchingOrders',
+                            )}
+                          </EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
                     )}
                     {results
                       .filter((row) => row.type === type)
                       .map((row) => (
-                        <button
+                        <CommandItem
                           key={row.key}
-                          id={`${prefix}-${row.key}`}
-                          role="option"
-                          aria-selected={active === row.key}
-                          tabIndex={-1}
-                          type="button"
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => choose(row)}
+                          value={row.key}
+                          onSelect={() => choose(row)}
                           className={`block w-full rounded-md px-3 py-2 text-start hover:bg-muted ${active === row.key ? 'bg-muted ring-1 ring-ring' : ''}`}
                         >
                           <span className="block break-words text-sm font-medium">
@@ -293,13 +276,13 @@ function WorkspaceSearchDialog({
                           <span className="block break-words text-xs text-muted-foreground">
                             {localized(row.detail)}
                           </span>
-                        </button>
+                        </CommandItem>
                       ))}
-                  </div>
+                  </CommandGroup>
                 )
               )
             })}
-          </div>
+          </CommandList>
           {books.error && (
             <Button variant="outline" onClick={books.retry}>
               {t('admin:retryBooksSearch')}
@@ -323,10 +306,7 @@ function WorkspaceSearchDialog({
             )}
           </div>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          {t('admin:toSelectEnterToOpenEscToClose')}
-        </p>
-      </DialogContent>
+      </SearchFinder>
     </Dialog>
   )
 }

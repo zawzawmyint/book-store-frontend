@@ -16,7 +16,7 @@ import {
 } from '../../../generated/graphql'
 import { FormField } from '../../../app/components/FormField'
 import { Button } from '../../../app/components/ui/button'
-import { Label } from '../../../app/components/ui/label'
+import { Field, FieldLabel, FieldError } from '../../../app/components/ui/field'
 import { Textarea } from '../../../app/components/ui/textarea'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { Badge } from '../../../app/components/ui/badge'
@@ -257,8 +257,8 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
               {...register(field)}
             />
           ))}
-          <div className="sm:col-span-2">
-            <Label htmlFor="description">{t('admin:description')}</Label>
+          <Field className="sm:col-span-2" data-invalid={!!errors.description}>
+            <FieldLabel htmlFor="description">{t('admin:description')}</FieldLabel>
             <Textarea
               id="description"
               aria-invalid={!!errors.description}
@@ -268,13 +268,14 @@ function BookEditor({ book }: { book?: AdminBookFieldsFragment }) {
               className="mt-2"
             />
             {errors.description && (
-              <p id="description-error" className="mt-1 text-sm text-destructive">
+              <FieldError id="description-error" className="mt-1">
                 {localized(errors.description.message)}
-              </p>
+              </FieldError>
             )}
-          </div>
+          </Field>
           <FormField
             id="price"
+            suffix="USD"
             label={t('admin:priceUsd')}
             inputMode="decimal"
             error={localized(errors.price?.message)}

@@ -38,6 +38,10 @@ Give Staff and Admin one search entry point across Books and Orders, helping the
 - Group headings and result text expose type, identity and state without relying on icons or color. Announce loading/result counts through a polite live region without reading every keystroke.
 - View-all links and retry controls remain reachable by Tab. Respect reduced motion, both themes and the existing visible focus treatment. The dialog and results must fit a 390px viewport without horizontal scrolling.
 
+### 2026-10-20 search presentation follow-up
+
+The existing search contract above remains unchanged. The dialog is now presented as a top drawer immediately below the measured workspace header, matching that header's horizontal bounds so it does not cover the desktop sidebar. It follows sidebar expansion/collapse, RTL placement, and viewport resizing; on mobile it is full-width. Its backdrop begins at the viewport top and dims the sidebar with the content. The centered content column is no wider than 48rem and its height is limited to 70dvh or the remaining viewport. Its language switcher is explicitly omitted; all other dialog defaults remain intact. The grouped Books/Orders result behavior, 250ms qualification/debounce, keyboard combobox, per-group retry/error states, shortcut guards, destinations, and permission isolation remain the canonical contract. See [search finder and header preferences](../search-and-header/SPEC.md) for the shared presentation and verification evidence.
+
 ## API, permissions and asynchronous state
 
 - `WorkspaceSearchBooks` selects `adminBooks` total and `id/title/author/stock`; `WorkspaceSearchOrders` selects `adminOrders` total and `id/customerName/email/status/createdAt`. They use an explicit search, five-item limit, and zero offset.

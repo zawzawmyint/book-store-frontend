@@ -1,4 +1,6 @@
 {
+  "breadcrumb": "เส้นทางนำทาง",
+  "columns": "คอลัมน์",
   "paymentStatusChanged": "เปลี่ยนสถานะการชำระเงินแล้ว",
   "orderStatusChanged": "เปลี่ยนสถานะคำสั่งซื้อแล้ว",
   "bookCreated": "สร้างหนังสือแล้ว",

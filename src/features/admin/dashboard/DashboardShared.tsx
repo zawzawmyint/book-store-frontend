@@ -7,6 +7,13 @@ import { BookLoadingIcon } from '../../../app/components/BookLoader'
 import type { DashboardOrderFieldsFragment } from '../../../generated/graphql'
 import { Card, CardContent, CardHeader } from '../../../app/components/ui/card'
 import {
+  Item,
+  ItemContent,
+  ItemTitle,
+  ItemDescription,
+  ItemActions,
+} from '../../../app/components/ui/item'
+import {
   Table,
   TableBody,
   TableCell,
@@ -212,24 +219,32 @@ export function OrderPreview({
       ) : (
         <ul className="divide-y divide-border">
           {orders.map((order) => (
-            <li key={order.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-              <div>
-                <p className="font-medium">
-                  #<bdi dir="ltr">{localized(order.id)}</bdi> ·{' '}
-                  <bdi dir="auto">{localized(order.customerName)}</bdi>
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {localized(money(order.totalCents))}
-                </p>
-              </div>
-              <Link
-                className="text-sm underline"
-                to={`/admin/orders/${order.id}`}
-                state={{ returnTo }}
-              >
-                {t('admin:viewOrderValue', { value0: order.id })}
-              </Link>
-            </li>
+            <Item
+              asChild
+              key={order.id}
+              className="flex-wrap justify-between gap-3 rounded-none px-0 py-3"
+            >
+              <li>
+                <ItemContent>
+                  <ItemTitle className="text-base">
+                    #<bdi dir="ltr">{localized(order.id)}</bdi> ·{' '}
+                    <bdi dir="auto">{localized(order.customerName)}</bdi>
+                  </ItemTitle>
+                  <ItemDescription className="text-xs">
+                    {localized(money(order.totalCents))}
+                  </ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <Link
+                    className="text-sm underline"
+                    to={`/admin/orders/${order.id}`}
+                    state={{ returnTo }}
+                  >
+                    {t('admin:viewOrderValue', { value0: order.id })}
+                  </Link>
+                </ItemActions>
+              </li>
+            </Item>
           ))}
         </ul>
       )}

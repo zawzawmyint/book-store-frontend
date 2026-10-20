@@ -1,4 +1,6 @@
 {
+  "breadcrumb": "Breadcrumb",
+  "columns": "Columns",
   "paymentStatusChanged": "Payment status changed",
   "orderStatusChanged": "Order status changed",
   "bookCreated": "Book created",

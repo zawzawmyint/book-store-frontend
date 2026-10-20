@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { setAppearance } from './preferences'
 import { capturedEmailLink, signInRespectingRateLimit, verifyAndSignIn } from './auth-email-helpers'
 
 const oldPassword = 'bookstore-email-test-123'
@@ -91,12 +92,8 @@ test('resend survives reload, respects cooldown, and unknown recovery stays neut
 }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   async function checkMobileThemes(title: string, labels: string[] = []) {
-    const toggle = page.getByRole('switch', { name: 'Dark mode', exact: true })
     for (const dark of [true, false]) {
-      await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
-      if ((await toggle.getAttribute('aria-checked')) !== String(dark)) await toggle.click()
-      await expect(toggle).toHaveAttribute('aria-checked', String(dark))
-      await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
+      await setAppearance(page, dark ? 'dark' : 'light')
       await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible()
       for (const label of labels)
         await expect(page.getByLabel(label, { exact: true })).toBeVisible()

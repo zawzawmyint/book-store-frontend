@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../app/components/ui/select'
-import { AdminPageTable } from '../components/AdminPageTable'
+import { AdminDataTable, type AdminDataColumn } from '../components/AdminPageTable'
 import { AdminPageHeader } from '../components/AdminPageHeader'
 import { AdminFilterToolbar } from '../components/AdminFilterToolbar'
 import { Link } from 'react-router-dom'
@@ -20,7 +20,6 @@ import { useQuery } from '@apollo/client/react'
 import { AdminOrdersDocument } from '../../../generated/graphql'
 import { IconAction } from '../../../app/components/IconAction'
 import { Eye } from 'lucide-react'
-import { TableCell } from '../../../app/components/ui/table'
 import { useAdminQueryError } from '../admin-access'
 import { useAdminPagination, useAdminPageCorrection } from '../use-admin-pagination'
 import { AdminFeedback } from '../components/AdminFeedback'
@@ -46,6 +45,65 @@ export function OrdersPage() {
   useAdminQueryError(error)
   const orders = data?.adminOrders
   useAdminPageCorrection({ total: orders?.total, loading })
+  const columns: AdminDataColumn<NonNullable<typeof data>['adminOrders']['items'][number]>[] = [
+    {
+      id: 'request',
+      label: t('common:labelRequest'),
+      enableHiding: false,
+      cell: (order) => (
+        <>
+          #<bdi dir="ltr">{localized(order.id)}</bdi>
+        </>
+      ),
+    },
+    {
+      id: 'date',
+      label: t('common:labelDate'),
+      cell: (order) => <>{localized(formatDateTime(serverDate(order.createdAt)))}</>,
+    },
+    {
+      id: 'status',
+      label: t('common:labelStatus'),
+      cell: (order) => (
+        <>
+          <OrderStatusBadge status={order.status} paymentStatus={order.payment.status} />
+          <PaymentStatus payment={order.payment} />
+        </>
+      ),
+    },
+    {
+      id: 'customer',
+      label: t('common:labelCustomer'),
+      cell: (order) => (
+        <>
+          <bdi dir="auto">{localized(order.customerName)}</bdi>
+          <p className="mt-1 text-xs text-muted-foreground">
+            <bdi dir="ltr">{localized(order.email)}</bdi>
+          </p>
+        </>
+      ),
+    },
+    {
+      id: 'total',
+      label: t('common:labelTotal'),
+      numeric: true,
+      cell: (order) => <>{localized(money(order.totalCents))}</>,
+    },
+    {
+      id: 'details',
+      label: t('common:labelDetails'),
+      enableHiding: false,
+      cell: (order) => (
+        <>
+          <IconAction asChild label={t('admin:viewRequestValue', { value0: order.id })} workspace>
+            <Link to={order.id} state={{ returnTo: `/admin/orders?${params}` }}>
+              <Eye aria-hidden="true" />
+            </Link>
+          </IconAction>
+        </>
+      ),
+    },
+  ]
   return (
     <section>
       <AdminPageHeader
@@ -79,56 +137,19 @@ export function OrdersPage() {
         </div>
       </AdminFilterToolbar>
       <AdminFeedback loading={loading} error={localized(error)} retry={refetch} />
-      {!loading && !error && orders && (
-        <AdminPageTable
-          columns={[
-            { label: t('common:labelRequest') },
-            { label: t('common:labelDate') },
-            { label: t('common:labelStatus') },
-            { label: t('common:labelCustomer') },
-            { label: t('common:labelTotal'), numeric: true },
-            { label: t('common:labelDetails') },
-          ]}
-          items={orders.items}
+      <div hidden={loading || !!error || !orders}>
+        <AdminDataTable
+          columns={columns}
+          items={orders?.items ?? []}
           rowKey={(order) => order.id}
           label={t('admin:orderRequests2')}
           emptyMessage={t('admin:noOrderRequestsOnThisPage')}
           page={page}
-          total={orders.total}
+          total={orders?.total ?? 0}
           onPageChange={changePage}
           tableClassName="min-w-[640px]"
-          renderRow={(order) => (
-            <>
-              <TableCell>
-                #<bdi dir="ltr">{localized(order.id)}</bdi>
-              </TableCell>
-              <TableCell>{localized(formatDateTime(serverDate(order.createdAt)))}</TableCell>
-              <TableCell>
-                <OrderStatusBadge status={order.status} paymentStatus={order.payment.status} />
-                <PaymentStatus payment={order.payment} />
-              </TableCell>
-              <TableCell>
-                <bdi dir="auto">{localized(order.customerName)}</bdi>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  <bdi dir="ltr">{localized(order.email)}</bdi>
-                </p>
-              </TableCell>
-              <TableCell className="admin-numeric">{localized(money(order.totalCents))}</TableCell>
-              <TableCell>
-                <IconAction
-                  asChild
-                  label={t('admin:viewRequestValue', { value0: order.id })}
-                  workspace
-                >
-                  <Link to={order.id} state={{ returnTo: `/admin/orders?${params}` }}>
-                    <Eye aria-hidden="true" />
-                  </Link>
-                </IconAction>
-              </TableCell>
-            </>
-          )}
         />
-      )}
+      </div>
     </section>
   )
 }

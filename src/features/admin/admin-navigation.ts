@@ -128,3 +128,25 @@ export function getAdminSectionLabel(pathname: string) {
 export function isAdminNavigationActive(pathname: string, to: string) {
   return pathname === to || (to !== '/admin' && pathname.startsWith(to + '/'))
 }
+
+export function getAdminBreadcrumbs(pathname: string): Array<{ label: string; to?: string }> {
+  const section = workspaceSections.find(({ to }) => pathname === to)
+  if (section) return [{ label: section.navigation?.title ?? section.headerLabel }]
+  if (pathname === '/admin/books/new')
+    return [{ label: t('admin:books'), to: '/admin/books' }, { label: t('admin:addBook') }]
+  const book = /^\/admin\/books\/[1-9]\d*\/(edit|history)$/.exec(pathname)
+  if (book)
+    return [
+      { label: t('admin:books'), to: '/admin/books' },
+      { label: t(book[1] === 'edit' ? 'admin:editBook' : 'admin:bookHistory') },
+    ]
+  const order = /^\/admin\/orders\/([1-9]\d*)$/.exec(pathname)
+  if (order)
+    return [
+      { label: t('admin:orders'), to: '/admin/orders' },
+      { label: t('storefront:orderValue', { value0: order[1] }) },
+    ]
+  if (/^\/admin\/users\/[^/]+$/.test(pathname))
+    return [{ label: t('admin:users'), to: '/admin/users' }, { label: t('admin:details') }]
+  return []
+}

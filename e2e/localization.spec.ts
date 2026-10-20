@@ -1,24 +1,14 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
+import { selectLanguage } from './preferences'
 import arCommon from '../src/lib/i18n/locales/ar/common.json' with { type: 'json' }
 import arAdmin from '../src/lib/i18n/locales/ar/admin.json' with { type: 'json' }
 import zhStorefront from '../src/lib/i18n/locales/zh-Hans/storefront.json' with { type: 'json' }
 import { fillDelivery } from './delivery'
 import { hostedPayment } from './hosted-payment'
 
-async function selectLanguage(page: Page, name: string) {
-  const dialog = page.getByRole('dialog')
-  await (
-    (await dialog.count())
-      ? dialog.locator('[data-language-switcher]')
-      : page.locator('[data-language-switcher]')
-  ).click()
-  await page.getByRole('option', { name, exact: true }).click()
-}
-
 test('four languages persist across reload and keep catalog query context', async ({ page }) => {
   await page.goto('/books?search=the&sort=price-asc')
-  expect((await page.locator('[data-language-switcher]').boundingBox())!.width).toBe(44)
-  await expect(page.locator('[data-language-switcher] > svg')).toBeVisible()
+  await expect(page.locator('header [data-language-switcher]')).toHaveCount(0)
   for (const [name, id, dir] of [
     ['العربية', 'ar', 'rtl'],
     ['ไทย', 'th', 'ltr'],
@@ -30,7 +20,7 @@ test('four languages persist across reload and keep catalog query context', asyn
     await expect(page.locator('html')).toHaveAttribute('dir', dir)
     await expect(page).toHaveURL('/books?search=the&sort=price-asc')
     await page.reload()
-    await expect(page.locator('[data-language-switcher]')).toHaveText(name)
+    await expect(page.locator('html')).toHaveAttribute('lang', id)
     expect(await page.evaluate(() => localStorage.getItem('book-store-language'))).toBe(id)
     await page.setViewportSize({ width: 375, height: 812 })
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -60,7 +50,7 @@ test('Arabic admin sidebar, search portal and mobile dialog retain permission an
   await page.goto('/sign-in')
   await page.getByRole('button', { name: 'Demo Admin', exact: true }).click()
   await expect(page).toHaveURL('/admin')
-  expect((await page.locator('[data-language-switcher]').boundingBox())!.width).toBe(44)
+  await expect(page.locator('header [data-language-switcher]')).toHaveCount(0)
   await selectLanguage(page, 'العربية')
   const sidebar = page.locator('[data-slot="sidebar"][data-side]')
   await expect(sidebar).toHaveAttribute('data-side', 'right')
@@ -74,13 +64,12 @@ test('Arabic admin sidebar, search portal and mobile dialog retain permission an
   expect(closeBox.x).toBeLessThan(dialogBox.x + dialogBox.width / 2)
   const searchInput = search.locator('input[role="combobox"]')
   await searchInput.fill('Gatsby')
-  const originalDialog = await search.elementHandle()
-  await selectLanguage(page, '简体中文')
-  await expect(searchInput).toHaveValue('Gatsby')
-  expect(await originalDialog!.evaluate((element) => element.isConnected)).toBe(true)
-  await selectLanguage(page, 'العربية')
+  await expect(search.locator('[data-language-switcher]')).toHaveCount(0)
   await page.keyboard.press('Escape')
   await expect(search).toHaveCount(0)
+  await selectLanguage(page, '简体中文')
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-Hans')
+  await selectLanguage(page, 'العربية')
   await page.setViewportSize({ width: 375, height: 812 })
   const menu = page.getByRole('button', { name: arAdmin.adminMenu, exact: true })
   await menu.click()

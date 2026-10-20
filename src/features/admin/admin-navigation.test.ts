@@ -1,9 +1,35 @@
 import { expect, it } from 'vitest'
 import {
   getAdminNavigation,
+  getAdminBreadcrumbs,
   getAdminSectionLabel,
   isAdminNavigationActive,
 } from './admin-navigation'
+
+it('builds existing parent links and non-interactive current pages for known details', () => {
+  expect(getAdminBreadcrumbs('/admin/books/2/edit')).toEqual([
+    { label: 'Books', to: '/admin/books' },
+    { label: 'Edit book' },
+  ])
+  expect(getAdminBreadcrumbs('/admin/books/2/history')).toEqual([
+    { label: 'Books', to: '/admin/books' },
+    { label: 'Book history' },
+  ])
+  expect(getAdminBreadcrumbs('/admin/orders/8')).toEqual([
+    { label: 'Orders', to: '/admin/orders' },
+    { label: 'Order #8' },
+  ])
+  expect(getAdminBreadcrumbs('/admin/books/new')).toEqual([
+    { label: 'Books', to: '/admin/books' },
+    { label: 'Add book' },
+  ])
+})
+
+it('does not infer breadcrumbs from unknown suffixes or prefix collisions', () => {
+  expect(getAdminBreadcrumbs('/admin/orders-other')).toEqual([])
+  expect(getAdminBreadcrumbs('/admin/books/2/unknown')).toEqual([])
+  expect(getAdminBreadcrumbs('/admin/profile')).toEqual([{ label: 'Profile' }])
+})
 
 it('keeps the Orders header distinct from its Sales sidebar group on detail routes', () => {
   expect(getAdminSectionLabel('/admin/orders/2')).toBe('Orders')

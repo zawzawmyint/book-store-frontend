@@ -1,4 +1,6 @@
 {
+  "paginationPage": "الصفحة {{value0}}",
+  "paginationMorePages": "صفحات أخرى",
   "notificationTitle": "الإشعارات",
   "notificationCount": "الإشعارات، {{value0}} غير مقروء",
   "notificationCountUnknown": "الإشعارات، عدد غير المقروء غير متاح",
@@ -152,5 +154,11 @@
   "priceInputHint": "استخدم الأرقام 0–9 ونقطة للفاصلة العشرية، مثل 12.34.",
   "wholeNumberHint": "استخدم أعدادًا صحيحة بالأرقام 0–9.",
   "notification_STOCK_LOW": "مخزون {{title}} منخفض — المتبقي {{stock}}",
-  "notification_STOCK_OUT": "نفد مخزون {{title}}"
+  "notification_STOCK_OUT": "نفد مخزون {{title}}",
+  "appearance": "المظهر",
+  "appearanceLight": "فاتح",
+  "appearanceDark": "داكن",
+  "searchFinderHint": "ابحث بالعنوان أو المؤلف أو النوع.",
+  "searchNoMatches": "لا توجد كتب مطابقة. جرّب بحثًا آخر.",
+  "searchAllBooks": "البحث في جميع الكتب"
 }

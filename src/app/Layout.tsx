@@ -1,7 +1,7 @@
 import { localized, t, useI18n } from '../lib/i18n'
 import { NotificationProvider } from '../features/notifications/NotificationProvider'
 import { NotificationBell } from '../features/notifications/NotificationBell'
-import { BookOpenText, LogIn, ShoppingBag, UserRound } from 'lucide-react'
+import { BookOpenText, ShoppingBag, UserRound } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useLayoutEffect, useRef } from 'react'
 import { useApolloClient } from '@apollo/client/react'
@@ -13,10 +13,9 @@ import { PageContainer } from './components/PageContainer'
 import { useAdminAccess } from '../features/admin/admin-access'
 import { IconAction } from './components/IconAction'
 import { Badge } from './components/ui/badge'
-import { ThemeSwitch } from './components/ThemeSwitch'
 import { StorefrontSearch } from './components/StorefrontSearch'
 import { StorefrontMenu } from './components/StorefrontMenu'
-import { LanguageSwitcher } from './components/LanguageSwitcher'
+import { AccountPreferences } from './components/AccountPreferences'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,7 +32,7 @@ export function Layout() {
 }
 
 function StorefrontLayout() {
-  useI18n()
+  const { direction } = useI18n()
 
   const { pathname } = useLocation()
   const stickyHeader = pathname.replace(/\/+$/, '') !== '/books'
@@ -109,18 +108,17 @@ function StorefrontLayout() {
             >
               {t('common:allBooks')}
             </NavLink>
-            <LanguageSwitcher />
             <StorefrontSearch />
             <NotificationBell />
-            {!isPending &&
-              (session?.user.emailVerified === true ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <IconAction label={t('common:account')}>
-                      <UserRound aria-hidden="true" />
-                    </IconAction>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+            <DropdownMenu dir={direction}>
+              <DropdownMenuTrigger asChild>
+                <IconAction label={t('common:account')}>
+                  <UserRound aria-hidden="true" />
+                </IconAction>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="account-menu">
+                {!isPending && session?.user.emailVerified === true ? (
+                  <>
                     <div className="px-3 py-2 text-sm font-medium">
                       <bdi dir="auto">{localized(session.user.name)}</bdi>
                     </div>
@@ -146,15 +144,15 @@ function StorefrontLayout() {
                     >
                       {t('common:signOut')}
                     </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <IconAction asChild label={t('common:signIn')}>
-                  <Link to="/sign-in">
-                    <LogIn aria-hidden="true" />
-                  </Link>
-                </IconAction>
-              ))}
+                  </>
+                ) : !isPending ? (
+                  <DropdownMenuItem asChild>
+                    <Link to="/sign-in">{t('common:signIn')}</Link>
+                  </DropdownMenuItem>
+                ) : null}
+                <AccountPreferences />
+              </DropdownMenuContent>
+            </DropdownMenu>
             <IconAction
               asChild
               label={t('common:bagCount', { value0: t('common:itemCount', { count }) })}
@@ -171,9 +169,6 @@ function StorefrontLayout() {
                 </Badge>
               </Link>
             </IconAction>
-            <span className="hidden sm:inline-flex">
-              <ThemeSwitch />
-            </span>
             <StorefrontMenu />
           </nav>
         </PageContainer>

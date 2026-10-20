@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { openAccount, setAppearance, toggleAppearance } from './preferences'
 
 test.beforeEach(async ({ page }) => {
   await page.setExtraHTTPHeaders({ 'X-Real-IP': '192.0.2.247' })
@@ -30,27 +31,26 @@ test('storefront loads local fonts and exposes icon controls to keyboard users o
       .getByRole('link', { name: 'All books', exact: true }),
   ).toBeVisible()
   await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
-  for (const name of ['Sign in']) {
-    const action = page.getByRole('link', { name, exact: true })
+  for (const name of ['Account']) {
+    const action = page.getByRole('button', { name, exact: true })
     await expect(action).toBeVisible()
     const size = await action.boundingBox()
     expect(size!.width).toBeGreaterThanOrEqual(44)
     expect(size!.height).toBeGreaterThanOrEqual(44)
     await expect(action).toHaveText('')
   }
-  await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
-  const theme = page.getByRole('switch', { name: 'Dark mode', exact: true })
-  await theme.focus()
-  await expect(page.getByRole('tooltip')).toContainText('Switch to Light mode')
-  await page.keyboard.press('Space')
-  await expect(theme).toHaveAttribute('aria-checked', 'false')
-  await page.keyboard.press('Tab')
-  await theme.focus()
-  await expect(page.getByRole('tooltip')).toContainText('Switch to Dark mode')
-  await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
+  await openAccount(page)
+  const appearance = page.getByRole('menuitem', { name: /Appearance/ })
+  await appearance.focus()
+  await appearance.press('Enter')
+  const light = page.getByRole('menuitemradio', { name: 'Light', exact: true })
+  await light.focus()
+  await light.press('Space')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: testInfo.outputPath('storefront-light.png') })
-  await page.getByRole('link', { name: 'Sign in', exact: true }).click()
+  await openAccount(page)
+  await page.getByRole('menuitem', { name: 'Sign in', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible()
 })
 
@@ -89,7 +89,7 @@ test('admin icon actions retain navigation, search, and copy feedback', async ({
       return size ? Math.min(size.width, size.height) : 0
     })
     .toBeGreaterThanOrEqual(44)
-  await page.getByRole('switch', { name: 'Dark mode', exact: true }).click()
+  await toggleAppearance(page)
   await row.getByRole('button', { name: 'Adjust stock', exact: true }).click()
   expect(
     await page.getByRole('dialog').evaluate((el) => getComputedStyle(el).fontFamily),
@@ -134,11 +134,10 @@ test('blocked font requests keep text readable and controls usable', async ({ pa
       () => [...document.fonts].filter((font) => font.status === 'loaded').length,
     ),
   ).toBe(0)
-  await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
-  await page.getByRole('switch', { name: 'Dark mode', exact: true }).click()
-  await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
+  await setAppearance(page, 'light')
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-  await page.getByRole('link', { name: 'Sign in', exact: true }).click()
+  await openAccount(page)
+  await page.getByRole('menuitem', { name: 'Sign in', exact: true }).click()
   await expect(page.getByLabel('Email address')).toBeVisible()
 })

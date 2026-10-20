@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { useApolloClient } from '@apollo/client/react'
 import { authClient } from '../../../lib/auth-client'
 import { IconAction } from '../../../app/components/IconAction'
+import { AccountPreferences } from '../../../app/components/AccountPreferences'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +14,7 @@ import {
 } from '../../../app/components/ui/dropdown-menu'
 
 export function AdminAccountMenu() {
-  useI18n()
+  const { direction } = useI18n()
 
   const { data: session } = authClient.useSession()
   const client = useApolloClient()
@@ -36,13 +37,13 @@ export function AdminAccountMenu() {
   if (!session?.user) return null
   return (
     <div className="relative">
-      <DropdownMenu>
+      <DropdownMenu dir={direction}>
         <DropdownMenuTrigger asChild>
           <IconAction label={t('admin:account')} workspace>
             <UserRound size={16} aria-hidden="true" />
           </IconAction>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="admin-workspace min-w-52">
+        <DropdownMenuContent align="end" className="admin-workspace account-menu">
           <div className="border-b border-border px-3 py-2">
             <p className="text-sm font-medium">
               <bdi dir="auto">{localized(session?.user.name)}</bdi>
@@ -61,6 +62,7 @@ export function AdminAccountMenu() {
           >
             <LogOut size={14} className="me-2" aria-hidden="true" /> {t('admin:signOut')}
           </DropdownMenuItem>
+          <AccountPreferences />
         </DropdownMenuContent>
       </DropdownMenu>
       {error && (

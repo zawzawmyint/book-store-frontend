@@ -55,7 +55,7 @@ The frontend replaces application-owned copy and fixed display formatting with o
 ## 🧩 Delivered behavior and architecture
 
 - `src/lib/i18n/index.ts` owns the initialized i18next instance, preference validation/storage, `lang`/`dir` document updates, supported language metadata, and deferred feedback descriptors. It loads `common`, `storefront`, and `admin` resources from `src/lib/i18n/locales/<language>/`.
-- `LanguageSwitcher` is a translated, icon-only 44px combobox in storefront and workspace headers and shared dialog/sheet content. Its options retain native self-identifying labels.
+- Language is available as an inline, expandable Account-menu radio group in storefront and workspace headers. It remains available to storefront guests and uses the native self-identifying names. Shared dialogs and sheets retain `LanguageSwitcher` by default; focused search drawers and compact notification overlays explicitly omit the duplicated selector and inherit the application language.
 - `src/lib/format.ts` renders display-only money, number, date, and date-time values with the active locale while preserving the dashboard BigInt exact-money path.
 - Translation keys and parameters are resolved at render time for live validation, feedback, navigation, activity, and status content. Structured error codes select localized, operation-specific messages; raw server prose is not surfaced.
 - Arabic uses logical layout, direction-aware portal primitives, selective directional-icon handling, language-appropriate system-font fallbacks, and `bdi`/`dir` isolation for mixed-script values. Header/footer wordmarks remain LTR-isolated, and the book-page byline separates its translated prefix from the bidi-isolated author link.
@@ -67,7 +67,7 @@ The frontend replaces application-owned copy and fixed display formatting with o
 
 **Functional**
 
-- [x] Both shells offer all four languages; selection persists across reload and logout, and blocked/invalid storage safely falls back to English or current-page memory.
+- [x] Both shells offer all four languages through Account menus; selection persists across reload and logout, and blocked/invalid storage safely falls back to English or current-page memory.
 - [x] Scoped routes provide application-owned visible and accessible text, validation, feedback, status, activity, and chart copy from complete resources.
 - [x] Switching preserves active form, dialog, focus, route/query, session, bag, and checkout state without duplicate mutations.
 - [x] Arabic sets RTL, provides direction-aware shells and portaled controls, and restores LTR after switching back.

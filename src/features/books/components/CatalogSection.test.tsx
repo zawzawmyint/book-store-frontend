@@ -143,6 +143,21 @@ it('preserves unrelated bookmark parameters during automatic page correction', a
   expect(screen.getByLabelText('Current hash').textContent).toBe('#legacy')
 })
 
+it('selects a bounded numbered page through the URL while preserving catalog filters', async () => {
+  const { user, variables } = mount('/?genre=Fiction&sort=price-asc&page=5', 240)
+  await screen.findByText('Page 6 of 20')
+  const current = screen.getByRole('button', { current: 'page' })
+  expect(current.textContent).toBe('6')
+  await user.click(screen.getByRole('button', { name: 'Page 7' }))
+  await screen.findByText('Page 7 of 20')
+  expect(screen.getByLabelText('Current URL').textContent).toBe(
+    '?genre=Fiction&sort=price-asc&page=6',
+  )
+  expect(variables).toHaveBeenCalledWith(
+    expect.objectContaining({ genre: 'Fiction', sort: 'PRICE_ASC', limit: 12, offset: 72 }),
+  )
+})
+
 it('preserves legacy hashes when normalizing default and invalid URL parameters', async () => {
   mount('/?search=&sort=default&inStock=invalid&page=bad&extra=yes#legacy')
   await waitFor(() => expect(screen.getByLabelText('Current URL').textContent).toBe('?extra=yes'))

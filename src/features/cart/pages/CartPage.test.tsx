@@ -26,6 +26,20 @@ beforeEach(() => {
 })
 afterEach(cleanup)
 
+it('shows the browse action only for a settled empty bag', () => {
+  useCartStore.setState({ items: [], status: 'loading' })
+  render(
+    <MemoryRouter>
+      <CartPage />
+    </MemoryRouter>,
+  )
+  expect(screen.queryByText('Nothing here yet.')).toBeNull()
+  act(() => useCartStore.setState({ status: 'ready' }))
+  expect(screen.getByText('Nothing here yet.')).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Browse books' })).toHaveAttribute('href', '/books')
+  expect(screen.queryByRole('link', { name: 'Continue to checkout' })).toBeNull()
+})
+
 it('distinguishes unit and line prices and updates amounts with quantity', async () => {
   const update = vi.spyOn(useCartStore.getState(), 'update').mockImplementation((id, quantity) => {
     useCartStore.setState({ items: [{ ...item, id, quantity }] })

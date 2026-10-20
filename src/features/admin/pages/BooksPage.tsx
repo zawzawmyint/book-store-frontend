@@ -1,5 +1,5 @@
 import { localized, t, useI18n } from '../../../lib/i18n'
-import { AdminPageTable } from '../components/AdminPageTable'
+import { AdminDataTable, type AdminDataColumn } from '../components/AdminPageTable'
 import { AdminFilterToolbar } from '../components/AdminFilterToolbar'
 import { AdminPageHeader } from '../components/AdminPageHeader'
 import { useState } from 'react'
@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../app/components/ui/select'
-import { TableCell } from '../../../app/components/ui/table'
 import { Badge } from '../../../app/components/ui/badge'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { useAdminAccess, useAdminQueryError } from '../admin-access'
@@ -69,6 +68,92 @@ export function BooksPage() {
     setAction(undefined)
     void refetch().catch(() => {})
   }
+  const columns: AdminDataColumn<AdminBookFieldsFragment>[] = [
+    {
+      id: 'book',
+      label: t('common:labelBook'),
+      enableHiding: false,
+      cell: (book) => (
+        <>
+          <div className="flex items-center gap-3">
+            <BookCover
+              cover={book.cover}
+              decorative
+              id={book.id}
+              title={localized(book.title)}
+              author={book.author}
+              compact
+            />
+            <div>
+              <strong className="font-medium">
+                <bdi dir="auto">{localized(book.title)}</bdi>
+              </strong>
+              <p className="mt-1 text-muted-foreground">
+                <bdi dir="auto">{localized(book.author)}</bdi>
+              </p>
+            </div>
+          </div>
+        </>
+      ),
+    },
+    {
+      id: 'genre',
+      label: t('common:labelGenre'),
+      cell: (book) => (
+        <>
+          <bdi dir="auto">{localized(book.genre)}</bdi>
+        </>
+      ),
+    },
+    {
+      id: 'price',
+      label: t('common:labelPrice'),
+      numeric: true,
+      cell: (book) => <>{localized(money(book.priceCents))}</>,
+    },
+    {
+      id: 'stock',
+      label: t('common:labelStock'),
+      numeric: true,
+      cell: (book) => (
+        <>
+          {localized(book.stock)}
+          {book.stock <= 5 && (
+            <Badge variant="destructive" className="ms-2">
+              {t('admin:lowStock')}
+            </Badge>
+          )}
+        </>
+      ),
+    },
+    {
+      id: 'state',
+      label: t('common:labelState'),
+      cell: (book) => (
+        <>
+          <Badge variant={book.archived ? 'secondary' : 'default'}>
+            {localized(book.archived ? t('admin:archived') : t('admin:active'))}
+          </Badge>
+        </>
+      ),
+    },
+    {
+      id: 'actions',
+      label: t('common:labelActions'),
+      enableHiding: false,
+      cell: (book) => (
+        <>
+          <BookRowActions
+            book={book}
+            returnTo={`/admin/books?${params}`}
+            isAdmin={role === 'ADMIN'}
+            onStock={() => setAction({ kind: 'stock', book })}
+            onArchive={(opener) => setAction({ kind: 'archive', book, opener })}
+          />
+        </>
+      ),
+    },
+  ]
   return (
     <section>
       <AdminPageHeader
@@ -121,76 +206,19 @@ export function BooksPage() {
         </div>
       </AdminFilterToolbar>
       <AdminFeedback loading={loading} error={localized(error)} retry={refetch} />
-      {!loading && !error && books && (
-        <AdminPageTable
-          columns={[
-            { label: t('common:labelBook') },
-            { label: t('common:labelGenre') },
-            { label: t('common:labelPrice'), numeric: true },
-            { label: t('common:labelStock'), numeric: true },
-            { label: t('common:labelState') },
-            { label: t('common:labelActions') },
-          ]}
-          items={books.items}
+      <div hidden={loading || !!error || !books}>
+        <AdminDataTable
+          columns={columns}
+          items={books?.items ?? []}
           rowKey={(book) => book.id}
           label={t('admin:books2')}
           emptyMessage={t('admin:noMatchingBooks')}
           page={page}
-          total={books.total}
+          total={books?.total ?? 0}
           onPageChange={changePage}
           tableClassName="min-w-[760px]"
-          renderRow={(book) => (
-            <>
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  <BookCover
-                    cover={book.cover}
-                    decorative
-                    id={book.id}
-                    title={localized(book.title)}
-                    author={book.author}
-                    compact
-                  />
-                  <div>
-                    <strong className="font-medium">
-                      <bdi dir="auto">{localized(book.title)}</bdi>
-                    </strong>
-                    <p className="mt-1 text-muted-foreground">
-                      <bdi dir="auto">{localized(book.author)}</bdi>
-                    </p>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <bdi dir="auto">{localized(book.genre)}</bdi>
-              </TableCell>
-              <TableCell className="admin-numeric">{localized(money(book.priceCents))}</TableCell>
-              <TableCell className="admin-numeric">
-                {localized(book.stock)}
-                {book.stock <= 5 && (
-                  <Badge variant="destructive" className="ms-2">
-                    {t('admin:lowStock')}
-                  </Badge>
-                )}
-              </TableCell>
-              <TableCell>
-                <Badge variant={book.archived ? 'secondary' : 'default'}>
-                  {localized(book.archived ? t('admin:archived') : t('admin:active'))}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <BookRowActions
-                  book={book}
-                  returnTo={`/admin/books?${params}`}
-                  isAdmin={role === 'ADMIN'}
-                  onStock={() => setAction({ kind: 'stock', book })}
-                  onArchive={(opener) => setAction({ kind: 'archive', book, opener })}
-                />
-              </TableCell>
-            </>
-          )}
         />
-      )}
+      </div>
       {action?.kind === 'stock' && (
         <StockDialog book={action.book} close={() => setAction(undefined)} saved={saved} />
       )}

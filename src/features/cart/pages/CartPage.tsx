@@ -1,6 +1,14 @@
 import { localized, t, useI18n } from '../../../lib/i18n'
 import { useCartCovers } from '../use-cart-covers'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, ShoppingBag } from 'lucide-react'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+  EmptyMedia,
+} from '../../../app/components/ui/empty'
 import { Link } from 'react-router-dom'
 import { cartBlocked, checkoutCartReady, useCartStore } from '../cart-store'
 import { cartCount, cartTotal } from '../cart'
@@ -45,17 +53,26 @@ export function CartPage() {
       </div>
       {items.length === 0 && ['loading', 'merging'].includes(state.status) ? null : items.length ===
         0 ? (
-        <div className="py-28 text-center">
-          <p className="font-serif text-3xl">{t('storefront:nothingHereYet')}</p>
-          <p className="mt-3 text-sm text-muted-foreground">
-            {t('storefront:thereAreGoodStoriesWaitingOnTheShelves')}
-          </p>
-          <Button asChild className="mt-8">
-            <Link to="/books">
-              {t('storefront:browseBooks')} <ArrowRight size={17} />
-            </Link>
-          </Button>
-        </div>
+        <Empty className="py-28">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <ShoppingBag aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyTitle className="font-serif text-3xl">
+              {t('storefront:nothingHereYet')}
+            </EmptyTitle>
+            <EmptyDescription>
+              {t('storefront:thereAreGoodStoriesWaitingOnTheShelves')}
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link to="/books">
+                {t('storefront:browseBooks')} <ArrowRight size={17} />
+              </Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : (
         <div className="grid gap-10 pt-9 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-16">
           <div className="divide-y divide-border">

@@ -1,3 +1,4 @@
+import { expectSignedOutAccount } from './preferences'
 import { randomUUID } from 'node:crypto'
 import { expect, test, type Page } from '@playwright/test'
 import { capturedEmailLink, signInRespectingRateLimit } from './auth-email-helpers'
@@ -37,7 +38,7 @@ async function signOut(page: Page) {
   await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click()
   await expect(page).toHaveURL('/sign-in')
   await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible()
+  await expectSignedOutAccount(page)
 }
 
 async function addBook(page: Page, id: string) {

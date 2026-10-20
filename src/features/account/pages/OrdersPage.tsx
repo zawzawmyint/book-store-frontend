@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { Button } from '../../../app/components/ui/button'
 import { Card, CardContent, CardHeader } from '../../../app/components/ui/card'
 import { Separator } from '../../../app/components/ui/separator'
+import { Item, ItemContent, ItemActions } from '../../../app/components/ui/item'
 import { Skeleton } from '../../../app/components/ui/skeleton'
 import { BookLoader } from '../../../app/components/BookLoader'
 import { signInPath } from '../../auth/return-to'
@@ -104,15 +105,23 @@ export function OrdersPage() {
                   <Separator className="mb-4 bg-border" />
                   <ul className="space-y-2 text-sm">
                     {order.items.map((item, index) => (
-                      <li key={`${order.id}-${index}`} className="flex justify-between gap-4">
-                        <span>
-                          {localized(item.quantity)} ×{' '}
-                          <span className="font-serif">
-                            <bdi dir="auto">{localized(item.title)}</bdi>
-                          </span>
-                        </span>
-                        <span>{localized(money(item.quantity * item.unitPriceCents))}</span>
-                      </li>
+                      <Item
+                        asChild
+                        key={`${order.id}-${index}`}
+                        className="items-start gap-4 rounded-none p-0"
+                      >
+                        <li>
+                          <ItemContent className="block">
+                            {localized(item.quantity)} ×{' '}
+                            <span className="font-serif">
+                              <bdi dir="auto">{localized(item.title)}</bdi>
+                            </span>
+                          </ItemContent>
+                          <ItemActions>
+                            {localized(money(item.quantity * item.unitPriceCents))}
+                          </ItemActions>
+                        </li>
+                      </Item>
                     ))}
                   </ul>
                   <Button asChild variant="ghost" className="mt-4">

@@ -1,4 +1,6 @@
 {
+  "paginationPage": "หน้า {{value0}}",
+  "paginationMorePages": "หน้าเพิ่มเติม",
   "notificationTitle": "การแจ้งเตือน",
   "notificationCount": "การแจ้งเตือน ยังไม่ได้อ่าน {{value0}} รายการ",
   "notificationCountUnknown": "การแจ้งเตือน ไม่สามารถแสดงจำนวนที่ยังไม่ได้อ่าน",
@@ -127,5 +129,11 @@
   "priceInputHint": "ใช้ตัวเลข 0–9 และจุดทศนิยม เช่น 12.34",
   "wholeNumberHint": "ใช้จำนวนเต็มที่ประกอบด้วยตัวเลข 0–9",
   "notification_STOCK_LOW": "{{title}} ใกล้หมด — เหลือ {{stock}} เล่ม",
-  "notification_STOCK_OUT": "{{title}} หมดสต็อก"
+  "notification_STOCK_OUT": "{{title}} หมดสต็อก",
+  "appearance": "รูปแบบการแสดงผล",
+  "appearanceLight": "สว่าง",
+  "appearanceDark": "มืด",
+  "searchFinderHint": "ค้นหาจากชื่อหนังสือ ผู้เขียน หรือประเภท",
+  "searchNoMatches": "ไม่พบหนังสือที่ตรงกัน ลองค้นหาใหม่",
+  "searchAllBooks": "ค้นหาหนังสือทั้งหมด"
 }

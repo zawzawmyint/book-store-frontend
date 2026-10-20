@@ -1,4 +1,6 @@
 {
+  "paginationPage": "第 {{value0}} 页",
+  "paginationMorePages": "更多页面",
   "notificationTitle": "通知",
   "notificationCount": "通知，{{value0}} 条未读",
   "notificationCountUnknown": "通知，未读数量暂不可用",
@@ -127,5 +129,11 @@
   "priceInputHint": "请使用数字 0–9 和小数点，例如 12.34。",
   "wholeNumberHint": "请使用由数字 0–9 组成的整数。",
   "notification_STOCK_LOW": "{{title}} 库存不足 — 剩余 {{stock}} 本",
-  "notification_STOCK_OUT": "{{title}} 已售罄"
+  "notification_STOCK_OUT": "{{title}} 已售罄",
+  "appearance": "外观",
+  "appearanceLight": "浅色",
+  "appearanceDark": "深色",
+  "searchFinderHint": "按书名、作者或类型搜索。",
+  "searchNoMatches": "没有匹配的图书，请尝试其他搜索。",
+  "searchAllBooks": "搜索全部图书"
 }
