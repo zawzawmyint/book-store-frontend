@@ -46,8 +46,8 @@ This specification describes the delivered frontend contract. The root
 
 The logo is the home link; there is no redundant visible **Home** control in the
 desktop header. Desktop shows visible **All books**, then icon controls for search,
-account/sign-in, bag, and appearance. The All books link is active at catalog and
-book-detail routes.
+account/sign-in, and bag. The Account menu contains expandable Language and Appearance
+choices. The All books link is active at catalog and book-detail routes.
 
 The storefront header sticks at the viewport top while the small promotion strip
 remains in normal flow, except on `/books` (including query and trailing-slash URLs),
@@ -59,15 +59,20 @@ above the header; Admin navigation is unchanged.
 
 At 320px and other mobile widths, the compact two-line brand remains visible. Search,
 account/sign-in, bag, and the menu remain directly accessible as icons. The menu dialog
-contains **Home**, **All books**, and the existing Light/Dark switch. Desktop keeps the
-Light/Dark icon control in the header. All controls retain their accessible labels,
-focus behavior, and existing account and bag semantics.
+contains **Home** and **All books**; Language and Appearance remain in Account. All
+controls retain their accessible labels, focus behavior, and existing account and bag
+semantics.
 
-The icon-triggered **Search the store** dialog is closed initially. Its search input
-autofocuses when opened. Escape, the dialog close control, and a submission close the
-dialog and restore focus to its trigger. A submission trims text and opens
-`/books?search=…`; empty or whitespace-only text opens `/books`. It supports a
-repeated search after navigation. This dialog is distinct from catalog-local
+The icon-triggered **Search the store** drawer is closed initially. It opens directly
+beneath the measured header at full width, with a centered column up to 48rem and a
+height capped by 70dvh or the remaining viewport. Its search input autofocuses when
+opened. Escape, the close control, and a submission close the drawer and restore focus
+to its trigger. After a 250ms debounce, a trimmed term of at least two characters
+previews up to five public existing Books-query matches with cover, title, author, and
+locale-formatted price. Arrow keys select a preview; Enter opens it, otherwise submits
+the catalog search. The footer opens all catalog matches. Empty or whitespace-only
+submission opens `/books`; stale or closed-drawer results cannot remain selectable. It
+supports a repeated search after navigation. This drawer is distinct from catalog-local
 **Search books**, which retains catalog draft and browser-history behavior.
 
 ### Featured hero and genres

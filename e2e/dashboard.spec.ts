@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { setAppearance } from './preferences'
 
 test.beforeEach(async ({ page, request }, info) => {
   await page.setExtraHTTPHeaders({ 'X-Real-IP': `198.51.100.${(info.line % 200) + 1}` })
@@ -93,11 +94,8 @@ test('Admin dashboard exposes recorded payments, period selection and safe drill
   await page.screenshot({ path: 'test-results/dashboard-mobile.png', fullPage: true })
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.screenshot({ path: 'test-results/dashboard-desktop.png', fullPage: true })
-  const theme = page.getByRole('switch', { name: 'Dark mode', exact: true })
-  await theme.focus()
-  await page.keyboard.press('Space')
-  await expect(theme).toHaveAttribute('aria-checked', 'false')
-  await expect(theme).toBeFocused()
+  await setAppearance(page, 'light')
+  await expect(page.getByRole('button', { name: 'Account', exact: true })).toBeFocused()
   await page.screenshot({ path: 'test-results/dashboard-light.png', fullPage: true })
 })
 test('Staff dashboard never requests financial aggregates and supports stock adjustment', async ({

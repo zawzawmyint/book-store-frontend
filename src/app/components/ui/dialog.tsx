@@ -1,5 +1,5 @@
 import { localized, t, useI18n } from '../../../lib/i18n'
-import type { ComponentProps } from 'react'
+import type { ComponentProps, CSSProperties } from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import { cn } from '../../../lib/utils'
@@ -37,13 +37,21 @@ export function DialogContent({
   className,
   children,
   showCloseButton = true,
+  showLanguageSwitcher = true,
+  overlayClassName,
+  overlayStyle,
   ...props
-}: ComponentProps<typeof DialogPrimitive.Content> & { showCloseButton?: boolean }) {
+}: ComponentProps<typeof DialogPrimitive.Content> & {
+  showCloseButton?: boolean
+  showLanguageSwitcher?: boolean
+  overlayClassName?: string
+  overlayStyle?: CSSProperties
+}) {
   useI18n()
 
   return (
     <DialogPortal>
-      <DialogOverlay />
+      <DialogOverlay className={overlayClassName} style={overlayStyle} />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
@@ -53,9 +61,11 @@ export function DialogContent({
         {...props}
       >
         {localized(children)}
-        <div className="mt-4 flex justify-end">
-          <LanguageSwitcher />
-        </div>
+        {showLanguageSwitcher && (
+          <div className="mt-4 flex justify-end">
+            <LanguageSwitcher />
+          </div>
+        )}
         {showCloseButton && (
           <DialogPrimitive.Close
             aria-label={t('common:closeDialog')}

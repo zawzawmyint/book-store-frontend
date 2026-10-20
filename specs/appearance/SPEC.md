@@ -27,11 +27,10 @@ This feature changes appearance only. Routes, permissions, authentication, shopp
 
 The [icons and typography specification](../icons-typography/SPEC.md) defines the shared icon treatment while this specification remains the source of truth for the preference behavior.
 
-- Show the switch in the desktop storefront header and in the mobile storefront navigation dialog, as defined by [the homepage specification](../storefront-homepage/SPEC.md). Keep it in the workspace header, including workspace access-denied and retry screens. Guests do not need an Account menu to use it.
-- Toggle directly between Light and Dark, without a dropdown or System option.
-- Show a sun icon for the current Light mode and a moon icon for the current Dark mode, without a visible mode label. Give it the accessible name **Dark mode**, expose whether Dark is enabled, and show a tooltip for the next action: **Switch to Dark mode** or **Switch to Light mode**.
-- Support keyboard activation, a visible focus indicator, and focus remaining on the control after switching.
-- Keep the switch usable on desktop and mobile without obscuring navigation, account, or cart controls or causing page overflow.
+- The following 2026-10-20 follow-up supersedes the prior header-switch presentation: storefront and workspace Account menus contain an expandable **Appearance** group with keyboard-accessible Light/Dark radio choices. Storefront guests can use it beside **Sign in**; authenticated storefront and workspace users retain their account actions. The mobile storefront navigation dialog no longer duplicates appearance.
+- Selecting Light or Dark applies it directly; there is no System option. The Account-menu group shows the current named choice rather than a standalone switch tooltip or checked switch.
+- The group and radio choices retain keyboard use, visible focus, 44px targets, and both desktop/mobile fit. The root application subscribes to the theme store so another-tab storage change updates the document even while every Account menu is closed.
+- This follow-up changes only entry points and presentation. The persisted preference, default, storage-failure behavior, route/form/cart/session preservation, and cross-tab contract above remain unchanged. Its release status is tracked by [search finder and header preferences](../search-and-header/SPEC.md).
 
 ## Visual coverage
 
@@ -42,8 +41,8 @@ The [icons and typography specification](../icons-typography/SPEC.md) defines th
   unoutlined cards, and transparent table/toolbar outer frames.
 - Homepage genre and reading-mood cards are unoutlined rounded surfaces with their
   existing hover feedback. Secondary carousel controls and the recommendation action
-  are filled and unoutlined. The desktop header and mobile-menu theme switches have
-  transparent borders; their focus treatment remains unchanged.
+  are filled and unoutlined. The later Account-menu Appearance controls retain their
+  existing focus treatment.
 - Form and other control boundaries, focus indicators, status colors, text, images,
   routes, data, and shopping behavior are unchanged. No new gradients were added
   outside the homepage hero.
@@ -68,13 +67,13 @@ The [icons and typography specification](../icons-typography/SPEC.md) defines th
 
 ## Acceptance criteria
 
-- [x] Guests, Customers, Staff, and Admin can switch between Light and Dark from applicable desktop/workspace headers or the mobile storefront navigation dialog.
+- [x] Guests, Customers, Staff, and Admin can switch between Light and Dark through the applicable Account menu, including the storefront guest menu.
 - [x] First visits and missing, invalid, or unavailable saved preferences start in Dark.
 - [x] A saved Light or Dark choice survives reload and sign-out and applies across storefront/workspace navigation.
 - [x] Device appearance has no effect; changes or removal in another tab follow the persistence contract.
 - [x] Initial rendering shows the correct theme without an opposite-theme flash.
 - [x] All pages, feedback states, overlays, and native controls support both themes with readable contrast.
-- [x] The switch exposes its state and works with keyboard and mobile layouts.
+- [x] Account-menu radio choices expose the current state and work with keyboard and mobile layouts.
 - [x] Switching preserves unsaved forms, filters, cart data, sessions, and existing access safeguards.
 - [x] Frontend tests, lint, build, and browser checks pass before marking the feature Implemented.
 

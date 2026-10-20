@@ -434,7 +434,9 @@ it.each(['/account/profile', '/admin'])(
     expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Request a verification email' })).toBeTruthy()
     expect(screen.queryByRole('heading', { name: 'Your profile' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Account' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Account' })).toBeTruthy()
+    expect(screen.queryByRole('link', { name: 'Profile' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Orders' })).toBeNull()
     expect(window.location.pathname).toBe('/sign-in')
   },
 )

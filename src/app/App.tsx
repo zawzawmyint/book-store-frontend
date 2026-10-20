@@ -1,4 +1,5 @@
 import { t, useI18n } from '../lib/i18n'
+import { useTheme } from '../lib/theme'
 import { NotificationsPage } from '../features/notifications/NotificationsPage'
 import { CheckoutReturnPage } from '../features/checkout/pages/CheckoutReturnPage'
 import { OrderPage as CustomerOrderPage } from '../features/account/pages/OrderPage'
@@ -42,6 +43,8 @@ const DashboardPage = lazy(() => import('../features/admin/pages/DashboardPage')
 
 export default function App() {
   const { direction } = useI18n()
+  // Keep cross-tab appearance updates active while account menus are closed.
+  useTheme()
 
   return (
     <Direction.Provider dir={direction}>

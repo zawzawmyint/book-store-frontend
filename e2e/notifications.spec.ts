@@ -9,7 +9,10 @@ async function signIn(page: Page, email = 'admin-e2e@example.com') {
   await expect(page).toHaveURL('/account/notifications')
 }
 async function graphql(page: Page, query: string, variables?: Record<string, unknown>) {
-  const response = await page.request.post('/graphql', { headers: { Origin: new URL(page.url()).origin }, data: { query, variables } })
+  const response = await page.request.post('/graphql', {
+    headers: { Origin: new URL(page.url()).origin },
+    data: { query, variables },
+  })
   expect(response.ok()).toBe(true)
   const body = await response.json()
   expect(body.errors).toBeUndefined()
@@ -75,7 +78,51 @@ test('saved notifications work without live transport and preserve account, inbo
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(bell).toBeFocused()
-  await row.getByRole('link', { name: 'View', exact: true }).click()
+  await row.getByRole('link', { name: new RegExp(title) }).click()
   await expect(page).toHaveURL(`/admin/books/${created.createBook.id}/edit`)
   await expect(page.getByRole('button', { name: 'Notifications, 0 unread' })).toBeVisible()
+})
+
+test('desktop quick inboxes stay compact, non-modal and navigable in both shells', async ({
+  page,
+}) => {
+  await page.goto('/books')
+  await page.request.post('http://localhost:4100/__test__/restore-admin')
+  await signIn(page)
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  for (const theme of ['light', 'dark']) {
+    await page.evaluate((value) => localStorage.setItem('book-store-theme', value), theme)
+    for (const route of ['/account/notifications', '/admin/notifications']) {
+      await page.goto(route)
+      const bell = page.getByRole('button', { name: /^Notifications,/ })
+      await bell.click()
+      const inbox = page.getByRole('dialog', { name: 'Notifications', exact: true })
+      await expect(inbox).toBeVisible()
+      await expect(inbox.locator('.notification-row-link').first()).toBeVisible()
+      await expect(page.locator('[data-slot="dialog-overlay"]')).toHaveCount(0)
+      await expect(inbox.getByRole('combobox')).toHaveCount(0)
+      await expect(inbox).not.toContainText('Notifications are kept for 90 days.')
+      await expect(inbox.locator('.notification-event-icon').first()).toBeVisible()
+      await expect.poll(async () => (await inbox.boundingBox())?.width).toBeLessThanOrEqual(400)
+      const triggerBox = (await bell.boundingBox())!
+      const inboxBox = (await inbox.boundingBox())!
+      expect(inboxBox.y).toBeGreaterThanOrEqual(triggerBox.y + triggerBox.height)
+      expect(inboxBox.height).toBeLessThan(700)
+      await page.screenshot({
+        path: `test-results/compact-notifications-${route.startsWith('/admin') ? 'admin' : 'storefront'}-${theme}.png`,
+      })
+      await page.keyboard.press('Escape')
+      await expect(inbox).toHaveCount(0)
+      await expect(bell).toBeFocused()
+      await bell.click()
+      // Outside interaction dismisses without making the surrounding page inert.
+      await page.getByRole('heading', { name: 'Notifications', exact: true }).first().click()
+      await expect(inbox).toHaveCount(0)
+      await bell.click()
+      const link = inbox.getByRole('link', { name: /View all notifications/i })
+      await expect(link).toHaveAttribute('href', route)
+      await link.click()
+      await expect(inbox).toHaveCount(0)
+    }
+  }
 })

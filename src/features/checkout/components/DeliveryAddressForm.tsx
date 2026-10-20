@@ -12,7 +12,7 @@ import { money } from '../../../lib/format'
 import { Button } from '../../../app/components/ui/button'
 import { BookLoader } from '../../../app/components/BookLoader'
 import { Input } from '../../../app/components/ui/input'
-import { Label } from '../../../app/components/ui/label'
+import { Field, FieldLabel, FieldError } from '../../../app/components/ui/field'
 
 type DeliveryAddressFormProps = {
   form: UseFormReturn<AddressFormValues, unknown, DeliveryAddress>
@@ -145,8 +145,8 @@ export function DeliveryAddressForm({
             ) : null}
             <div id={field.name === 'addressLine2' ? 'optional-address-line' : undefined}>
               {(field.name !== 'addressLine2' || showLine2) && (
-                <>
-                  <Label htmlFor={field.name}>{localized(field.label)}</Label>
+                <Field data-invalid={!!form.formState.errors[field.name]}>
+                  <FieldLabel htmlFor={field.name}>{localized(field.label)}</FieldLabel>
                   <Input
                     id={field.name}
                     autoComplete={field.autoComplete}
@@ -159,21 +159,21 @@ export function DeliveryAddressForm({
                     }
                   />
                   {form.formState.errors[field.name] && (
-                    <p
+                    <FieldError
                       className="mt-2 text-sm text-destructive"
                       role="alert"
                       id={`${field.name}-error`}
                     >
                       {localized(form.formState.errors[field.name]?.message)}
-                    </p>
+                    </FieldError>
                   )}
-                </>
+                </Field>
               )}
             </div>
           </div>
         ))}
-        <div>
-          <Label htmlFor="countryCode">{t('storefront:country')}</Label>
+        <Field data-invalid={!!form.formState.errors.countryCode}>
+          <FieldLabel htmlFor="countryCode">{t('storefront:country')}</FieldLabel>
           <select
             id="countryCode"
             autoComplete="shipping country"
@@ -190,11 +190,11 @@ export function DeliveryAddressForm({
             ))}
           </select>
           {form.formState.errors.countryCode && (
-            <p role="alert" id="country-error">
+            <FieldError id="country-error">
               {localized(form.formState.errors.countryCode.message)}
-            </p>
+            </FieldError>
           )}
-        </div>
+        </Field>
       </fieldset>
       {deliveryOptions && (
         <p className="text-sm text-muted-foreground">

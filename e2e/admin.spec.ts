@@ -1,3 +1,4 @@
+import { expectSignedOutAccount } from './preferences'
 import { expect, test, type Page } from '@playwright/test'
 
 // Distinct test clients retain production rate limiting without sharing one proxy bucket.
@@ -35,7 +36,7 @@ test('admin workspace stays separate from shopping and returns to the storefront
   await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click()
   await expect(page).toHaveURL('/sign-in')
   await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible()
+  await expectSignedOutAccount(page)
 })
 
 test('admin filter toolbar aligns controls and wraps on mobile', async ({ page }) => {
@@ -229,11 +230,11 @@ test('admin manages catalog, stock, archive/restore and saved order requests', a
   await page.keyboard.press('Enter')
   await page.getByRole('menuitem', { name: 'Archive', exact: true }).click()
   await page.keyboard.press('Escape')
-  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByRole('alertdialog')).toHaveCount(0)
   await expect(moreActions).toBeFocused()
   await moreActions.click()
   await page.getByRole('menuitem', { name: 'Archive', exact: true }).click()
-  await page.getByRole('dialog').getByRole('button', { name: 'Confirm archive' }).click()
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Confirm archive' }).click()
   await expect(page.getByText('No matching books.')).toBeVisible()
   await expect(page.getByText('Showing 0–0 of 0', { exact: true })).toBeVisible()
   await page.getByRole('combobox', { name: 'Catalog state' }).click()
@@ -243,7 +244,7 @@ test('admin manages catalog, stock, archive/restore and saved order requests', a
     .getByRole('button', { name: 'More actions for Edited journey book', exact: true })
     .click()
   await page.getByRole('menuitem', { name: 'Restore', exact: true }).click()
-  await page.getByRole('dialog').getByRole('button', { name: 'Confirm restore' }).click()
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Confirm restore' }).click()
   await page.getByRole('combobox', { name: 'Catalog state' }).click()
   await page.getByRole('option', { name: 'Active' }).click()
   await expect(row).toContainText('Active')

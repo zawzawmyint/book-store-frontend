@@ -23,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../app/components/ui/select'
-import { TableCell } from '../../../app/components/ui/table'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { accessErrorCode, useAdminAccess, useAdminQueryError } from '../admin-access'
 import { useAdminPagination, useAdminPageCorrection } from '../use-admin-pagination'
@@ -31,7 +30,7 @@ import { AdminDialog } from '../components/AdminDialog'
 import { AdminFeedback } from '../components/AdminFeedback'
 import { AdminFilterToolbar } from '../components/AdminFilterToolbar'
 import { AdminPageHeader } from '../components/AdminPageHeader'
-import { AdminPageTable } from '../components/AdminPageTable'
+import { AdminDataTable, type AdminDataColumn } from '../components/AdminPageTable'
 import { EmailVerificationBadge } from '../components/EmailVerificationBadge'
 
 function readRole(value: string | null): AdminUserRoleFilter {
@@ -75,6 +74,100 @@ export function UsersPage() {
       setCopyError(msg('admin:unableToCopyTheUserId'))
     }
   }
+  const columns: AdminDataColumn<AdminUserFieldsFragment>[] = [
+    {
+      id: 'name',
+      label: t('common:labelName'),
+      enableHiding: false,
+      cell: (user) => (
+        <>
+          <bdi dir="auto">{localized(user.name)}</bdi>
+        </>
+      ),
+    },
+    {
+      id: 'email',
+      label: t('common:labelEmail'),
+      cell: (user) => (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <span>
+              <bdi dir="ltr">{localized(user.email)}</bdi>
+            </span>
+            <EmailVerificationBadge verified={user.emailVerified} />
+          </div>
+        </>
+      ),
+    },
+    {
+      id: 'role',
+      label: t('common:labelRole'),
+      cell: (user) => (
+        <>
+          {localized(
+            user.role === 'ADMIN'
+              ? t('admin:admin')
+              : user.role === 'STAFF'
+                ? t('admin:staff')
+                : t('admin:customer'),
+          )}
+        </>
+      ),
+    },
+    {
+      id: 'joined',
+      label: t('common:labelJoined'),
+      cell: (user) => <>{localized(formatDate(new Date(user.createdAt)))}</>,
+    },
+    {
+      id: 'id',
+      label: t('common:labelUserID'),
+      cell: (user) => (
+        <>
+          <span className="font-sans text-xs break-all">
+            <bdi dir="ltr">{localized(user.id)}</bdi>
+          </span>
+        </>
+      ),
+    },
+    {
+      id: 'actions',
+      label: t('common:labelActions'),
+      enableHiding: false,
+      cell: (user) => (
+        <>
+          <div className="flex flex-wrap gap-2">
+            <IconAction asChild label={t('admin:viewUserValue', { value0: user.name })} workspace>
+              <Link to={user.id} state={{ returnTo: `/admin/users?${params}` }}>
+                <Eye aria-hidden="true" />
+              </Link>
+            </IconAction>
+            <IconAction
+              label={t('admin:copyUserIdForValue', { value0: user.name })}
+              workspace
+              onClick={() => void copyId(user.id)}
+            >
+              <Copy aria-hidden="true" />
+            </IconAction>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={(event) => {
+                setCopyError('')
+                setAction({
+                  user,
+                  role: user.role,
+                  opener: event.currentTarget,
+                })
+              }}
+            >
+              {t('admin:changeRole')}
+            </Button>
+          </div>
+        </>
+      ),
+    },
+  ]
   return (
     <section>
       <AdminPageHeader
@@ -118,90 +211,19 @@ export function UsersPage() {
         </div>
       </AdminFilterToolbar>
       <AdminFeedback loading={loading} error={localized(error)} retry={refetch} />
-      {!loading && !error && users && (
-        <AdminPageTable
-          columns={[
-            { label: t('common:labelName') },
-            { label: t('common:labelEmail') },
-            { label: t('common:labelRole') },
-            { label: t('common:labelJoined') },
-            { label: t('common:labelUserID') },
-            { label: t('common:labelActions') },
-          ]}
-          items={users.items}
+      <div hidden={loading || !!error || !users}>
+        <AdminDataTable
+          columns={columns}
+          items={users?.items ?? []}
           rowKey={(user) => user.id}
           label={t('admin:users2')}
           emptyMessage={t('admin:noAccountsMatch')}
           page={page}
-          total={users.total}
+          total={users?.total ?? 0}
           onPageChange={changePage}
           tableClassName="min-w-[880px]"
-          renderRow={(user) => (
-            <>
-              <TableCell>
-                <bdi dir="auto">{localized(user.name)}</bdi>
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span>
-                    <bdi dir="ltr">{localized(user.email)}</bdi>
-                  </span>
-                  <EmailVerificationBadge verified={user.emailVerified} />
-                </div>
-              </TableCell>
-              <TableCell>
-                {localized(
-                  user.role === 'ADMIN'
-                    ? t('admin:admin')
-                    : user.role === 'STAFF'
-                      ? t('admin:staff')
-                      : t('admin:customer'),
-                )}
-              </TableCell>
-              <TableCell>{localized(formatDate(new Date(user.createdAt)))}</TableCell>
-              <TableCell>
-                <span className="font-sans text-xs break-all">
-                  <bdi dir="ltr">{localized(user.id)}</bdi>
-                </span>
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-wrap gap-2">
-                  <IconAction
-                    asChild
-                    label={t('admin:viewUserValue', { value0: user.name })}
-                    workspace
-                  >
-                    <Link to={user.id} state={{ returnTo: `/admin/users?${params}` }}>
-                      <Eye aria-hidden="true" />
-                    </Link>
-                  </IconAction>
-                  <IconAction
-                    label={t('admin:copyUserIdForValue', { value0: user.name })}
-                    workspace
-                    onClick={() => void copyId(user.id)}
-                  >
-                    <Copy aria-hidden="true" />
-                  </IconAction>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={(event) => {
-                      setCopyError('')
-                      setAction({
-                        user,
-                        role: user.role,
-                        opener: event.currentTarget,
-                      })
-                    }}
-                  >
-                    {t('admin:changeRole')}
-                  </Button>
-                </div>
-              </TableCell>
-            </>
-          )}
         />
-      )}
+      </div>
       {action && (
         <RoleDialog
           user={action.user}

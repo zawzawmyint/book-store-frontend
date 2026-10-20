@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Bell } from 'lucide-react'
+import { Empty, EmptyHeader, EmptyTitle, EmptyMedia } from '../../app/components/ui/empty'
 import { t, useI18n } from '../../lib/i18n'
 import { Button } from '../../app/components/ui/button'
 import { PageContainer } from '../../app/components/PageContainer'
@@ -68,7 +70,14 @@ function InboxFeed({ unread }: { unread: boolean }) {
           {t('common:notificationLoading')}
         </p>
       ) : !feed.nodes.length && !feed.error ? (
-        <p className="py-6">{t('common:notificationEmpty')}</p>
+        <Empty className="py-6">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Bell aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyTitle className="text-sm font-normal">{t('common:notificationEmpty')}</EmptyTitle>
+          </EmptyHeader>
+        </Empty>
       ) : null}
       <NotificationList nodes={feed.nodes} />
       {feed.hasNextPage && (

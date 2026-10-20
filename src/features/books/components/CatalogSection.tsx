@@ -1,4 +1,5 @@
-import { localized, message as msg, t, useI18n } from '../../../lib/i18n'
+import { paginationPages } from '../../../lib/pagination'
+import { locale, localized, message as msg, t, useI18n } from '../../../lib/i18n'
 import { Search, X } from 'lucide-react'
 import { IconAction } from '../../../app/components/IconAction'
 import { BookCard } from './BookCard'
@@ -8,7 +9,21 @@ import { useCatalog } from '../use-catalog'
 import { useCatalogScroll } from '../catalog-navigation'
 import { money } from '../../../lib/format'
 import { Button } from '../../../app/components/ui/button'
-import { Input } from '../../../app/components/ui/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '../../../app/components/ui/input-group'
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '../../../app/components/ui/empty'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from '../../../app/components/ui/pagination'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { Skeleton } from '../../../app/components/ui/skeleton'
 import { BookLoader } from '../../../app/components/BookLoader'
@@ -107,8 +122,8 @@ export function CatalogSection() {
             <label htmlFor="catalog-search" className="mb-2 block text-sm font-semibold">
               {t('storefront:searchBooks')}
             </label>
-            <div className="catalog-search-field flex items-center rounded-sm border border-control focus-within:border-primary focus-within:ring-1 focus-within:ring-inset focus-within:ring-ring">
-              <Input
+            <InputGroup className="catalog-search-field">
+              <InputGroupInput
                 id="catalog-search"
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
@@ -116,15 +131,17 @@ export function CatalogSection() {
                 placeholder={t('storefront:searchTitleOrAuthor')}
                 className="min-h-11 min-w-0 border-0 bg-transparent px-3 py-3 text-sm focus-visible:ring-0"
               />
-              <IconAction
-                label={t('storefront:searchBooks')}
-                type="submit"
-                variant="ghost"
-                className="text-primary"
-              >
-                <Search aria-hidden="true" />
-              </IconAction>
-            </div>
+              <InputGroupAddon align="inline-end">
+                <IconAction
+                  label={t('storefront:searchBooks')}
+                  type="submit"
+                  variant="ghost"
+                  className="text-primary"
+                >
+                  <Search aria-hidden="true" />
+                </IconAction>
+              </InputGroupAddon>
+            </InputGroup>
           </form>
           <div className="hidden lg:block">
             <label htmlFor="catalog-sort" className="mb-3 block text-sm font-semibold">
@@ -200,12 +217,16 @@ export function CatalogSection() {
             </>
           )}
           {!loading && !error && books.length === 0 && (
-            <div className="rounded-sm bg-muted px-6 py-20 text-center">
-              <p className="font-serif text-3xl">{t('storefront:noBooksOnThisShelf')}</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {t('storefront:tryAnotherTitleAuthorGenreOrPriceRange')}
-              </p>
-            </div>
+            <Empty className="rounded-sm bg-muted px-6 py-20 text-center">
+              <EmptyHeader>
+                <EmptyTitle className="font-serif text-3xl">
+                  {t('storefront:noBooksOnThisShelf')}
+                </EmptyTitle>
+                <EmptyDescription className="mt-2 text-sm text-muted-foreground">
+                  {t('storefront:tryAnotherTitleAuthorGenreOrPriceRange')}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
           {!loading && !error && books.length > 0 && (
             <div className="grid grid-cols-1 gap-x-5 gap-y-12 min-[375px]:grid-cols-2 xl:grid-cols-3">
@@ -215,30 +236,38 @@ export function CatalogSection() {
             </div>
           )}
           {!loading && !error && (total ?? 0) > PAGE_SIZE && (
-            <nav
-              aria-label={t('storefront:catalogPages')}
-              className="mt-14 flex items-center justify-center gap-4"
-            >
-              <Button
-                variant="ghost"
-                disabled={page === 0}
-                onClick={() => changePage(page - 1)}
-                className="min-h-11 px-2 text-sm"
-              >
-                {t('storefront:previous')}
-              </Button>
-              <span className="text-sm text-muted-foreground">
+            <Pagination aria-label={t('storefront:catalogPages')} className="mt-14">
+              <span className="w-full text-center text-sm text-muted-foreground">
                 {t('storefront:pageValueOfValue', { value0: page + 1, value1: pages })}
               </span>
-              <Button
-                variant="ghost"
-                disabled={page + 1 >= pages}
-                onClick={() => changePage(page + 1)}
-                className="min-h-11 px-2 text-sm"
-              >
-                {t('storefront:next')}
-              </Button>
-            </nav>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious disabled={page === 0} onClick={() => changePage(page - 1)}>
+                    {t('storefront:previous')}
+                  </PaginationPrevious>
+                </PaginationItem>
+                {paginationPages(page + 1, pages).map((value) => (
+                  <PaginationItem key={value}>
+                    {typeof value === 'number' ? (
+                      <PaginationLink
+                        isActive={value === page + 1}
+                        aria-label={t('common:paginationPage', { value0: value })}
+                        onClick={() => changePage(value - 1)}
+                      >
+                        {new Intl.NumberFormat(locale()).format(value)}
+                      </PaginationLink>
+                    ) : (
+                      <PaginationEllipsis aria-label={t('common:paginationMorePages')} />
+                    )}
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext disabled={page + 1 >= pages} onClick={() => changePage(page + 1)}>
+                    {t('storefront:next')}
+                  </PaginationNext>
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           )}
         </div>
       </div>

@@ -1,5 +1,15 @@
+import { paginationPages } from '../../../lib/pagination'
 import { errorMessage } from '../../../lib/i18n/errors'
-import { localized, t, useI18n } from '../../../lib/i18n'
+import { locale, localized, t, useI18n } from '../../../lib/i18n'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from '../../../app/components/ui/pagination'
 import { Button } from '../../../app/components/ui/button'
 import { Alert, AlertDescription } from '../../../app/components/ui/alert'
 import { Skeleton } from '../../../app/components/ui/skeleton'
@@ -62,32 +72,53 @@ export function AdminPagination({
   const offset = (page - 1) * ADMIN_PAGE_SIZE
   const start = itemCount ? offset + 1 : 0
   const end = itemCount ? Math.min(total, offset + itemCount) : 0
+  const pages = Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE))
   return (
-    <nav
+    <Pagination
       aria-label={t('admin:pagination')}
       className="mt-4 flex flex-wrap items-center justify-between gap-3"
     >
       <span className="text-sm text-muted-foreground" aria-label={label}>
         {t('admin:showingRange', { value0: start, value1: end, value2: total })}
       </span>
-      <div className="flex items-center gap-3">
-        <Button variant="outline" disabled={page <= 1} onClick={() => change(page - 1)}>
-          {t('admin:previous')}
-        </Button>
+      <div className="flex max-w-full flex-wrap items-center justify-center gap-2">
         <span className="text-xs text-muted-foreground">
           {t('admin:pageValueOfValue', {
             value0: page,
             value1: Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE)),
           })}
         </span>
-        <Button
-          variant="outline"
-          disabled={page * ADMIN_PAGE_SIZE >= total}
-          onClick={() => change(page + 1)}
-        >
-          {t('admin:next')}
-        </Button>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious disabled={page <= 1} onClick={() => change(page - 1)}>
+              {t('admin:previous')}
+            </PaginationPrevious>
+          </PaginationItem>
+          {paginationPages(page, pages).map((value) => (
+            <PaginationItem key={value}>
+              {typeof value === 'number' ? (
+                <PaginationLink
+                  isActive={value === page}
+                  aria-label={t('common:paginationPage', { value0: value })}
+                  onClick={() => change(value)}
+                >
+                  {new Intl.NumberFormat(locale()).format(value)}
+                </PaginationLink>
+              ) : (
+                <PaginationEllipsis aria-label={t('common:paginationMorePages')} />
+              )}
+            </PaginationItem>
+          ))}
+          <PaginationItem>
+            <PaginationNext
+              disabled={page * ADMIN_PAGE_SIZE >= total}
+              onClick={() => change(page + 1)}
+            >
+              {t('admin:next')}
+            </PaginationNext>
+          </PaginationItem>
+        </PaginationContent>
       </div>
-    </nav>
+    </Pagination>
   )
 }

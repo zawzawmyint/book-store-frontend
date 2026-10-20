@@ -1,4 +1,6 @@
 {
+  "breadcrumb": "مسار التنقل",
+  "columns": "الأعمدة",
   "paymentStatusChanged": "تغيرت حالة الدفع",
   "orderStatusChanged": "تغيرت حالة الطلب",
   "bookCreated": "تم إنشاء الكتاب",

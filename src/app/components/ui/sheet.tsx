@@ -54,10 +54,12 @@ function SheetContent({
   children,
   side = 'right',
   showCloseButton = true,
+  showLanguageSwitcher = true,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: 'top' | 'right' | 'bottom' | 'left'
   showCloseButton?: boolean
+  showLanguageSwitcher?: boolean
 }) {
   useI18n()
 
@@ -80,9 +82,11 @@ function SheetContent({
         )}
         {...props}
       >
-        <div className="flex justify-end px-4 pt-3 pe-12">
-          <LanguageSwitcher />
-        </div>
+        {showLanguageSwitcher && (
+          <div className="flex justify-end px-4 pt-3 pe-12">
+            <LanguageSwitcher />
+          </div>
+        )}
         {localized(children)}
         {showCloseButton && (
           <SheetPrimitive.Close className="absolute top-4 end-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-sidebar-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-sidebar-accent">

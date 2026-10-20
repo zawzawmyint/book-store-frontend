@@ -12,6 +12,10 @@ This record distinguishes delivered local behavior from production acceptance. T
 - Browser: the SQLite full browser suite passed **80** journeys. The separate notification mobile/language/theme test passed. `bun run test:e2e -- --config playwright.notifications.config.ts` passed **2** tests in **50.7 seconds**, exercising mobile 375px and actual native Chromium 200% zoom across four languages, two themes, and both inbox scopes (32 route visits). It checked dialog bounds, focus, no overflow, and 44px mobile actions. The dedicated configuration uses an isolated temporary browser profile and verifies the native zoom with CDP `cssVisualViewport.zoom === 2`; the default browser project intentionally skips that native case. `bun run test:postgres:browser` then passed **81** journeys with **1** intentional native-zoom skip in **8.6 minutes**; the dedicated project supplies that skipped native-zoom evidence.
 - Review: the initial independent review found two issues. Both were fixed with regressions, and the follow-up review was clear.
 
+## Compact UI follow-up
+
+The subsequent [compact notification UI](../compact-notifications/SPEC.md) replaces the desktop modal with a bell-anchored popover and shares icon rows with full history. Its [verification record](../compact-notifications/VERIFICATION.md) contains the newer frontend, browser, desktop RTL, and native-zoom evidence. The original results above remain historical rollout evidence; this presentation change does not satisfy the production gates below.
+
 ## Production acceptance still required
 
 - Apply and verify the additive migrations on the staging database, then keep backend and frontend flags off until compatible deployment is confirmed.

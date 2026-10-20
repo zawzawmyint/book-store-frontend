@@ -1,4 +1,6 @@
 {
+  "paginationPage": "Page {{value0}}",
+  "paginationMorePages": "More pages",
   "notificationTitle": "Notifications",
   "notificationCount": "Notifications, {{value0}} unread",
   "notificationCountUnknown": "Notifications, unread count unavailable",
@@ -132,5 +134,11 @@
   "userCount_one": "{{formattedCount}} user",
   "userCount_other": "{{formattedCount}} users",
   "notification_STOCK_LOW": "{{title}} is running low — {{stock}} remaining",
-  "notification_STOCK_OUT": "{{title}} is out of stock"
+  "notification_STOCK_OUT": "{{title}} is out of stock",
+  "appearance": "Appearance",
+  "appearanceLight": "Light",
+  "appearanceDark": "Dark",
+  "searchFinderHint": "Search by title, author, or genre.",
+  "searchNoMatches": "No matching books. Try another search.",
+  "searchAllBooks": "Search all books"
 }

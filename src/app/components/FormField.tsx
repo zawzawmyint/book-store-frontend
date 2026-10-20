@@ -1,26 +1,48 @@
 import type { ComponentProps } from 'react'
 import { Input } from './ui/input'
-import { Label } from './ui/label'
+import { Field, FieldLabel, FieldError } from './ui/field'
+import { InputGroup, InputGroupAddon, InputGroupInput } from './ui/input-group'
 import { localize, useI18n } from '../../lib/i18n'
 
-type FormFieldProps = ComponentProps<typeof Input> & { id: string; label: string; error?: string }
+type FormFieldProps = ComponentProps<typeof Input> & {
+  id: string
+  label: string
+  error?: string
+  suffix?: string
+}
 
-export function FormField({ id, label, error, ...inputProps }: FormFieldProps) {
+export function FormField({
+  id,
+  label,
+  error,
+  suffix,
+  'aria-describedby': describedBy,
+  ...inputProps
+}: FormFieldProps) {
   useI18n()
+  const Control = suffix ? InputGroupInput : Input
+  const control = (
+    <Control
+      {...inputProps}
+      id={id}
+      aria-invalid={Boolean(error)}
+      aria-describedby={
+        [describedBy, error ? `${id}-error` : undefined].filter(Boolean).join(' ') || undefined
+      }
+    />
+  )
   return (
-    <div>
-      <Label htmlFor={id}>{localize(label)}</Label>
-      <Input
-        {...inputProps}
-        id={id}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? `${id}-error` : undefined}
-      />
-      {error && (
-        <p id={`${id}-error`} role="alert" className="mt-2 text-sm text-destructive">
-          {localize(error)}
-        </p>
+    <Field data-invalid={Boolean(error)}>
+      <FieldLabel htmlFor={id}>{localize(label)}</FieldLabel>
+      {suffix ? (
+        <InputGroup>
+          {control}
+          <InputGroupAddon align="inline-end">{localize(suffix)}</InputGroupAddon>
+        </InputGroup>
+      ) : (
+        control
       )}
-    </div>
+      {error && <FieldError id={`${id}-error`}>{localize(error)}</FieldError>}
+    </Field>
   )
 }

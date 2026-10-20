@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { setAppearance, toggleAppearance } from './preferences'
 
 test.beforeEach(async ({ page }) => {
   await page.setExtraHTTPHeaders({ 'X-Real-IP': '192.0.2.249' })
@@ -22,25 +23,23 @@ test('dark defaults before React, saved light persists, and device settings do n
   }
   await page.emulateMedia({ colorScheme: 'light' })
   await page.goto('/')
-  const toggle = page.getByRole('switch', { name: 'Dark mode', exact: true })
-  await expect(toggle).toHaveAttribute('aria-checked', 'true')
-  await toggle.focus()
-  await page.keyboard.press('Space')
-  await expect(toggle).toHaveAttribute('aria-checked', 'false')
-  await expect(toggle).toBeFocused()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+  await setAppearance(page, 'light')
+  await expect(page.getByRole('button', { name: 'Account', exact: true })).toBeFocused()
   await page.reload()
-  await expect(toggle).toHaveAttribute('aria-checked', 'false')
+  await expect(page.getByRole('button', { name: 'Account', exact: true })).toBeVisible()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
   await page.emulateMedia({ colorScheme: 'dark' })
-  await expect(toggle).toHaveAttribute('aria-checked', 'false')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
   const sibling = await page.context().newPage()
   try {
     await sibling.goto('/')
-    await sibling.getByRole('switch', { name: 'Dark mode', exact: true }).click()
-    await expect(toggle).toHaveAttribute('aria-checked', 'true')
+    await setAppearance(sibling, 'dark')
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
     await sibling.evaluate(() => localStorage.setItem('book-store-theme', 'light'))
-    await expect(toggle).toHaveAttribute('aria-checked', 'false')
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
     await sibling.evaluate(() => localStorage.removeItem('book-store-theme'))
-    await expect(toggle).toHaveAttribute('aria-checked', 'true')
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   } finally {
     await sibling.close()
   }
@@ -58,7 +57,7 @@ test('switching preserves cart and admin form state and themes mobile overlays',
     .poll(() => page.evaluate(() => localStorage.getItem('book-store-cart')))
     .toContain('The Great Gatsby')
   const savedCart = await page.evaluate(() => localStorage.getItem('book-store-cart'))
-  await page.getByRole('switch', { name: 'Dark mode', exact: true }).click()
+  await toggleAppearance(page)
   expect(await page.evaluate(() => localStorage.getItem('book-store-cart'))).toBe(savedCart)
   expect((await page.request.post('http://localhost:4100/__test__/restore-admin')).ok()).toBe(true)
   await page.goto('/sign-in?returnTo=%2Fadmin%2Fbooks%2F1%2Fedit')
@@ -69,7 +68,7 @@ test('switching preserves cart and admin form state and themes mobile overlays',
   await expect(page.getByRole('heading', { name: 'Edit book', exact: true })).toBeVisible()
   const description = page.getByLabel('Description', { exact: true })
   await description.fill('Unsaved theme check')
-  await page.getByRole('switch', { name: 'Dark mode', exact: true }).click()
+  await toggleAppearance(page)
   await expect(description).toHaveValue('Unsaved theme check')
   await expect(page).toHaveURL('/admin/books/1/edit')
   await page.goto('/admin/books')
@@ -98,12 +97,7 @@ test('switching preserves cart and admin form state and themes mobile overlays',
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.getByRole('button', { name: 'Account', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click()
-  await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
-  await expect(page.getByRole('switch', { name: 'Dark mode', exact: true })).toHaveAttribute(
-    'aria-checked',
-    'true',
-  )
-  await page.keyboard.press('Escape')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await page.goto('/cart')
   await expect(page.getByText('Nothing here yet.', { exact: true })).toBeVisible()
   await page.goto('/books/1')
@@ -115,8 +109,6 @@ test('switching preserves cart and admin form state and themes mobile overlays',
   await expect(page.getByRole('link', { name: 'The Great Gatsby', exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: 'test-results/appearance-store-mobile-dark.png', fullPage: true })
-  await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
-  await page.getByRole('switch', { name: 'Dark mode', exact: true }).click()
-  await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
+  await toggleAppearance(page)
   await page.screenshot({ path: 'test-results/appearance-store-mobile-light.png', fullPage: true })
 })

@@ -1,4 +1,6 @@
 {
+  "breadcrumb": "面包屑导航",
+  "columns": "列",
   "paymentStatusChanged": "支付状态已更改",
   "orderStatusChanged": "订单状态已更改",
   "bookCreated": "图书已创建",

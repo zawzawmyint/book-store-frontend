@@ -1,4 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test'
+import { openAccount } from './preferences'
 import { mkdir, readFile, writeFile, rm } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
 import { deliveryAddress } from './delivery'
@@ -70,18 +71,18 @@ async function audit(page: Page, route: string, records: Audit[], screenshot?: s
 }
 
 async function checkLanguageKeyboard(page: Page, label: string) {
-  const trigger = page.getByRole('combobox', { name: label, exact: true })
-  await trigger.focus()
-  await page.keyboard.press('ArrowDown')
-  await expect(page.getByRole('listbox')).toBeVisible()
+  const trigger = await openAccount(page)
+  const language = page.getByRole('menuitem', { name: new RegExp(label) })
+  await language.focus()
+  await language.press('Enter')
   for (const name of ['English', 'العربية', 'ไทย', '简体中文'])
-    await expect(page.getByRole('option', { name, exact: true })).toBeVisible()
+    await expect(page.getByRole('menuitemradio', { name, exact: true })).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(trigger).toBeFocused()
 }
 
-async function assertDialogFits(page: Page) {
-  const dialog = page.getByRole('dialog')
+async function assertDialogFits(page: Page, role: 'dialog' | 'alertdialog' = 'dialog') {
+  const dialog = page.getByRole(role)
   await expect(dialog).toBeVisible()
   const box = (await dialog.boundingBox())!
   const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }))
@@ -89,6 +90,18 @@ async function assertDialogFits(page: Page) {
   expect(box.y).toBeGreaterThanOrEqual(-1)
   expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 1)
   expect(box.y + box.height).toBeLessThanOrEqual(viewport.height + 1)
+}
+
+async function checkQuickInbox(page: Page, title: string, screenshot: string) {
+  const bell = page.locator('header').getByRole('button', { name: new RegExp(`^${title}`) })
+  await bell.click()
+  await assertDialogFits(page)
+  await expect(
+    page.getByRole('dialog').locator('[data-slot="item"], [data-slot="empty"]'),
+  ).not.toHaveCount(0)
+  await capture(page, screenshot, false)
+  await page.keyboard.press('Escape')
+  await expect(bell).toBeFocused()
 }
 
 for (const [languageIndex, language] of languages.entries()) {
@@ -168,6 +181,23 @@ for (const [languageIndex, language] of languages.entries()) {
           ]) {
             await audit(page, route, records, route === '/books/1' ? picture('book') : undefined)
           }
+          await page.goto(origin + '/books')
+          const storeSearch = page.getByRole('button', {
+            name: common.openStoreSearch,
+            exact: true,
+          })
+          await storeSearch.click()
+          await assertDialogFits(page)
+          await page
+            .getByRole('combobox', { name: common.searchTheStore, exact: true })
+            .fill('Gatsby')
+          await expect(page.getByRole('dialog').getByRole('option').first()).toBeVisible()
+          await expect(
+            page.getByRole('dialog').getByRole('option', { selected: true }),
+          ).toHaveCount(0)
+          await capture(page, picture('storefront-search'), false)
+          await page.keyboard.press('Escape')
+          await expect(storeSearch).toBeFocused()
           await page.goto(origin + '/sign-up')
           await page
             .getByRole('textbox', { name: storefront.fullName, exact: true })
@@ -215,6 +245,7 @@ for (const [languageIndex, language] of languages.entries()) {
           ]) {
             await audit(page, route, records)
           }
+          await checkQuickInbox(page, common.notificationTitle, picture('storefront-notifications'))
           // Add one line through the canonical server cart API; this never touches local/development data.
           const cart = await context.request.post(origin + '/graphql', {
             headers: { Origin: origin },
@@ -280,6 +311,35 @@ for (const [languageIndex, language] of languages.entries()) {
           }
           await page.goto(origin + '/admin/books')
           await page.waitForLoadState('networkidle')
+          const columns = page.getByRole('button', { name: admin.columns, exact: true })
+          await columns.click()
+          const menu = page.getByRole('menu')
+          await expect(menu.getByRole('menuitemcheckbox').first()).toBeChecked()
+          const menuBox = (await menu.boundingBox())!
+          expect(menuBox.x).toBeGreaterThanOrEqual(-1)
+          expect(menuBox.x + menuBox.width).toBeLessThanOrEqual(
+            await page.evaluate(() => innerWidth + 1),
+          )
+          await capture(page, picture('columns-menu'), false)
+          await page.keyboard.press('Escape')
+          await expect(columns).toBeFocused()
+          await expect(
+            page.getByRole('navigation', { name: admin.breadcrumb, exact: true }),
+          ).toBeVisible()
+          const archiveOpener = page
+            .getByRole('table')
+            .locator('tbody tr')
+            .first()
+            .locator('button[aria-haspopup="menu"]')
+          await archiveOpener.click()
+          await page.getByRole('menuitem', { name: common.labelArchive, exact: true }).click()
+          await assertDialogFits(page, 'alertdialog')
+          await expect(
+            page.getByRole('alertdialog').getByRole('button', { name: admin.cancel, exact: true }),
+          ).toBeFocused()
+          await capture(page, picture('archive-dialog'), false)
+          await page.keyboard.press('Escape')
+          await expect(archiveOpener).toBeFocused()
           const stockOpener = page
             .getByRole('button', { name: admin.adjustStock, exact: true })
             .first()
@@ -299,6 +359,7 @@ for (const [languageIndex, language] of languages.entries()) {
           await capture(page, picture('workspace-search'), false)
           await page.keyboard.press('Escape')
           await expect(searchOpener).toBeFocused()
+          await checkQuickInbox(page, common.notificationTitle, picture('workspace-notifications'))
           await checkLanguageKeyboard(page, common.language)
           await page.getByRole('button', { name: admin.account, exact: true }).click()
           await page.getByRole('menuitem', { name: admin.signOut, exact: true }).click()
@@ -306,9 +367,7 @@ for (const [languageIndex, language] of languages.entries()) {
           expect(await page.evaluate(() => localStorage.getItem('book-store-language'))).toBe(
             language,
           )
-          await expect(
-            page.getByRole('combobox', { name: common.language, exact: true }),
-          ).toBeVisible()
+          await checkLanguageKeyboard(page, common.language)
           expect(scriptErrors).toEqual([])
         } finally {
           await writeFile(

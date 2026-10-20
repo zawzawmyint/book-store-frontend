@@ -1,7 +1,11 @@
 import { localized, t, useI18n } from '../../../lib/i18n'
 import { useId, useState, type FormEvent } from 'react'
 import { Button } from '../../../app/components/ui/button'
-import { Input } from '../../../app/components/ui/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '../../../app/components/ui/input-group'
 import {
   Sheet,
   SheetContent,
@@ -138,31 +142,41 @@ function FilterForm({ applied, genres, update, mobile = false }: Props & { mobil
             <label htmlFor={`${id}-min`} className="mb-2 block text-xs">
               {t('storefront:minPrice')}
             </label>
-            <Input
-              id={`${id}-min`}
-              inputMode="decimal"
-              value={min}
-              onChange={(event) => setMin(event.target.value)}
-              aria-invalid={!!error}
-              aria-describedby={error ? `${id}-error` : undefined}
-              placeholder="0.00"
-              className="min-h-11"
-            />
+            <InputGroup>
+              <InputGroupInput
+                id={`${id}-min`}
+                inputMode="decimal"
+                value={min}
+                onChange={(event) => setMin(event.target.value)}
+                aria-invalid={!!error}
+                aria-describedby={error ? `${id}-error` : undefined}
+                placeholder="0.00"
+                className="min-h-11 px-2"
+              />
+              <InputGroupAddon align="inline-end" aria-hidden="true">
+                USD
+              </InputGroupAddon>
+            </InputGroup>
           </div>
           <div>
             <label htmlFor={`${id}-max`} className="mb-2 block text-xs">
               {t('storefront:maxPrice')}
             </label>
-            <Input
-              id={`${id}-max`}
-              inputMode="decimal"
-              value={max}
-              onChange={(event) => setMax(event.target.value)}
-              aria-invalid={!!error}
-              aria-describedby={error ? `${id}-error` : undefined}
-              placeholder={t('storefront:any')}
-              className="min-h-11"
-            />
+            <InputGroup>
+              <InputGroupInput
+                id={`${id}-max`}
+                inputMode="decimal"
+                value={max}
+                onChange={(event) => setMax(event.target.value)}
+                aria-invalid={!!error}
+                aria-describedby={error ? `${id}-error` : undefined}
+                placeholder={t('storefront:any')}
+                className="min-h-11 px-2"
+              />
+              <InputGroupAddon align="inline-end" aria-hidden="true">
+                USD
+              </InputGroupAddon>
+            </InputGroup>
           </div>
         </div>
         {error && (

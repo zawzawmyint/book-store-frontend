@@ -10,7 +10,6 @@ import {
   DialogClose,
 } from './ui/dialog'
 import { IconAction } from './IconAction'
-import { ThemeSwitch } from './ThemeSwitch'
 
 export function StorefrontMenu() {
   useI18n()
@@ -48,10 +47,6 @@ export function StorefrontMenu() {
             </DialogClose>
           ))}
         </nav>
-        <div className="flex items-center justify-between border-t border-border pt-5">
-          <span className="text-sm text-muted-foreground">{t('common:readingAppearance')}</span>
-          <ThemeSwitch />
-        </div>
       </DialogContent>
     </Dialog>
   )

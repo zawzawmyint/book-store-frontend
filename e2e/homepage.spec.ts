@@ -1,11 +1,10 @@
 import { expect, test } from '@playwright/test'
+import { setAppearance } from './preferences'
 
 test('homepage discovery, catalog navigation, and guest bag work together', async ({ page }) => {
   await page.goto('/')
   const navigation = page.getByRole('navigation', { name: 'Main navigation' })
-  await expect(page.getByRole('searchbox', { name: 'Search the store', exact: true })).toHaveCount(
-    0,
-  )
+  await expect(page.getByRole('combobox', { name: 'Search the store', exact: true })).toHaveCount(0)
   const shelf = page.getByRole('region', { name: 'Selected for your shelf' })
   await expect(shelf.getByRole('article')).toHaveCount(4)
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toHaveCount(0)
@@ -35,28 +34,26 @@ test('header search and old catalog links preserve navigation state', async ({
 }, testInfo) => {
   await page.goto('/cart')
   const searchTrigger = page.getByRole('button', { name: 'Open store search', exact: true })
-  await expect(page.getByRole('searchbox', { name: 'Search the store', exact: true })).toHaveCount(
-    0,
-  )
+  await expect(page.getByRole('combobox', { name: 'Search the store', exact: true })).toHaveCount(0)
   await searchTrigger.click()
-  await expect(page.getByRole('searchbox', { name: 'Search the store', exact: true })).toBeFocused()
+  await expect(page.getByRole('combobox', { name: 'Search the store', exact: true })).toBeFocused()
   await page.screenshot({ path: testInfo.outputPath('search-dialog.png') })
   await page.keyboard.press('Escape')
   await expect(searchTrigger).toBeFocused()
   await searchTrigger.click()
-  await page.getByRole('searchbox', { name: 'Search the store', exact: true }).fill('  Jane  ')
-  await page.getByRole('button', { name: 'Search the store', exact: true }).click()
+  await page.getByRole('combobox', { name: 'Search the store', exact: true }).fill('  Jane  ')
+  await page.getByRole('combobox', { name: 'Search the store', exact: true }).press('Enter')
   await expect(page).toHaveURL('/books?search=Jane')
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await searchTrigger.click()
-  await page.getByRole('searchbox', { name: 'Search the store', exact: true }).fill('Gatsby')
-  await page.getByRole('searchbox', { name: 'Search the store', exact: true }).press('Enter')
+  await page.getByRole('combobox', { name: 'Search the store', exact: true }).fill('Gatsby')
+  await page.getByRole('combobox', { name: 'Search the store', exact: true }).press('Enter')
   await expect(page.getByRole('textbox', { name: 'Search books', exact: true })).toHaveValue(
     'Gatsby',
   )
   await searchTrigger.click()
-  await page.getByRole('searchbox', { name: 'Search the store', exact: true }).fill('   ')
-  await page.getByRole('searchbox', { name: 'Search the store', exact: true }).press('Enter')
+  await page.getByRole('combobox', { name: 'Search the store', exact: true }).fill('   ')
+  await page.getByRole('combobox', { name: 'Search the store', exact: true }).press('Enter')
   await expect(page).toHaveURL('/books')
   await searchTrigger.click()
   await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
@@ -83,13 +80,7 @@ test('home and catalog fit mobile and desktop in both themes', async ({ page }, 
   for (const width of [1440, 320]) {
     await page.setViewportSize({ width, height: width === 320 ? 780 : 1000 })
     for (const mode of ['light', 'dark']) {
-      if (width === 320)
-        await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
-      const toggle = page.getByRole('switch', { name: 'Dark mode', exact: true })
-      if (((await toggle.getAttribute('aria-checked')) === 'true') !== (mode === 'dark'))
-        await toggle.click()
-      if (width === 320)
-        await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
+      await setAppearance(page, mode as 'light' | 'dark')
       await expect(page.locator('h1')).toHaveCount(1)
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
@@ -111,7 +102,7 @@ test('home and catalog fit mobile and desktop in both themes', async ({ page }, 
   await page.getByRole('dialog').getByRole('link', { name: 'All books', exact: true }).click()
   await expect(page).toHaveURL('/books')
   await page.getByRole('button', { name: 'Open store search', exact: true }).click()
-  await expect(page.getByRole('searchbox', { name: 'Search the store', exact: true })).toBeFocused()
+  await expect(page.getByRole('combobox', { name: 'Search the store', exact: true })).toBeFocused()
   await page.keyboard.type('Gatsby')
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL('/books?search=Gatsby')

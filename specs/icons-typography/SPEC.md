@@ -12,10 +12,10 @@ Routes, permissions, confirmations, shopping, authentication, and the Light/Dark
 
 ## Header controls
 
-- The storefront logo is the Home link and visible **All books** is desktop navigation, as delivered in [the storefront-homepage specification](../storefront-homepage/SPEC.md). There is no separate visible desktop Home control. Signed-out Sign in uses a login icon; signed-in Account uses a user icon; Bag uses the existing shopping-bag icon with its visible item count.
-- Desktop Search and Light/Dark are compact icon controls. At mobile widths Search, account/sign-in, Bag, and the navigation-menu icon remain directly accessible; the menu dialog contains visible Home and All books navigation plus the theme switch. Retain account menu items, the authorization-aware workspace link, and cart-count behavior.
+- The storefront logo is the Home link and visible **All books** is desktop navigation, as delivered in [the storefront-homepage specification](../storefront-homepage/SPEC.md). There is no separate visible desktop Home control. The Account trigger uses a user icon for guests and signed-in users; the guest menu contains **Sign in**. Bag uses the existing shopping-bag icon with its visible item count.
+- Desktop Search is a compact icon control. At mobile widths Search, account/sign-in, Bag, and the navigation-menu icon remain directly accessible; the menu dialog contains visible Home and All books navigation. Appearance has moved to an expandable Account-menu group. Retain account menu items, the authorization-aware workspace link, and cart-count behavior.
 - Workspace Account uses a user icon. Keep the workspace title, section context, and menu-item labels visible.
-- The Light/Dark switch uses its existing sun/moon icon without visible Light/Dark text. Sun represents current Light mode; moon represents current Dark mode. Keep the accessible name **Dark mode**, switch semantics, and checked state. Its tooltip describes the next action: **Switch to Light mode** or **Switch to Dark mode**.
+- Account menus use a visible Appearance group with a small decorative icon, the current named choice, and inline Light/Dark radio choices. The radio items communicate selection without relying on color; the obsolete standalone sun/moon switch and its tooltip are removed.
 - The brand name stays visible. Header controls remain usable for guests, Customers, Staff, and Admin, including workspace access-denied and retry screens.
 - This theme-switch presentation is part of [the appearance specification](../appearance/SPEC.md). Dark remains the default, with the same persistence and device-setting independence.
 
@@ -60,7 +60,7 @@ Routes, permissions, confirmations, shopping, authentication, and the Light/Dark
 - [x] Workspace and compact storefront actions use the specified icons, with the logo home link, visible desktop All books navigation, cart count, and mobile-menu labels retained.
 - [x] Edit, History, record details, Copy user ID, and search submits use icons with correct accessible names and tooltips.
 - [x] Stock/role actions, primary form/shopping actions, navigation labels, and meaningful content retain the specified visible text.
-- [x] The icon-only theme switch preserves its checked state, default Dark, persistence, keyboard use, and cross-tab behavior.
+- [x] The Account-menu Appearance radio group preserves default Dark, persistence, keyboard use, and cross-tab behavior.
 - [x] All icon actions preserve routes, filters, permissions, confirmations, copy feedback, and mutation behavior.
 - [x] Controls have usable touch targets and visible focus, and fit desktop/mobile layouts without overflow.
 - [x] Lora and Source Sans 3 load and appear in their assigned areas, including workspace overlays; font failure leaves content readable and usable.

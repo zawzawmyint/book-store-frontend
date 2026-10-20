@@ -1,4 +1,13 @@
+import { Fragment } from 'react'
 import { localized, t, useI18n } from '../../lib/i18n'
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '../../app/components/ui/breadcrumb'
 import { NotificationProvider } from '../notifications/NotificationProvider'
 import { NotificationBell } from '../notifications/NotificationBell'
 import { BookOpenText, ArrowUpRight, X } from 'lucide-react'
@@ -22,12 +31,10 @@ import {
 } from '../../app/components/ui/sidebar'
 import { AdminAccountMenu } from './components/AdminAccountMenu'
 import { useAdminAccess } from './admin-access'
-import { ThemeSwitch } from '../../app/components/ThemeSwitch'
 import { WorkspaceSearch } from './components/WorkspaceSearchDialog'
-import { LanguageSwitcher } from '../../app/components/LanguageSwitcher'
 import {
   getAdminNavigation,
-  getAdminSectionLabel,
+  getAdminBreadcrumbs,
   isAdminNavigationActive,
 } from './admin-navigation'
 
@@ -148,12 +155,38 @@ export function AdminLayout() {
   )
 }
 
+export function AdminBreadcrumbs() {
+  useI18n()
+  const { pathname } = useLocation()
+  const breadcrumbs = getAdminBreadcrumbs(pathname)
+  if (!breadcrumbs.length) return null
+  return (
+    <Breadcrumb aria-label={t('admin:breadcrumb')} className="min-w-0">
+      <BreadcrumbList>
+        {breadcrumbs.map((crumb, index) => (
+          <Fragment key={crumb.to ?? 'current'}>
+            {index > 0 && <BreadcrumbSeparator />}
+            <BreadcrumbItem>
+              {crumb.to ? (
+                <BreadcrumbLink asChild>
+                  <Link to={crumb.to}>{localized(crumb.label)}</Link>
+                </BreadcrumbLink>
+              ) : (
+                <BreadcrumbPage>{localized(crumb.label)}</BreadcrumbPage>
+              )}
+            </BreadcrumbItem>
+          </Fragment>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
+  )
+}
+
 function WorkspaceLayout() {
   useI18n()
 
   const { role } = useAdminAccess()
-  const { pathname, key } = useLocation()
-  const section = getAdminSectionLabel(pathname)
+  const { key } = useLocation()
   return (
     <div className="admin-workspace">
       <SidebarProvider style={{ '--sidebar-width-icon': '4rem' } as React.CSSProperties}>
@@ -163,25 +196,21 @@ function WorkspaceLayout() {
         <AdminNavigation />
         <div className="min-w-0 flex-1">
           <header className="sticky top-0 z-20 flex min-h-16 flex-wrap py-2 items-center justify-between gap-3 border-b border-border bg-surface px-4 sm:px-8">
-            <div className="flex min-w-0 items-center gap-3">
+            <div className="flex min-w-0 max-w-full flex-1 items-center gap-3">
               <AdminSidebarToggle />
-              <h1 className="truncate text-sm font-semibold">
+              <h1 className="hidden shrink-0 truncate text-sm font-semibold lg:block">
                 {localized(
                   role === 'STAFF' ? t('admin:theQuietShelfStaff') : t('admin:theQuietShelfAdmin'),
                 )}
               </h1>
-              <span className="hidden text-muted-foreground sm:inline" aria-hidden="true">
+              <span className="hidden text-muted-foreground lg:inline" aria-hidden="true">
                 /
               </span>
-              <span className="hidden text-sm text-muted-foreground sm:inline">
-                {localized(section)}
-              </span>
+              <AdminBreadcrumbs />
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <LanguageSwitcher />
               <WorkspaceSearch key={`${role}:${key}`} />
               <NotificationBell />
-              <ThemeSwitch />
               <AdminAccountMenu />
             </div>
           </header>
