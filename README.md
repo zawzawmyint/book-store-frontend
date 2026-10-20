@@ -1,5 +1,7 @@
 # The Quiet Shelf storefront
 
+Proposed feature, implementation delivered: [In-app notifications](specs/in-app-notifications/SPEC.md) adds customer/workspace bells and inboxes, coordinated with the [implementation plan](../backend/docs/superpowers/plans/2026-10-20-in-app-notifications.md). Local unit, browser, localization, mobile, and native 200% zoom evidence is recorded in its verification record; it remains Proposed pending staging production Redis TLS, streaming-proxy/capacity, and retention-scheduler evidence.
+
 Implemented feature: [Account carts](specs/account-carts/SPEC.md) keeps a versioned guest bag in browser storage and each verified account's bag on the server.
 
 Implemented feature: [Auth email verification and recovery](specs/auth-email/SPEC.md) adds verification, resend, password-recovery pages, and read-only verification-status badges in the Admin user directory.
@@ -14,7 +16,7 @@ Implemented feature: [Storefront and admin localization](specs/localization/SPEC
 
 A React + TypeScript + Tailwind bookstore storefront using shadcn/ui primitives, Zustand, React Hook Form, and Zod. This folder is its own Git repository. The backend lives in the sibling `backend` repository and should be started first.
 
-See [SPEC.md](SPEC.md) for storefront behavior, [bag and checkout UI](specs/bag-checkout-ui/SPEC.md) for the in-progress presentation verification, [book details](specs/book-details-upgrade/SPEC.md) for purchase, quantity, and related-book behavior, [the catalog upgrade](specs/catalog-upgrade/SPEC.md) for catalog filters and browsing continuity, [the storefront homepage](specs/storefront-homepage/SPEC.md) for curated discovery, [specs/account-carts/SPEC.md](specs/account-carts/SPEC.md) for account and guest bag ownership, [specs/order-workflow/SPEC.md](specs/order-workflow/SPEC.md) for request processing, [specs/icons-typography/SPEC.md](specs/icons-typography/SPEC.md) for icon actions and typography, [specs/appearance/SPEC.md](specs/appearance/SPEC.md) for Light/Dark appearance, [specs/authentication/SPEC.md](specs/authentication/SPEC.md) for sign-in, [specs/demo-login/SPEC.md](specs/demo-login/SPEC.md) for optional local demo controls, [specs/profile/SPEC.md](specs/profile/SPEC.md) for the account profile, [specs/staff/SPEC.md](specs/staff/SPEC.md) for workspace roles, [specs/users/SPEC.md](specs/users/SPEC.md) for user-directory compatibility, and [specs/activity/SPEC.md](specs/activity/SPEC.md) for Admin activity history.
+See [SPEC.md](SPEC.md) for storefront behavior, [in-app notifications](specs/in-app-notifications/SPEC.md) and its [verification record](specs/in-app-notifications/VERIFICATION.md) for the delivered interface and release gates, [bag and checkout UI](specs/bag-checkout-ui/SPEC.md) for the in-progress presentation verification, [book details](specs/book-details-upgrade/SPEC.md) for purchase, quantity, and related-book behavior, [the catalog upgrade](specs/catalog-upgrade/SPEC.md) for catalog filters and browsing continuity, [the storefront homepage](specs/storefront-homepage/SPEC.md) for curated discovery, [specs/account-carts/SPEC.md](specs/account-carts/SPEC.md) for account and guest bag ownership, [specs/order-workflow/SPEC.md](specs/order-workflow/SPEC.md) for request processing, [specs/icons-typography/SPEC.md](specs/icons-typography/SPEC.md) for icon actions and typography, [specs/appearance/SPEC.md](specs/appearance/SPEC.md) for Light/Dark appearance, [specs/authentication/SPEC.md](specs/authentication/SPEC.md) for sign-in, [specs/demo-login/SPEC.md](specs/demo-login/SPEC.md) for optional local demo controls, [specs/profile/SPEC.md](specs/profile/SPEC.md) for the account profile, [specs/staff/SPEC.md](specs/staff/SPEC.md) for workspace roles, [specs/users/SPEC.md](specs/users/SPEC.md) for user-directory compatibility, and [specs/activity/SPEC.md](specs/activity/SPEC.md) for Admin activity history.
 
 ## Development workflow
 
@@ -36,6 +38,10 @@ bun run dev
 ```
 
 Open `http://localhost:5173`. Vite uses port 5173 strictly and stops if it is occupied, keeping the storefront URL aligned with the backend's trusted origin. Vite forwards `/graphql` and `/api/auth` to the local backend. Set `VITE_API_TARGET` if the local API uses another port. Deploy both paths through the same storefront origin so session cookies work reliably.
+
+## In-app notification activation
+
+Build with `VITE_IN_APP_NOTIFICATIONS_ENABLED=false` until the compatible backend migrations and API are deployed. Set it to `true` before the production frontend build only after the backend feature flag is enabled. The same-origin deployment must proxy `/api/notifications/stream` without buffering or compression and preserve session cookies. Backend Redis/TLS, channel-prefix, cleanup, and staging requirements are in the [backend notification specification](../backend/specs/in-app-notifications/SPEC.md).
 
 ## Localization
 

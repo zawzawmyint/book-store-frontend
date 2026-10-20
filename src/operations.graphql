@@ -633,3 +633,49 @@ query BookCovers($ids: [ID!]!) {
     }
   }
 }
+fragment NotificationFields on InAppNotification {
+  id
+  kind
+  scope
+  createdAt
+  readAt
+  resourceType
+  resourceId
+  bookTitle
+  stockAtEvent
+  refundPhase
+  testPayment
+}
+
+query NotificationCount($scope: NotificationScope!) {
+  notificationUnreadCount(scope: $scope)
+}
+
+query NotificationFeed(
+  $scope: NotificationScope!
+  $first: Int!
+  $after: String
+  $unreadOnly: Boolean!
+) {
+  notifications(scope: $scope, first: $first, after: $after, unreadOnly: $unreadOnly) {
+    nodes {
+      ...NotificationFields
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+
+mutation ReadNotification($scope: NotificationScope!, $id: ID!) {
+  markNotificationRead(scope: $scope, id: $id) {
+    ...NotificationFields
+  }
+}
+
+mutation ReadAllNotifications($scope: NotificationScope!) {
+  markAllNotificationsRead(scope: $scope) {
+    changedCount
+  }
+}

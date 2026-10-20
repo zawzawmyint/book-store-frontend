@@ -1,4 +1,6 @@
 import { localized, t, useI18n } from '../lib/i18n'
+import { NotificationProvider } from '../features/notifications/NotificationProvider'
+import { NotificationBell } from '../features/notifications/NotificationBell'
 import { BookOpenText, LogIn, ShoppingBag, UserRound } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useLayoutEffect, useRef } from 'react'
@@ -23,6 +25,14 @@ import {
 } from './components/ui/dropdown-menu'
 
 export function Layout() {
+  return (
+    <NotificationProvider scope="STOREFRONT">
+      <StorefrontLayout />
+    </NotificationProvider>
+  )
+}
+
+function StorefrontLayout() {
   useI18n()
 
   const { pathname } = useLocation()
@@ -101,6 +111,7 @@ export function Layout() {
             </NavLink>
             <LanguageSwitcher />
             <StorefrontSearch />
+            <NotificationBell />
             {!isPending &&
               (session?.user.emailVerified === true ? (
                 <DropdownMenu>

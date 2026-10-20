@@ -24,7 +24,11 @@ export default defineConfig({
     {
       command: 'bun run dev --host localhost --port 4173 --strictPort',
       url: 'http://localhost:4173',
-      env: { VITE_API_TARGET: 'http://127.0.0.1:4100', VITE_DEMO_LOGIN: 'true' },
+      env: {
+        VITE_API_TARGET: 'http://127.0.0.1:4100',
+        VITE_DEMO_LOGIN: 'true',
+        VITE_IN_APP_NOTIFICATIONS_ENABLED: 'true',
+      },
       reuseExistingServer: false,
     },
   ],

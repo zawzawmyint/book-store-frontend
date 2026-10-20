@@ -1,5 +1,7 @@
 # The Quiet Shelf storefront specification
 
+> **Proposed in-app notifications, implementation delivered:** [Notification specification](specs/in-app-notifications/SPEC.md) defines scoped storefront/workspace bells, inbox pages and SSE-driven GraphQL refresh, coordinated with the [backend plan](../backend/docs/superpowers/plans/2026-10-20-in-app-notifications.md). Local implementation and verification are recorded, but the feature remains Proposed pending staging production Redis TLS, streaming proxy/capacity, and daily retention-scheduler evidence.
+
 > **Implemented localization:** [Storefront and admin localization](specs/localization/SPEC.md) delivers English, Arabic, Thai, and Simplified Chinese interface translation, locale-aware USD/date formatting, browser-local language selection, and Arabic RTL using i18next/react-i18next. Technical acceptance includes the actual 200% native-browser zoom and coordinated PostgreSQL browser evidence; [the verification record](specs/localization/VERIFICATION.md) describes the exact coverage. Human native-speaker sign-off is optional and was not performed.
 
 > **Implemented book cover uploads:** [Book covers](specs/book-cover-uploads/SPEC.md) documents the staff cover editor, real-image presentation, guest lookup, and existing-cover fallback.
