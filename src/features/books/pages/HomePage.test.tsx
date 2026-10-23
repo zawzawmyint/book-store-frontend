@@ -16,7 +16,7 @@ import {
 import { HomePage } from './HomePage'
 import { TooltipProvider } from '../../../app/components/ui/tooltip'
 import { useCartStore } from '../../cart/cart-store'
-import type { StorefrontHomeQuery } from '../../../generated/graphql'
+import type { HomepageBookFragment } from '../../../generated/graphql'
 
 vi.stubGlobal(
   'ResizeObserver',
@@ -37,11 +37,17 @@ const book = (id: string, title: string, stock = 5) => ({
   priceCents: 1200,
   stock,
 })
-const data: StorefrontHomeQuery = {
-  first: book('1', 'API First'),
-  second: book('2', 'API Second'),
-  third: book('4', 'API Third'),
-  fourth: book('8', 'API Fourth'),
+const page = (...items: HomepageBookFragment[]) => ({ __typename: 'BookPage' as const, items })
+const gatsby = { ...book('13', 'The Great Gatsby'), author: 'F. Scott Fitzgerald' }
+const pride = { ...book('14', 'Pride and Prejudice'), author: 'Jane Austen' }
+const jane = { ...book('16', 'Jane Eyre'), author: 'Charlotte Brontë' }
+const room = { ...book('20', 'A Room with a View'), author: 'E. M. Forster' }
+const data = {
+  first: page(gatsby),
+  second: page(pride),
+  third: page(jane),
+  fourth: page(room),
+  fallback: page(book('15', 'API Fallback'), gatsby, pride, jane),
   genres: ['Classic Fiction', 'Fantasy'],
 }
 beforeEach(() => {
@@ -113,34 +119,62 @@ function mount({
 
 it('shows explicit API-backed selections in order with working genre and recommendation links', async () => {
   const { operations } = mount()
-  await screen.findByRole('link', { name: 'API First' })
+  await screen.findByRole('link', { name: 'The Great Gatsby' })
   const shelf = await screen.findByRole('region', { name: 'Selected for your shelf' })
   expect(
     within(shelf)
       .getAllByRole('article')
-      .map((article) => within(article).getByRole('link', { name: /^API/ }).textContent),
-  ).toEqual(['API First', 'API Second', 'API Third', 'API Fourth'])
+      .map((article) => within(article).getAllByRole('link')[1].textContent),
+  ).toEqual(['The Great Gatsby', 'Pride and Prejudice', 'Jane Eyre', 'A Room with a View'])
   expect(screen.getByRole('link', { name: 'Classic Fiction' }).getAttribute('href')).toBe(
     '/books?genre=Classic+Fiction',
   )
   expect(screen.getByRole('link', { name: /Discover this book/ }).getAttribute('href')).toBe(
-    '/books/1',
+    '/books/13',
   )
   expect(screen.queryByRole('button', { name: 'Next' })).toBeNull()
   expect(operations).toEqual([
     {
       name: 'StorefrontHome',
-      variables: { firstId: '1', secondId: '2', thirdId: '4', fourthId: '8' },
+      variables: {
+        firstSearch: 'Gatsby',
+        secondSearch: 'Prejudice',
+        thirdSearch: 'Eyre',
+        fourthSearch: 'Forster',
+      },
     },
   ])
 })
 
+it('keeps the recommendation attached to its title and author after catalog IDs change', async () => {
+  mount({
+    result: {
+      ...data,
+      first: page({
+        ...gatsby,
+        title: '  ＴＨＥ Great   Gatsby ',
+        author: 'f. SCOTT   Fitzgerald',
+      }),
+      fallback: page(),
+    },
+  })
+  expect(
+    (await screen.findByRole('link', { name: /Discover this book/ })).getAttribute('href'),
+  ).toBe('/books/13')
+})
+
 it('omits missing selections and their editorial note while keeping sold-out cards disabled', async () => {
   mount({
-    result: { ...data, first: null, third: null, second: book('2', 'Sold Out', 0) } as typeof data,
+    result: {
+      ...data,
+      first: page(),
+      third: page(),
+      second: page({ ...pride, stock: 0 }),
+      fallback: page(),
+    },
   })
   const shelf = await screen.findByRole('region', { name: 'Selected for your shelf' })
-  await screen.findByRole('link', { name: 'Sold Out' })
+  await screen.findByRole('link', { name: 'Pride and Prejudice' })
   expect(within(shelf).getAllByRole('article')).toHaveLength(2)
   expect(screen.getByRole('button', { name: 'Sold out' })).toHaveProperty('disabled', true)
   expect(screen.queryByRole('link', { name: /Discover this book/ })).toBeNull()
@@ -151,10 +185,11 @@ it('distinguishes loading from empty and keeps an empty homepage useful', async 
   mount({
     result: {
       ...data,
-      first: null,
-      second: null,
-      third: null,
-      fourth: null,
+      first: page(),
+      second: page(),
+      third: page(),
+      fourth: page(),
+      fallback: page(),
       genres: [],
     } as unknown as typeof data,
     delay: 20,
@@ -169,6 +204,61 @@ it('distinguishes loading from empty and keeps an empty homepage useful', async 
   expect(screen.queryByRole('status', { name: 'Opening selected books…' })).toBeNull()
   expect(screen.getByRole('link', { name: /Browse all books/ }).getAttribute('href')).toBe('/books')
   expect(screen.queryAllByRole('img')).toHaveLength(0)
+})
+
+it('fills missing editorial matches from unique catalog books without assigning a false note', async () => {
+  const wrongAuthor = { ...gatsby, id: '21', author: 'Another Author' }
+  mount({
+    result: {
+      ...data,
+      first: page(wrongAuthor, book('22', 'The Great Gatsby Companion')),
+      second: page(pride, pride),
+      third: page(),
+      fourth: page(),
+      fallback: page(pride, book('23', 'Fallback One'), book('24', 'Fallback Two'), wrongAuthor),
+    },
+  })
+  const shelf = await screen.findByRole('region', { name: 'Selected for your shelf' })
+  await screen.findByRole('link', { name: 'Pride and Prejudice' })
+  expect(
+    within(shelf)
+      .getAllByRole('article')
+      .map((article) => within(article).getAllByRole('link')[1].textContent),
+  ).toEqual(['Pride and Prejudice', 'Fallback One', 'Fallback Two', 'The Great Gatsby'])
+  expect(
+    screen.getByRole('link', { name: 'Featured book: Pride and Prejudice' }).getAttribute('href'),
+  ).toBe('/books/14')
+  expect(screen.queryByRole('link', { name: /Discover this book/ })).toBeNull()
+})
+
+it('uses catalog order when no editorial match exists and removes duplicate IDs and identities', async () => {
+  mount({
+    result: {
+      ...data,
+      first: page(),
+      second: page(),
+      third: page(),
+      fourth: page(),
+      fallback: page(
+        book('21', 'Fallback First', 0),
+        book('21', 'Fallback First', 0),
+        book('22', '  FALLBACK   First '),
+        book('24', 'Fallback Last'),
+      ),
+    },
+  })
+  const shelf = await screen.findByRole('region', { name: 'Selected for your shelf' })
+  await screen.findByRole('link', { name: 'Fallback First' })
+  expect(
+    within(shelf)
+      .getAllByRole('article')
+      .map((article) => within(article).getAllByRole('link')[1].textContent),
+  ).toEqual(['Fallback First', 'Fallback Last'])
+  expect(
+    screen.getByRole('link', { name: 'Featured book: Fallback First' }).getAttribute('href'),
+  ).toBe('/books/21')
+  expect(screen.getByRole('button', { name: 'Sold out' })).toHaveProperty('disabled', true)
+  expect(screen.queryByRole('link', { name: /Discover this book/ })).toBeNull()
 })
 
 it('retains the bag and static navigation when homepage data and its retry fail', async () => {
@@ -187,7 +277,7 @@ it('retains the bag and static navigation when homepage data and its retry fail'
 it('does not display partial GraphQL error data as a successful editorial selection', async () => {
   mount({ partialError: true })
   await screen.findByRole('alert')
-  expect(screen.queryByRole('link', { name: 'API First' })).toBeNull()
+  expect(screen.queryByRole('link', { name: 'The Great Gatsby' })).toBeNull()
   expect(screen.queryByRole('link', { name: /Discover this book/ })).toBeNull()
   expect(screen.queryAllByRole('img')).toHaveLength(0)
 })
@@ -225,18 +315,21 @@ it('uses available genres for moods and the current selected author for discover
   expect(within(moods).queryByRole('link', { name: /A little adventure/ })).toBeNull()
   const author = screen.getByRole('region', { name: 'Explore an author' })
   expect(
-    within(author).getByRole('link', { name: 'Explore books by API Author' }).getAttribute('href'),
-  ).toBe('/books?search=API+Author')
+    within(author)
+      .getByRole('link', { name: 'Explore books by F. Scott Fitzgerald' })
+      .getAttribute('href'),
+  ).toBe('/books?search=F.+Scott+Fitzgerald')
 })
 
 it('omits author and mood sections when no matching data is available', async () => {
   mount({
     result: {
       ...data,
-      first: null,
-      second: null,
-      third: null,
-      fourth: null,
+      first: page(),
+      second: page(),
+      third: page(),
+      fourth: page(),
+      fallback: page(),
       genres: [],
     } as unknown as typeof data,
   })

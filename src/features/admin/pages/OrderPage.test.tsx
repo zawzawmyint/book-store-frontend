@@ -57,7 +57,7 @@ export const order = {
     },
   ],
 }
-export function mount(mocks: unknown[], role = 'STAFF') {
+export function mount(mocks: unknown[], role = 'STAFF', returnTo?: unknown) {
   return render(
     <MockedProvider mocks={mocks as never}>
       <AccessContext.Provider
@@ -71,7 +71,7 @@ export function mount(mocks: unknown[], role = 'STAFF') {
           confirmRole: async () => {},
         }}
       >
-        <MemoryRouter initialEntries={['/admin/orders/1']}>
+        <MemoryRouter initialEntries={[{ pathname: '/admin/orders/1', state: { returnTo } }]}>
           <Routes>
             <Route path="/admin/orders/:id" element={<OrderPage />} />
           </Routes>
@@ -84,6 +84,17 @@ const detail = {
   request: { query: AdminOrderDocument, variables: { id: '1' } },
   result: { data: { adminOrder: order } },
 }
+it.each([
+  ['/admin/orders?status=PREPARING&page=2#row', '/admin/orders?status=PREPARING&page=2'],
+  ['/admin?period=7', '/admin?period=7'],
+  [42, '/admin/orders'],
+  ['/admin/orders?search=\\bad', '/admin/orders'],
+])('preserves safe order list and dashboard returns %s', async (returnTo, expected) => {
+  mount([detail], 'STAFF', returnTo)
+  expect((await screen.findByRole('link', { name: /Back to /i })).getAttribute('href')).toBe(
+    expected,
+  )
+})
 it('lets staff confirm acceptance and validates a customer-visible cancellation reason', async () => {
   const user = userEvent.setup()
   mount([detail])
@@ -193,7 +204,9 @@ it('blocks acceptance of pending new orders and permits paid orders', async () =
       },
     },
   ])
-  await screen.findByText((_, element) => element?.tagName === 'P' && element.textContent === 'Payment pending · USD')
+  await screen.findByText(
+    (_, element) => element?.tagName === 'P' && element.textContent === 'Payment pending · USD',
+  )
   expect(screen.queryByRole('button', { name: 'Accept and prepare' })).toBeNull()
   expect(screen.getByRole('button', { name: 'Cancel request' })).toBeTruthy()
 })

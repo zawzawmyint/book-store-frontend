@@ -1,4 +1,10 @@
 {
+  "bookDetailsConflict": "这本书已在其他地方被修改。你的草稿已保留，请重新加载最新详情后再保存。",
+  "reloadLatestBookDetails": "重新加载最新详情",
+  "discardBookDraftWarning": "重新加载将丢弃未保存的书籍详情和所选封面。如果加载失败，草稿将保留。",
+  "keepEditingBook": "继续编辑",
+  "discardBookDraftAndReload": "丢弃草稿并重新加载",
+  "bookDetailsReloadFailed": "无法加载最新书籍详情。你的草稿已保留，请重试。",
   "breadcrumb": "面包屑导航",
   "columns": "列",
   "paymentStatusChanged": "支付状态已更改",

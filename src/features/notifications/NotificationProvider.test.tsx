@@ -11,6 +11,7 @@ import {
 } from '../../generated/graphql'
 import { NotificationProvider } from './NotificationProvider'
 import { useNotifications } from './notification-context'
+import { authClient } from '../../lib/auth-client'
 const fixtures = vi.hoisted(() => ({
   session: { user: { id: 'reader-a', emailVerified: true } },
   connect: vi.fn(() => vi.fn()),
@@ -29,6 +30,7 @@ beforeEach(() => {
   vi.stubEnv('VITE_IN_APP_NOTIFICATIONS_ENABLED', 'true')
   fixtures.session = { user: { id: 'reader-a', emailVerified: true } }
   fixtures.connect.mockClear()
+  vi.mocked(authClient.getSession).mockClear()
 })
 afterEach(() => {
   cleanup()
@@ -116,6 +118,28 @@ it('hides the runtime disabled feature and closes transport', async () => {
   expect(await screen.findByText('disabled')).toBeTruthy()
   expect(close).toHaveBeenCalledTimes(1)
 })
+it.each([
+  { codes: ['OTHER', 'NOTIFICATIONS_DISABLED', 'UNAUTHENTICATED'], refreshes: 0 },
+  { codes: ['OTHER', 'UNAUTHENTICATED', 'NOTIFICATIONS_DISABLED'], refreshes: 1 },
+])('uses the first recognized notification code in $codes', async ({ codes, refreshes }) => {
+  render(
+    <MockedProvider
+      mocks={[
+        {
+          request: { query: NotificationCountDocument, variables: { scope: 'STOREFRONT' } },
+          result: { errors: codes.map((code) => new GraphQLError(code, { extensions: { code } })) },
+        },
+      ]}
+    >
+      <NotificationProvider scope="STOREFRONT">
+        <Probe />
+      </NotificationProvider>
+    </MockedProvider>,
+  )
+  expect(await screen.findByText('disabled')).toBeTruthy()
+  expect(authClient.getSession).toHaveBeenCalledTimes(refreshes)
+})
+
 it('clears old identity immediately and ignores its late response', async () => {
   const close = vi.fn()
   fixtures.connect.mockReturnValueOnce(close)

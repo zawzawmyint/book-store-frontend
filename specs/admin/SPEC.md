@@ -127,6 +127,8 @@ Give store administrators an `/admin` area in the existing React application for
 - Keep same-origin `/graphql` and `/api/auth` proxies. No separate API URL or session token storage is required.
 - `src/features/admin/` owns guards, layout, pages, dialogs, and local form schemas. Existing `src/app/App.tsx`, `src/app/Layout.tsx`, and `src/app/SessionBoundary.tsx` integrate routes, navigation, and privacy boundaries. Shared primitives remain in `src/app/components/ui/`.
 - Apollo owns viewer, book, and order data; Better Auth owns session identity; local form state owns unsaved edits. Zustand continues to own only the customer cart and its existing storage format.
+- Book detail edits use the loaded `detailsRevision`. A stale save remains on the form with localized feedback and an explicit reload action; confirmation is required before a successful reload discards unsaved fields or a staged cover. Stock and cover revisions remain independent.
+- Workspace list returns accept only their known relative list paths and preserve their query strings. Book, order and user details reject malformed or unexpected history state without throwing; legacy `/admin/customers` return paths normalize to `/admin/users`, while validated dashboard returns retain their existing priority.
 - Update existing root specs to describe delivered behavior only after each phase passes acceptance checks; both admin feature specs are Implemented after the full agreed scope passes verification.
 
 ## Accessibility and responsive behavior

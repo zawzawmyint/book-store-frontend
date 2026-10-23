@@ -20,6 +20,7 @@ const book: AdminBookFieldsFragment = {
   archived: false,
   cover: null,
   coverRevision: 0,
+  detailsRevision: 0,
 }
 function mount(mocks: unknown[], archived = false) {
   function Harness() {

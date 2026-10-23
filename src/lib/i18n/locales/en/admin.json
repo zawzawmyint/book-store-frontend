@@ -1,4 +1,10 @@
 {
+  "bookDetailsConflict": "This book changed elsewhere. Your draft is preserved. Reload the latest details before saving again.",
+  "reloadLatestBookDetails": "Reload latest details",
+  "discardBookDraftWarning": "Reloading will discard unsaved book details and the selected cover. Your draft is kept if reloading fails.",
+  "keepEditingBook": "Keep editing",
+  "discardBookDraftAndReload": "Discard draft and reload",
+  "bookDetailsReloadFailed": "Unable to reload the latest book details. Your draft is preserved. Please try again.",
   "breadcrumb": "Breadcrumb",
   "columns": "Columns",
   "paymentStatusChanged": "Payment status changed",

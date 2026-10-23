@@ -18,6 +18,7 @@ import { accessErrorCode, useAdminAccess, useAdminQueryError } from '../admin-ac
 import { AdminFeedback } from '../components/AdminFeedback'
 import { AdminPageHeader } from '../components/AdminPageHeader'
 import { EmailVerificationBadge } from '../components/EmailVerificationBadge'
+import { adminListReturnTo } from '../activity-data'
 
 const passwordSchema = z
   .object({
@@ -46,12 +47,10 @@ export function UserPage() {
   })
   useAdminQueryError(error)
   const location = useLocation()
-  const requestedReturn = (location.state as { returnTo?: string } | null)?.returnTo
-  const returnTo = requestedReturn?.startsWith('/admin/users?')
-    ? requestedReturn
-    : requestedReturn?.startsWith('/admin/customers?')
-      ? `/admin/users${requestedReturn.slice('/admin/customers'.length)}`
-      : '/admin/users'
+  const returnTo = adminListReturnTo(
+    (location.state as { returnTo?: unknown } | null)?.returnTo,
+    'users',
+  )
   const user = data?.adminUser
   const [notice, setNotice] = useState('')
   const [copyError, setCopyError] = useState('')

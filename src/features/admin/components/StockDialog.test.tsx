@@ -23,6 +23,7 @@ Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
 const book = {
   cover: null,
   coverRevision: 0,
+  detailsRevision: 0,
   id: '1',
   title: 'Inventory book',
   author: 'Author',

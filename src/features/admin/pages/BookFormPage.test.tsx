@@ -20,14 +20,19 @@ const book = {
   archived: false,
   cover: null,
   coverRevision: 0,
+  detailsRevision: 0,
 }
 const operations: string[] = []
 let failDetails = false
 let reloadFails = false
+let conflictDetails = false
+const updateVariables: Record<string, unknown>[] = []
 beforeEach(() => {
   operations.length = 0
   failDetails = false
   reloadFails = false
+  conflictDetails = false
+  updateVariables.length = 0
   vi.stubGlobal('fetch', vi.fn())
   URL.createObjectURL = vi.fn(() => 'blob:preview')
   URL.revokeObjectURL = vi.fn()
@@ -36,13 +41,23 @@ afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
 })
-function mount(edit = false, existingCover = false) {
+function mount(edit = false, existingCover = false, returnTo?: unknown) {
   const client = new ApolloClient({
     cache: new InMemoryCache(),
     link: new ApolloLink(
       (operation) =>
         new Observable((observer) => {
           operations.push(operation.operationName!)
+          if (operation.operationName === 'UpdateBook') {
+            updateVariables.push(operation.variables)
+            if (conflictDetails) {
+              observer.next({
+                errors: [{ message: 'Book changed', extensions: { code: 'CONFLICT' } }],
+              })
+              observer.complete()
+              return
+            }
+          }
           if (operation.operationName === 'AdminBook' && operation.variables.id === '18') {
             observer.error(new Error('Other book unavailable'))
             return
@@ -64,6 +79,8 @@ function mount(edit = false, existingCover = false) {
                 : {
                     adminBook: {
                       ...book,
+                      title: reads > 1 ? 'Latest book' : book.title,
+                      detailsRevision: reads > 1 ? 1 : 0,
                       cover: existingCover
                         ? {
                             __typename: 'BookCover',
@@ -82,7 +99,11 @@ function mount(edit = false, existingCover = false) {
   })
   render(
     <ApolloProvider client={client}>
-      <MemoryRouter initialEntries={[edit ? '/admin/books/17/edit' : '/admin/books/new']}>
+      <MemoryRouter
+        initialEntries={[
+          { pathname: edit ? '/admin/books/17/edit' : '/admin/books/new', state: { returnTo } },
+        ]}
+      >
         <Link to="/admin/books/18/edit">Open another book</Link>
         <Routes>
           <Route path="/admin/books/new" element={<BookFormPage />} />
@@ -105,6 +126,14 @@ async function fill() {
     await user.type(screen.getByLabelText(label, { exact: true }), value)
   return user
 }
+it.each([
+  ['/admin/books?filter=ARCHIVED&page=2#row', '/admin/books?filter=ARCHIVED&page=2'],
+  [42, '/admin/books'],
+  ['https://internal.invalid/admin/books?page=2', '/admin/books'],
+])('validates book form return state %s', async (returnTo, expected) => {
+  mount(false, false, returnTo)
+  expect(screen.getByRole('link', { name: /Back to books/ })).toHaveAttribute('href', expected)
+})
 async function select(user: ReturnType<typeof userEvent.setup>) {
   await user.upload(
     screen.getByLabelText('Choose cover image'),
@@ -120,6 +149,41 @@ function uploaded() {
     }),
   )
 }
+it('preserves a conflicted draft and reloads only after explicit confirmation', async () => {
+  conflictDetails = true
+  mount(true)
+  const user = userEvent.setup()
+  await screen.findByDisplayValue('A book')
+  await user.clear(screen.getByLabelText('Title', { exact: true }))
+  await user.type(screen.getByLabelText('Title', { exact: true }), 'My draft')
+  await select(user)
+  await user.click(screen.getByRole('button', { name: 'Save book' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('changed')
+  expect(screen.getByLabelText('Title', { exact: true })).toHaveValue('My draft')
+  expect(screen.getByRole('button', { name: 'Save book' })).toBeDisabled()
+  expect(updateVariables[0]?.expectedRevision).toBe(0)
+  await user.click(screen.getByRole('button', { name: 'Reload latest details' }))
+  expect(await screen.findByRole('alertdialog')).toHaveTextContent('discard')
+  await user.click(screen.getByRole('button', { name: 'Keep editing' }))
+  expect(screen.getByLabelText('Title', { exact: true })).toHaveValue('My draft')
+  await user.click(screen.getByRole('button', { name: 'Reload latest details' }))
+  reloadFails = true
+  await user.click(screen.getByRole('button', { name: 'Discard draft and reload' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('reload')
+  expect(screen.getByLabelText('Title', { exact: true })).toHaveValue('My draft')
+  reloadFails = false
+  expect(screen.getByAltText('Selected cover for My draft')).toBeInTheDocument()
+  expect(fetch).not.toHaveBeenCalled()
+  await user.click(screen.getByRole('button', { name: 'Reload latest details' }))
+  await user.click(screen.getByRole('button', { name: 'Discard draft and reload' }))
+  await screen.findByDisplayValue('Latest book')
+  expect((screen.getByLabelText('Choose cover image') as HTMLInputElement).files).toHaveLength(0)
+  conflictDetails = false
+  await user.type(screen.getByLabelText('Title', { exact: true }), ' revised')
+  await user.click(screen.getByRole('button', { name: 'Save book' }))
+  await screen.findByRole('heading', { name: 'Catalog destination' })
+  expect(updateVariables[1]?.expectedRevision).toBe(1)
+})
 it('creates a book and uploads its selected cover through the single form action', async () => {
   vi.mocked(fetch).mockResolvedValue(uploaded())
   mount()

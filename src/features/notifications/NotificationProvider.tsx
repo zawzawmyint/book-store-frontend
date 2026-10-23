@@ -11,12 +11,12 @@ import { authClient } from '../../lib/auth-client'
 import { useAdminAccess } from '../admin/admin-access'
 import { createRefreshScheduler } from './refresh-scheduler'
 import { connectNotificationStream } from './notification-stream'
+import { graphqlErrorCodes } from '../../lib/graphql-errors'
 
 function errorCode(error: unknown): string | undefined {
-  const entries = (error as { errors?: { extensions?: { code?: string } }[] } | null)?.errors
-  return entries
-    ?.map((entry) => entry.extensions?.code)
-    .find((code) => ['NOTIFICATIONS_DISABLED', 'UNAUTHENTICATED', 'FORBIDDEN'].includes(code ?? ''))
+  return graphqlErrorCodes(error).find((code) =>
+    ['NOTIFICATIONS_DISABLED', 'UNAUTHENTICATED', 'FORBIDDEN'].includes(code),
+  )
 }
 export function NotificationProvider({
   scope,

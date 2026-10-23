@@ -34,6 +34,23 @@ beforeEach(() => {
   localStorage.clear()
   sessionStorage.clear()
 })
+it('never applies a completed old-account save after switching to a different account', async () => {
+  const store = createCartStore()
+  const first = transport()
+  const pending = deferred<ServerCart>()
+  first.set = () => pending.promise
+  await store.getState().identify('A', first)
+  const adding = store.getState().add(book, 2)
+  const second = transport()
+  second.read = async () => cart('B-revision', 1)
+  await store.getState().identify('B', second)
+  pending.resolve(cart('A-revision', 2))
+  expect(await adding).toBe(false)
+  expect(store.getState().owner).toBe('B')
+  expect(store.getState().revision).toBe('B-revision')
+  expect(store.getState().items[0].quantity).toBe(1)
+  expect(store.getState().status).toBe('ready')
+})
 it('confirms one complete guest increment and rejects limits with feedback', async () => {
   const store = createCartStore()
   const result = store.getState().add(book, 3)
