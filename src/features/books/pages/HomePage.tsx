@@ -3,7 +3,7 @@ import { useQuery } from '@apollo/client/react'
 import { Navigate, Link, useLocation } from 'react-router-dom'
 import { ArrowRight, BookOpen, Compass, Sparkles, Feather, Moon, Rocket } from 'lucide-react'
 import { StorefrontHomeDocument } from '../../../generated/graphql'
-import { homepageSelections, homepageVariables, type HomepageBook } from '../homepage'
+import { homepageVariables, resolveHomepageBooks } from '../homepage'
 import { HomeHero } from '../components/HomeHero'
 import { StoreNote } from '../components/StoreNote'
 import { BookCard } from '../components/BookCard'
@@ -66,18 +66,11 @@ function HomeContent() {
     variables: homepageVariables,
     notifyOnNetworkStatusChange: true,
   })
-  const candidates = !error && data ? [data.first, data.second, data.third, data.fourth] : []
-  const books = candidates.filter(
-    (book, index): book is HomepageBook =>
-      !!book && candidates.findIndex((candidate) => candidate?.id === book.id) === index,
-  )
+  const { books, recommendation, note } =
+    !error && data
+      ? resolveHomepageBooks(data)
+      : { books: [], recommendation: undefined, note: undefined }
   const genres = !error ? [...new Set(data?.genres.filter((genre) => genre.trim()) ?? [])] : []
-  const recommendation = books.find((book) =>
-    homepageSelections.some((entry) => entry.bookId === book.id && entry.editorialNote),
-  )
-  const note = homepageSelections.find(
-    (entry) => entry.bookId === recommendation?.id,
-  )?.editorialNote
   return (
     <>
       <HomeHero books={books} hasGenres={genres.length > 0} />

@@ -29,6 +29,108 @@ test('homepage discovery, catalog navigation, and guest bag work together', asyn
   await expect(page).toHaveURL('/books')
 })
 
+test('hero and shelf retain editorial books after catalog IDs change', async ({ page }) => {
+  await page.setExtraHTTPHeaders({ 'X-Real-IP': '192.0.2.238' })
+  await page.goto('/sign-in?returnTo=%2Fadmin%2Fbooks')
+  await page.getByLabel('Email address').fill('admin-e2e@example.com')
+  await page.getByLabel('Password').fill('bookstore-admin-test-123')
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await expect(page).toHaveURL('/admin/books')
+  const originals: { id: string; archived: boolean }[] = []
+  const replacements: string[] = []
+  async function graphql(query: string, variables: Record<string, unknown>) {
+    const response = await page.request.post('/graphql', {
+      headers: { Origin: 'http://localhost:4173' },
+      data: { query, variables },
+    })
+    expect(response.ok()).toBe(true)
+    const body = await response.json()
+    expect(body.errors).toBeUndefined()
+    return body.data
+  }
+  async function archive(id: string, archived: boolean) {
+    await graphql(
+      'mutation($id:ID!,$archived:Boolean!){setBookArchived(id:$id,archived:$archived){id}}',
+      { id, archived },
+    )
+  }
+  try {
+    for (const [id, title, author] of [
+      ['1', 'ＴＨＥ Great   Gatsby', 'F. Scott Fitzgerald'],
+      ['2', 'Pride and Prejudice', 'Jane Austen'],
+      ['4', 'Jane Eyre', 'Charlotte Brontë'],
+      ['8', 'A Room with a View', 'E. M. Forster'],
+    ]) {
+      const { adminBook: original } = await graphql(
+        'query($id:ID!){adminBook(id:$id){id archived title author genre description priceCents stock}}',
+        { id },
+      )
+      originals.push({ id, archived: original.archived })
+      const { createBook: replacement } = await graphql(
+        'mutation($input:CreateBookInput!){createBook(input:$input){id}}',
+        {
+          input: {
+            details: {
+              title,
+              author,
+              genre: original.genre,
+              description: original.description,
+              priceCents: original.priceCents,
+            },
+            stock: original.stock,
+          },
+        },
+      )
+      replacements.push(replacement.id)
+      await archive(id, true)
+    }
+    await page.goto('/')
+    const shelf = page.getByRole('region', { name: 'Selected for your shelf' })
+    await expect(shelf.getByRole('article')).toHaveCount(4)
+    const hero = page.locator('.home-hero')
+    await expect(hero.getByRole('link', { name: /Featured book:/ })).toHaveAttribute(
+      'href',
+      `/books/${replacements[0]}`,
+    )
+    await expect(
+      page.getByRole('link', { name: 'Discover this book', exact: true }),
+    ).toHaveAttribute('href', `/books/${replacements[0]}`)
+    const shelfIds = await shelf
+      .getByRole('article')
+      .evaluateAll((articles) =>
+        articles.map((article) =>
+          article.querySelector('a[href^="/books/"]')?.getAttribute('href'),
+        ),
+      )
+    expect(shelfIds).toEqual(replacements.map((id) => `/books/${id}`))
+    await page.reload()
+    await expect(shelf.getByRole('article')).toHaveCount(4)
+    await expect(hero.getByRole('link', { name: /Featured book:/ })).toHaveAttribute(
+      'href',
+      `/books/${replacements[0]}`,
+    )
+    for (const id of replacements) await archive(id, true)
+    await page.reload()
+    await expect(shelf.getByRole('article')).toHaveCount(4)
+    const fallbackLinks = await shelf
+      .getByRole('article')
+      .evaluateAll((articles) =>
+        articles.map((article) =>
+          article.querySelector('a[href^="/books/"]')?.getAttribute('href'),
+        ),
+      )
+    expect(new Set(fallbackLinks).size).toBe(4)
+    await expect(hero.getByRole('link', { name: /Featured book:/ })).toHaveAttribute(
+      'href',
+      fallbackLinks[0]!,
+    )
+    await expect(page.getByRole('link', { name: 'Discover this book', exact: true })).toHaveCount(0)
+  } finally {
+    for (const original of originals) await archive(original.id, original.archived)
+    for (const id of replacements) await archive(id, true)
+  }
+})
+
 test('header search and old catalog links preserve navigation state', async ({
   page,
 }, testInfo) => {

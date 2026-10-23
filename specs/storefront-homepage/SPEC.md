@@ -132,8 +132,16 @@ have no cart side effect.
 
 ### Selected shelf and discovery
 
-**Selected for your shelf** displays up to four configured books in editorial order
-inside an edge-to-edge horizontal rail. Its first card aligns with the page content.
+#### Resilient editorial selections — Implemented (2026-10-22)
+
+The hero and selected shelf share one resolved list of up to four visible API books. `homepageSelections` contains `{ search, title, author, editorialNote? }` editorial identities, normalized with Unicode NFKC, case, and whitespace normalization. The catalog has no separate slug/key field; this frontend identity survives database reseeding without a schema migration. Renaming an intended title or author makes it a missing editorial match and activates fallback.
+
+The existing public `books` query fetches up to twelve candidates for each of the distinctive `Gatsby`, `Prejudice`, `Eyre`, and `Forster` search tokens, plus four deterministic catalog fallback books, in the same homepage operation. `firstSearch` through `fourthSearch` are separate from exact editorial identities, allowing cosmetic spacing changes elsewhere in the title. Backend search remains literal: frontend normalization applies only to retrieved candidates and does not guarantee retrieval of candidates outside these bounds or with missing metadata. Exact identities resolve in editorial order; duplicate IDs and identities are removed, and current fallback books fill remaining positions. Sold-out visible books remain eligible with disabled purchase actions. The first resolved book supplies the hero. The Gatsby editorial note appears only for its exact configured identity, never an unrelated fallback.
+
+Verified acceptance: reseeded IDs render the intended hero and four-card shelf; partially/all missing editorial picks use unique current fallback books; duplicate candidates do not repeat cards; fewer than four catalog books render the available subset. A successful empty state requires no visible catalog books; loading, API/partial errors and retry remain distinct. Existing links, cart actions, genres, locales, responsive layouts and access behavior remain intact. No backend schema, migration, dependency or admin-curation feature is introduced.
+
+**Selected for your shelf** displays up to four resolved books, with editorial matches
+followed by catalog fallback, inside an edge-to-edge horizontal rail. Its first card aligns with the page content.
 Desktop shows about three cards and a preview; smaller screens show fewer cards with
 the next card peeking in. Previous/next controls advance by one visible rail width,
 touch/trackpad scrolling stays native, and a subtle fade marks more books at the right
@@ -167,15 +175,15 @@ publish placeholder contact, policy, delivery, or returns links.
 ## Data and editorial ownership
 
 The frontend owns a small ordered configuration of up to four unique entries shaped as
-`{ bookId: string, editorialNote?: string }`. It currently selects IDs `1`, `2`, `4`,
-and `8`; product metadata always comes from the API. The first available configuration
-entry with an editorial note provides the recommendation. There is no database or
-admin curation record.
+`{ search: string, title: string, author: string, editorialNote?: string }`; product
+metadata always comes from the API. The first resolved entry with an editorial note
+provides the recommendation. There is no database or admin curation record.
 
 The named `StorefrontHome` operation in `src/operations.graphql` makes one bounded
-request: four existing `book(id: ID!)` lookups aliased for those selections plus
-`genres`. It does not fetch or scan the complete catalog and requires no new schema or
-query. Generated documents are updated through codegen rather than manually.
+request: four `books(search:, limit: 12)` aliases, `fallback: books(limit: 4)`, and
+`genres`. It does not fetch or scan the complete catalog and requires no new schema,
+backend API, or query endpoint. Generated documents are updated through codegen rather
+than manually.
 
 On a query error, the header, static hero, **Browse all books**, StoreNote, and footer
 remain usable; dynamic data is replaced with an accessible retry state and partial
@@ -194,7 +202,8 @@ only when their corresponding API genres are available. Cart contents remain int
 - `src/features/books/components/BookRail.tsx` owns the shared accessible shelf rail,
   including viewport-width paging, native scroll, edge fade, and motion-aware autoplay;
   it is also used for related books on the detail page.
-- `src/features/books/homepage.ts` owns editorial selection IDs and notes.
+- `src/features/books/homepage.ts` owns editorial search/identity selections, notes,
+  normalization, deduplication, and fallback resolution.
 - `src/features/books/pages/CatalogPage.tsx`, existing catalog code, and existing
   shopping-return links retain catalog behavior and destinations.
 - `src/operations.graphql` and generated documents define the bounded homepage query.
@@ -220,6 +229,9 @@ only when their corresponding API genres are available. Cart contents remain int
       strings and hashes remain homepage URLs.
 - [x] Homepage failures keep static navigation and cart state usable; no partial error
       data appears as editorial content.
+- [x] Replaced editorial-book IDs resolve by normalized title and author after reseeding,
+      use unique fallback books when unavailable, and never attach the Gatsby note to an
+      unrelated fallback.
 - [x] No new backend schema, persistence, authentication, inventory, payment, or
       GraphQL contract is introduced.
 - [x] Final targeted browser verification and visual inspection confirm the redesign;
@@ -255,6 +267,26 @@ The final sticky-header increment passed **226 tests in 44 files**, lint, build 
 the existing bundle warning, and **8/8** affected Chromium journeys in 1.3 minutes.
 Live desktop and 375px inspection confirmed the sticky header, dialog layering, Escape
 behavior, restored homepage viewport, and the saved catalog-layout screenshot.
+
+### Editorial selection resilience verification
+
+`bun --bun run codegen` completed against the live API on port 4000. Focused
+`HomePage` coverage passed **14/14**; the full frontend suite passed **378/378** across
+74 files; lint and build passed with the existing large-chunk warning. The focused
+Chromium run passed **20/20** journeys across homepage, catalog-upgrade,
+book-details-upgrade, and localization in 1.7 minutes. It is not a full browser-suite
+claim; the native notification zoom project was not run.
+
+The real-API browser regression created replacement selected books with IDs 13 and
+above, including a full-width/whitespace variant of *The Great Gatsby*, archived the
+old matches, and confirmed that the resolved hero, shelf, and recommendation use the
+replacement Gatsby (ID 13) after reload. It then archived replacements, confirmed four
+unique fallback cards and no unrelated editorial note, then restored the original
+archive states and archived the created test fixtures. Before the token fix, the replacement hero
+incorrectly remained ID 14; the component regression also first exposed the missing
+editorial note. A live localhost:5173 smoke showed four shelf cards, hero/recommendation
+for `/books/13`, and no empty-state message; the full-page evidence is
+`test-results/homepage-live-repaired.png`.
 
 Rollback is frontend-only: deploy the preceding compatible frontend. If rolling back to
 a version that lacks `/books`, hosting must redirect new `/books` bookmarks to `/` while

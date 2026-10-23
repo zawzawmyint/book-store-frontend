@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest'
 import {
   activityValue,
+  adminListReturnTo,
   booksReturnTo,
   localDateBound,
   readActivityFilters,
@@ -67,4 +68,37 @@ it('allows only the books list return location', () => {
     undefined,
   ])
     expect(booksReturnTo(value)).toBe('/admin/books')
+})
+it.each(['books', 'users', 'orders'] as const)(
+  'validates exact %s list paths and unknown navigation state',
+  (list) => {
+    const path = `/admin/${list}`
+    expect(adminListReturnTo(path, list)).toBe(path)
+    expect(adminListReturnTo(`${path}?search=A%20B&page=2#row`, list)).toBe(
+      `${path}?search=A%20B&page=2`,
+    )
+    for (const value of [
+      undefined,
+      null,
+      false,
+      42,
+      {},
+      [],
+      `https://internal.invalid${path}?page=2`,
+      `//internal.invalid${path}?page=2`,
+      `${path}/1`,
+      `${path}-other?page=2`,
+      `${path}?search=\\bad`,
+      `${path}?search=bad\n`,
+      `${path}?search=bad\u007f`,
+      '/admin/profile?page=2',
+    ])
+      expect(adminListReturnTo(value, list)).toBe(path)
+  },
+)
+it('normalizes legacy user lists while retaining queries and dropping fragments', () => {
+  expect(adminListReturnTo('/admin/customers?role=CUSTOMER&page=2#row', 'users')).toBe(
+    '/admin/users?role=CUSTOMER&page=2',
+  )
+  expect(adminListReturnTo('/admin/customers', 'users')).toBe('/admin/users')
 })

@@ -8,7 +8,9 @@
   icon with a 1.8-second opacity fade and a contextual status label. The implementation
   adds no image request, artificial delay, blocking overlay, or dependency.
 - The shared indicator covers session/bag initialization; homepage, catalog, book, and
-  order loading; workspace access/data loading; and the dashboard code-loading fallback.
+  order loading; workspace access/data loading; and every lazy admin page route inside
+  the already-authorized workspace shell. The route fallback is localized, respects
+  RTL direction, and remounts by pathname so a route transition receives its own state.
   Compact versions cover workspace search and delivery/payment waiting.
 - Existing skeletons, static navigation, access guards, request/error handling, retry
   behavior, checkout/cart privacy boundaries, action labels, and disabled safeguards

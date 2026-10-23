@@ -25,6 +25,7 @@ import { Separator } from '../../../app/components/ui/separator'
 import { useAdminQueryError } from '../admin-access'
 import { AdminFeedback } from '../components/AdminFeedback'
 import { dashboardReturnTo } from '../dashboard/dashboard-format'
+import { adminListReturnTo } from '../activity-data'
 
 export function OrderPage() {
   useI18n()
@@ -51,11 +52,9 @@ function OrderDetailPage({ id }: { id: string }) {
   })
   useAdminQueryError(error)
   const location = useLocation()
-  const requestedReturn = (location.state as { returnTo?: string } | null)?.returnTo
+  const requestedReturn = (location.state as { returnTo?: unknown } | null)?.returnTo
   const dashboardReturn = dashboardReturnTo(requestedReturn)
-  const returnTo =
-    dashboardReturn ??
-    (requestedReturn?.startsWith('/admin/orders?') ? requestedReturn : '/admin/orders')
+  const returnTo = dashboardReturn ?? adminListReturnTo(requestedReturn, 'orders')
   const order = current?.id === id ? current : data?.adminOrder
   async function refreshOrder() {
     const result = await refetch()

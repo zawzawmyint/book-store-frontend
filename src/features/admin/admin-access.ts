@@ -1,12 +1,8 @@
 import { createContext, useContext, useEffect } from 'react'
+import { graphqlErrorCodes } from '../../lib/graphql-errors'
 
 export function accessErrorCode(error: unknown): string | undefined {
-  if (error && typeof error === 'object' && 'errors' in error) {
-    const entries = (error as { errors?: Array<{ extensions?: { code?: string } }> }).errors
-    return entries?.find((entry) =>
-      ['FORBIDDEN', 'UNAUTHENTICATED'].includes(entry.extensions?.code ?? ''),
-    )?.extensions?.code
-  }
+  return graphqlErrorCodes(error).find((code) => ['FORBIDDEN', 'UNAUTHENTICATED'].includes(code))
 }
 export const AccessContext = createContext({
   role: undefined as string | undefined,

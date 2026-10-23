@@ -81,18 +81,21 @@ fragment HomepageBook on Book {
   stock
 }
 
-query StorefrontHome($firstId: ID!, $secondId: ID!, $thirdId: ID!, $fourthId: ID!) {
-  first: book(id: $firstId) {
-    ...HomepageBook
+query StorefrontHome($firstSearch: String!, $secondSearch: String!, $thirdSearch: String!, $fourthSearch: String!) {
+  first: books(search: $firstSearch, limit: 12) {
+    items { ...HomepageBook }
   }
-  second: book(id: $secondId) {
-    ...HomepageBook
+  second: books(search: $secondSearch, limit: 12) {
+    items { ...HomepageBook }
   }
-  third: book(id: $thirdId) {
-    ...HomepageBook
+  third: books(search: $thirdSearch, limit: 12) {
+    items { ...HomepageBook }
   }
-  fourth: book(id: $fourthId) {
-    ...HomepageBook
+  fourth: books(search: $fourthSearch, limit: 12) {
+    items { ...HomepageBook }
+  }
+  fallback: books(limit: 4) {
+    items { ...HomepageBook }
   }
   genres
 }
@@ -211,6 +214,7 @@ fragment AdminBookFields on AdminBook {
     height
   }
   coverRevision
+  detailsRevision
   id
   title
   author
@@ -250,8 +254,8 @@ mutation CreateBook($input: CreateBookInput!) {
     ...AdminBookFields
   }
 }
-mutation UpdateBook($id: ID!, $input: AdminBookDetailsInput!) {
-  updateBook(id: $id, input: $input) {
+mutation UpdateBook($id: ID!, $input: AdminBookDetailsInput!, $expectedRevision: Int!) {
+  updateBook(id: $id, input: $input, expectedRevision: $expectedRevision) {
     ...AdminBookFields
   }
 }

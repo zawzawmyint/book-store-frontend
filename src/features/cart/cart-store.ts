@@ -1,13 +1,12 @@
-import { errorMessage } from '../../lib/i18n/errors'
 import { message as msg } from '../../lib/i18n'
 import { create } from 'zustand'
-import { CombinedGraphQLErrors } from '@apollo/client'
+import { cartErrorCode } from './cart-error'
+import { runCartOperation } from './cart-account'
+import { createGuestCart } from './cart-guest'
 import { addToCart, changeQuantity, type BookSummary, type CartItem } from './cart'
 import {
   cartPersistence,
-  freshGuest,
   withCartStorageLock,
-  markUnconfirmedCartEdit,
   acknowledgeCartEdit,
   type PendingMerge,
 } from './cart-persistence'
@@ -28,7 +27,8 @@ export type CartTransport = {
   set: (input: SetCartInput) => Promise<ServerCart>
   merge: (input: MergeCartInput) => Promise<ServerCart>
 }
-type Operation = { kind: 'set'; input: SetCartInput } | { kind: 'merge'; record: PendingMerge }
+export type CartOperation =
+  { kind: 'set'; input: SetCartInput } | { kind: 'merge'; record: PendingMerge }
 export type CartState = {
   items: CartItem[]
   owner: string | null | undefined
@@ -50,10 +50,6 @@ export type CartState = {
   importLegacy: () => Promise<void>
   discardLegacy: () => void
 }
-const errorCode = (error: unknown) =>
-  CombinedGraphQLErrors.is(error)
-    ? error.errors[0]?.extensions?.code
-    : (error as { code?: string })?.code
 export const cartBlocked = (state: Pick<CartState, 'status'>) =>
   !['ready', 'guest'].includes(state.status)
 export const checkoutCartReady = (state: CartState) =>
@@ -63,12 +59,11 @@ export const checkoutCartReady = (state: CartState) =>
   state.items.every((item) => item.available !== false && item.stock >= item.quantity)
 export function createCartStore() {
   const disk = cartPersistence()
-  let guest = disk.guest
   let api: CartTransport | undefined
   let generation = 0
   let accepted = 0
   let readSequence = 0
-  let operation: Operation | undefined
+  let operation: CartOperation | undefined
   const store = create<CartState>()((set, get) => {
     const warning = () => set({ storageWarning: disk.warning() })
     const apply = (cart: ServerCart, passive = false) => {
@@ -80,27 +75,8 @@ export function createCartStore() {
       })
     }
     const active = (owner: string, token: number) => generation === token && get().owner === owner
-    const persistGuest = (items: CartItem[]) => {
-      guest = { ...guest, guestId: crypto.randomUUID(), items }
-      disk.saveGuest(guest)
-      if (get().owner === null) set({ items })
-      warning()
-    }
-    const synchronize = () => {
-      const current = disk.synchronize()
-      guest = current.guest
-      set({ legacyItems: current.legacy })
-      if (get().owner === null) set({ items: guest.items })
-      warning()
-    }
-    const editGuest = (edit: (items: CartItem[]) => CartItem[]) => {
-      const token = generation
-      void withCartStorageLock(() => {
-        if (generation !== token || get().owner !== null) return
-        synchronize()
-        persistGuest(edit(guest.items))
-      })
-    }
+    const guest = createGuestCart(disk, { set, get, generation: () => generation, warning })
+    const { synchronize, persist: persistGuest, edit: editGuest } = guest
     async function read(initial = false) {
       const owner = get().owner
       if (!owner || !api || (!initial && cartBlocked(get()))) return
@@ -133,7 +109,7 @@ export function createCartStore() {
           (!initial && cartBlocked(get()))
         )
           return
-        if (errorCode(error) === 'UNAUTHENTICATED') {
+        if (cartErrorCode(error) === 'UNAUTHENTICATED') {
           await get().identify(undefined)
           return
         }
@@ -150,110 +126,26 @@ export function createCartStore() {
         transport = api,
         token = generation
       if (!owner || !current || !transport) return null
-      if (current.kind === 'set') markUnconfirmedCartEdit(owner, current.input.requestKey)
-      set({
-        status: current.kind === 'merge' ? 'merging' : 'saving',
-        message: '',
-        retryKind: current.kind === 'merge' ? 'merge' : 'save',
-        validationMessage: '',
-        notices: [],
-      })
-      try {
-        const cart =
-          current.kind === 'merge'
-            ? await transport.merge({
-                items: current.record.items,
-                requestKey: current.record.requestKey,
-                expectedRevision: current.record.expectedRevision,
-              })
-            : await transport.set(current.input)
-        // A completed merge may retire durable recovery even after the owner leaves,
-        // but its response must never populate the next account's visible bag.
-        if (current.kind === 'merge')
-          await withCartStorageLock(() => disk.completePending(current.record))
-        else acknowledgeCartEdit(owner, current.input.requestKey)
-        if (!active(owner, token)) return null
-        apply(cart)
-        operation = undefined
-        set({ status: 'ready', message: msg('storefront:bagSaved') })
-        warning()
-        await mergeNext()
-        return active(owner, token) ? cart : null
-      } catch (error) {
-        if (!active(owner, token)) return null
-        if (errorCode(error) === 'UNAUTHENTICATED') {
-          await get().identify(undefined)
-          return null
-        }
-        if (current.kind === 'set' && errorCode(error) === 'BAD_USER_INPUT') {
+      return runCartOperation({
+        owner,
+        current,
+        transport,
+        isActive: () => active(owner, token),
+        set,
+        apply,
+        disk,
+        warning,
+        clearOperation: () => {
           operation = undefined
-          acknowledgeCartEdit(owner, current.input.requestKey)
-          set({ status: 'loading' })
-          try {
-            const cart = await transport.read()
-            if (!active(owner, token)) return null
-            apply(cart)
-            set({
-              status: 'ready',
-              message: '',
-              validationMessage: msg(
-                'storefront:valueReviewAvailabilityThenDecreaseOrRemoveUnavailableSelections',
-                { value0: errorMessage(error, 'common:invalidInput') },
-              ),
-            })
-          } catch {
-            if (active(owner, token))
-              set({
-                status: 'error',
-                retryKind: 'load',
-                message: msg(
-                  'storefront:thisSelectionWasRejectedReloadYourBagToReviewCurrentAvailability',
-                ),
-              })
-          }
-          return null
-        }
-        if (errorCode(error) === 'CART_CONFLICT') {
-          set({ status: 'loading' })
-          try {
-            const cart = await transport.read()
-            if (!active(owner, token)) return null
-            apply(cart)
-            if (current.kind === 'merge') {
-              current.record = { ...current.record, expectedRevision: cart.revision }
-              await withCartStorageLock(() => disk.savePending(current.record))
-              if (!active(owner, token)) return null
-            } else current.input = { ...current.input, expectedRevision: cart.revision }
-            set({
-              status: 'conflict',
-              message: msg(
-                'storefront:yourBagChangedElsewhereReviewTheLatestSelectionsThenRetryYour',
-              ),
-            })
-          } catch {
-            if (active(owner, token))
-              set({
-                status: 'error',
-                message: msg('storefront:yourBagChangedElsewhereButTheLatestSelectionsCouldNotBe'),
-              })
-          }
-        } else
-          set({
-            status: 'error',
-            message: msg('storefront:valueCouldNotBeConfirmedRetryTheSameOperationToRecover', {
-              value0: msg(
-                current.kind === 'merge' ? 'storefront:guestMerge' : 'storefront:bagSave',
-              ),
-            }),
-          })
-        warning()
-        return null
-      }
+        },
+        mergeNext,
+        identify: () => get().identify(undefined),
+      })
     }
     function freeze(source: 'guest' | 'legacy', items: CartItem[]) {
       const owner = get().owner
       if (!owner || !get().revision || !items.length) return false
-      const guestId = source === 'guest' ? guest.guestId : disk.legacyId
+      const guestId = source === 'guest' ? guest.current.guestId : disk.legacyId
       const record: PendingMerge = {
         owner,
         source,
@@ -271,8 +163,7 @@ export function createCartStore() {
         return false
       }
       if (source === 'guest') {
-        guest = freshGuest()
-        disk.saveGuest(guest)
+        guest.reset()
       } else {
         disk.discardLegacy(false)
         set({ legacyItems: [] })
@@ -294,7 +185,7 @@ export function createCartStore() {
           operation = { kind: 'merge', record: pending }
           return true
         }
-        return freeze('guest', guest.items)
+        return freeze('guest', guest.current.items)
       })
       if (!active(owner, token)) return
       if (!claimed) {
@@ -304,7 +195,7 @@ export function createCartStore() {
       await execute()
     }
     return {
-      items: guest.items,
+      items: guest.current.items,
       owner: null,
       status: 'guest',
       message: '',
@@ -328,7 +219,7 @@ export function createCartStore() {
         if (owner === null) synchronize()
         set({
           owner,
-          items: owner === null ? guest.items : [],
+          items: owner === null ? guest.current.items : [],
           revision: undefined,
           status: owner === null ? 'guest' : 'loading',
           message: '',
@@ -369,9 +260,9 @@ export function createCartStore() {
             const result = await withCartStorageLock(() => {
               if (generation !== token || get().owner !== null || cartBlocked(get())) return false
               synchronize()
-              const reason = invalid(guest.items)
+              const reason = invalid(guest.current.items)
               if (reason) return reject(reason)
-              persistGuest(addToCart(guest.items, book, quantity))
+              persistGuest(addToCart(guest.current.items, book, quantity))
               set({ validationMessage: '' })
               return true
             })

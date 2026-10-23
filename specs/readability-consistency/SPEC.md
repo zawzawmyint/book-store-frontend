@@ -41,6 +41,7 @@ Out of scope:
 - [admin-navigation.ts](../../src/features/admin/admin-navigation.ts) is the single source for sidebar entries, header labels, active-route matching, and Admin-only navigation metadata. [AdminLayout](../../src/features/admin/AdminLayout.tsx) keeps the established sidebar DOM, order, icons, collapse behavior, search behavior, and access boundaries.
 - [use-workspace-search.ts](../../src/features/admin/search/use-workspace-search.ts) accepts named options. [WorkspaceSearchDialog](../../src/features/admin/components/WorkspaceSearchDialog.tsx) keeps Books' default eligibility and Orders' existing one-digit eligibility.
 - Focused pagination and navigation tests cover URL preservation, invalid and out-of-range pages, correction gates, history replacement, distinct header/sidebar labels, active routes, and role visibility. Existing workspace-search tests retain stale-response and remount coverage.
+- Admin detail/list-return parsing uses the same strict known-path rules for books, orders and users. It preserves allowed list queries, normalizes legacy customer paths, keeps dashboard-return precedence, and safely falls back for malformed history state.
 
 The implementation preserves the existing workspace UI, routes, permissions, GraphQL operations, generated files, and dependencies.
 

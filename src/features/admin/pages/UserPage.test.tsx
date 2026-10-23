@@ -83,6 +83,12 @@ it.each([
   ['https://example.com/admin/users?search=Ada', '/admin/users'],
   ['//example.com/admin/users?search=Ada', '/admin/users'],
   ['/admin/users-other?search=Ada', '/admin/users'],
+  ['/admin/users?search=Ada#details', '/admin/users?search=Ada'],
+  ['/admin/customers#details', '/admin/users'],
+  ['/admin/users?search=Ada\n', '/admin/users'],
+  ['/admin/users?search=\\Ada', '/admin/users'],
+  [42, '/admin/users'],
+  [{ path: '/admin/users' }, '/admin/users'],
 ])('normalizes or rejects return state %s', async (returnTo, expected) => {
   renderPage({ pathname: '/admin/users/ada', state: { returnTo } }, [userMock()])
   await screen.findByRole('heading', { name: 'Ada Reader' })

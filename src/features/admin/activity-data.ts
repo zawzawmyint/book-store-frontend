@@ -109,17 +109,25 @@ export function activityValue(field: string, value: string | null | undefined) {
     return value === 'true' ? t('admin:archived') : t('admin:active')
   return value || t('admin:empty')
 }
-export function booksReturnTo(value: unknown) {
-  if (typeof value !== 'string' || value.includes('\\') || hasControlCharacters(value))
-    return '/admin/books'
+export function adminListReturnTo(value: unknown, list: 'books' | 'users' | 'orders') {
+  const fallback = `/admin/${list}`
+  if (
+    typeof value !== 'string' ||
+    !value.startsWith('/') ||
+    value.startsWith('//') ||
+    value.includes('\\') ||
+    hasControlCharacters(value)
+  )
+    return fallback
   try {
     const url = new URL(value, 'https://internal.invalid')
-    return url.origin === 'https://internal.invalid' &&
-      url.pathname === '/admin/books' &&
-      value.startsWith('/admin/books')
-      ? url.pathname + url.search
-      : '/admin/books'
+    const allowed =
+      url.pathname === fallback || (list === 'users' && url.pathname === '/admin/customers')
+    return url.origin === 'https://internal.invalid' && allowed ? fallback + url.search : fallback
   } catch {
-    return '/admin/books'
+    return fallback
   }
+}
+export function booksReturnTo(value: unknown) {
+  return adminListReturnTo(value, 'books')
 }
